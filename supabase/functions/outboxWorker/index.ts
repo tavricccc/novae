@@ -1,7 +1,13 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { requireEnv } from "../_shared/env.ts";
 import { sendFcmMessage } from "../_shared/fcm.ts";
-import { markNotionPageDeleted } from "../_shared/notion.ts";
+import {
+  markNotionPageDeleted,
+  syncAnnouncementCreatedToNotion,
+  syncIssueCommentToNotion,
+  syncIssueCreatedToNotion,
+  syncIssueStatusChangedToNotion,
+} from "../_shared/notion.ts";
 import { requireBearerSecret } from "../_shared/webhook.ts";
 
 interface OutboxEvent {
@@ -10,6 +16,7 @@ interface OutboxEvent {
   payload: Record<string, unknown>;
   target_id: string;
   target_type: string;
+  actor_uid: string;
 }
 
 function asString(value: unknown, fallback = "") {
@@ -94,21 +101,40 @@ function notificationForEvent(event: OutboxEvent) {
   return null;
 }
 
-async function markMappedNotionPageDeleted(
+async function syncNotionForEvent(
   supabase: ReturnType<typeof createClient>,
-  targetType: string,
-  targetId: string,
-) {
-  const { data, error } = await supabase
-    .schema("app_private")
-    .from("notion_pages")
-    .select("notion_page_id")
-    .eq("target_type", targetType)
-    .eq("target_id", targetId)
-    .maybeSingle();
-  if (error) throw error;
-  if (data?.notion_page_id) {
-    await markNotionPageDeleted(data.notion_page_id);
+  event: OutboxEvent,
+): Promise<void> {
+  switch (event.event_type) {
+    case "issue.created":
+      await syncIssueCreatedToNotion(supabase, event.target_id, event.payload);
+      break;
+    case "issue.status_changed":
+      await syncIssueStatusChangedToNotion(supabase, event.target_id, event.payload);
+      break;
+    case "issue.comment_created":
+      await syncIssueCommentToNotion(supabase, event.target_id);
+      break;
+    case "issue.deleted":
+    case "announcement.deleted": {
+      const { data, error } = await supabase
+        .schema("app_private")
+        .from("notion_pages")
+        .select("notion_page_id")
+        .eq("target_type", event.target_type)
+        .eq("target_id", event.target_id)
+        .maybeSingle();
+      if (error) throw error;
+      if (data?.notion_page_id) {
+        await markNotionPageDeleted(String(data.notion_page_id));
+      }
+      break;
+    }
+    case "announcement.created":
+      await syncAnnouncementCreatedToNotion(supabase, event.target_id, event.payload);
+      break;
+    default:
+      break;
   }
 }
 
@@ -138,9 +164,7 @@ async function sendPushes(
 }
 
 async function processEvent(supabase: ReturnType<typeof createClient>, event: OutboxEvent) {
-  if (event.event_type.endsWith(".deleted")) {
-    await markMappedNotionPageDeleted(supabase, event.target_type, event.target_id);
-  }
+  await syncNotionForEvent(supabase, event);
 
   const notification = notificationForEvent(event);
   if (notification) {

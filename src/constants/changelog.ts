@@ -2,6 +2,29 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "支援 Notion 提案同步",
+    version: "v1.8.31",
+    date: "2026-07-03",
+    time: "23:08",
+    items: [
+      {
+        title: "新增提案建立時自動同步至 Notion 資料庫。",
+      },
+      {
+        title: "支援提案狀態變更時更新 Notion 頁面並附上時間軸紀錄。",
+      },
+      {
+        title: "支援留言新增時同步至 Notion 頁面。",
+      },
+      {
+        title: "支援公告發布時同步至 Notion 資料庫。",
+      },
+      {
+        title: "提案或公告刪除時自動在 Notion 標記為已刪除。",
+      },
+    ],
+  },
+  {
     title: "提升部署維護穩定性",
     version: "v1.8.30",
     date: "2026-07-03",

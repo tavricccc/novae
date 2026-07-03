@@ -45,6 +45,7 @@ jobs:
           CLOUDINARY_WEBHOOK_SECRET: ${{ secrets.CLOUDINARY_WEBHOOK_SECRET }}
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
         run: |
@@ -64,6 +65,7 @@ jobs:
             CLOUDINARY_WEBHOOK_SECRET \
             WEBHOOK_SECRET \
             NOTION_TOKEN \
+            NOTION_DATABASE_ID \
             UPSTASH_REDIS_REST_URL \
             UPSTASH_REDIS_REST_TOKEN; do
             if [ -z "${!name}" ]; then
@@ -104,6 +106,7 @@ jobs:
           WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           NOTION_VERSION: ${{ secrets.NOTION_VERSION || '2022-06-28' }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
           UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
           UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
         run: |
@@ -120,6 +123,7 @@ jobs:
             WEBHOOK_SECRET="$WEBHOOK_SECRET" \
             NOTION_TOKEN="$NOTION_TOKEN" \
             NOTION_VERSION="$NOTION_VERSION" \
+            NOTION_DATABASE_ID="$NOTION_DATABASE_ID" \
             UPSTASH_REDIS_REST_URL="$UPSTASH_REDIS_REST_URL" \
             UPSTASH_REDIS_REST_TOKEN="$UPSTASH_REDIS_REST_TOKEN"
 
