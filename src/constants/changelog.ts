@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "修正後端資料權限設定",
+    version: "v1.8.43",
+    date: "2026-07-04",
+    time: "14:37",
+    items: [
+      {
+        title: "修正部署後後端服務讀取使用者資料可能失敗的問題。",
+      },
+      {
+        title: "完善後端資料操作所需的權限設定。",
+      },
+    ],
+  },
+  {
     title: "修正後端資料存取設定",
     version: "v1.8.42",
     date: "2026-07-04",

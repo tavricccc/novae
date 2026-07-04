@@ -41,6 +41,7 @@
 - supabase/migrations/202607020001_supabase_foundation.sql：Supabase 初始 migration，建立 `app_private` / `app_api` schema、Firebase JWT helper、RLS 基礎、核心資料檢查、查詢索引、hard delete RPC、outbox batch claim 與 statement-level worker wake-up。
 - supabase/migrations/202607020002_app_backend_actions.sql：補齊提案、公告、留言、通知、推播 token、使用者頭像、圖片 metadata、Notion page mapping 與維護紀錄等 Supabase app tables，並維護搜尋欄位、計數同步、updated_at 與常用查詢索引。
 - supabase/migrations/202607041434_expose_app_schemas.sql：設定 hosted PostgREST exposed schemas，讓部署後的 Edge Functions 可透過 service role 存取 `app_private`，並 reload PostgREST 設定與 schema cache。
+- supabase/migrations/202607041437_grant_service_role_app_private.sql：授權 service role 存取 `app_private` tables 與 sequences，供 Edge Functions 以後端身份執行受控資料操作。
 - supabase/functions/backendAction/index.ts：前端受控 action 入口，經共用 Firebase 驗證與 HTTP 邊界確認後查詢使用者角色，依 action 處理提案、公告、留言、附議、通知、推播偏好、Dashboard、使用者角色與 Cloudinary 上傳 session，並提供部署流程使用的受密鑰保護健康檢查。
 - supabase/functions/syncUser/index.ts：Firebase 登入後同步使用者 custom claim 的 Edge Function，與受控 action 共用登入資格驗證。
 - supabase/functions/cloudinaryWebhook/index.ts：Cloudinary 上傳完成 webhook，限制 POST、驗證簽章並安全解析 payload 後將 pending upload 轉為 ready。
