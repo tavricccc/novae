@@ -239,6 +239,7 @@
 
 - src/services/issues.ts：API Gateway 入口，統一 re-export 提案讀寫子服務。
 - src/services/backend-action.ts：Supabase Edge Function `backendAction` 呼叫工具，統一 action/payload 格式、timeout 與 abort signal。
+- src/services/supabase-function-error.ts：Supabase Edge Function 非 2xx 回應解析 helper，優先讀取後端 JSON / text 錯誤內容。
 - src/services/session-role.ts：登入後向後端查詢目前使用者角色，避免前端保存管理員 email 清單。
 - src/services/issues-core.ts：提案 read service 相容匯出入口與單筆提案讀取 helper，實際常數、錯誤、工具、正規化與查詢 builder 拆到子檔。
 - src/services/issues-constants.ts：提案服務常數，包含分頁大小、期限天數與 bucket 狀態。
@@ -259,7 +260,7 @@
 - src/services/uploads.ts：Cloudinary 圖片直傳服務，向後端取得簽名 session 後直傳 Cloudinary，並提供圖片 URL 解析、快取與刪除 action。
 - src/services/users-read.ts：作者頭像讀取服務，透過後端批次取得 uid 對應的最新快取頭像。
 - src/services/users-write.ts：使用者相關寫入服務，目前負責登入後頭像快取。
-- src/services/supabase-auth.ts：Supabase 登入初始化服務，登入後呼叫 `syncUser` Edge Function 補齊 Firebase custom claim 並強制刷新 token，避免半完成登入狀態。
+- src/services/supabase-auth.ts：Supabase 登入初始化服務，登入後明確帶入 Firebase token 呼叫 `syncUser` Edge Function 補齊 custom claim 並強制刷新 token，避免半完成登入狀態。
 
 ---
 ## public & scripts & workflows

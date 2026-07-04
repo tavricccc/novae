@@ -1,8 +1,10 @@
 import type { User } from 'firebase/auth';
 import { getSupabaseClient, hasSupabaseConfig } from '@/lib/supabase';
 import { withRequestTimeout } from '@/lib/request';
+import { readSupabaseFunctionError } from '@/services/supabase-function-error';
 
 interface SyncUserResponse {
+  error?: string;
   ok?: boolean;
   role?: string;
 }
@@ -21,17 +23,20 @@ export async function ensureSupabaseAuthenticatedRole(user: User) {
   }
 
   const client = getSupabaseClient();
-  const { data, error } = await withRequestTimeout(
+  const { data, error, response } = await withRequestTimeout(
     () => client.functions.invoke<SyncUserResponse>('syncUser', {
       body: {
         email: user.email,
+      },
+      headers: {
+        Authorization: `Bearer ${token.token}`,
       },
     }),
     { label: 'Supabase 登入初始化' },
   );
 
   if (error || data?.ok !== true) {
-    throw new Error(error?.message || 'Supabase 登入初始化失敗。');
+    throw new Error(error ? await readSupabaseFunctionError({ error, response }) : data?.error || 'Supabase 登入初始化失敗。');
   }
 
   const refreshedToken = await withRequestTimeout(

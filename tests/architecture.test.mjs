@@ -95,6 +95,9 @@ test('backendAction covers frontend actions and Cloudinary direct upload', async
   const firebaseAuth = await read('supabase/functions/_shared/firebase-auth.ts');
   const http = await read('supabase/functions/_shared/http.ts');
   const uploads = await read('src/services/uploads.ts');
+  const backendActionService = await read('src/services/backend-action.ts');
+  const supabaseAuthService = await read('src/services/supabase-auth.ts');
+  const functionErrorService = await read('src/services/supabase-function-error.ts');
   const session = await read('src/composables/useSession.ts');
 
   for (const action of [
@@ -120,6 +123,11 @@ test('backendAction covers frontend actions and Cloudinary direct upload', async
   assert.match(backendAction, /requireEligibleFirebaseUser/u);
   assert.match(backendAction, /requireMethod\(request, "POST"\)/u);
   assert.match(backendAction, /readJsonRecord/u);
+  assert.match(backendActionService, /auth\?\.currentUser\?\.getIdToken/u);
+  assert.match(backendActionService, /Authorization: `Bearer \$\{token\}`/u);
+  assert.match(backendActionService, /readSupabaseFunctionError/u);
+  assert.match(supabaseAuthService, /Authorization: `Bearer \$\{token\.token\}`/u);
+  assert.match(functionErrorService, /response\.clone\(\)\.json/u);
   assert.match(firebaseAuth, /accounts:lookup/u);
   assert.match(firebaseAuth, /ALLOWED_DOMAIN/u);
   assert.match(http, /errorStatus/u);

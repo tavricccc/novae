@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "修正後端操作錯誤提示",
+    version: "v1.8.36",
+    date: "2026-07-04",
+    time: "00:29",
+    items: [
+      {
+        title: "修正部分登入後操作可能無法正確送出身份資訊的問題。",
+      },
+      {
+        title: "改善後端服務異常時的錯誤訊息呈現。",
+      },
+    ],
+  },
+  {
     title: "提升後端服務穩定性",
     version: "v1.8.35",
     date: "2026-07-04",
