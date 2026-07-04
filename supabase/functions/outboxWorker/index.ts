@@ -21,6 +21,8 @@ interface OutboxEvent {
   actor_uid: string;
 }
 
+const NOTIFICATION_ID_NAMESPACE = "52c06670-c364-4c0f-82d9-8f18bb9f311e";
+
 function asString(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
 }
@@ -151,6 +153,28 @@ function notificationForReviewApproval(event: OutboxEvent) {
     actor_uid: event.actor_uid,
     issue_category: asString(event.payload.issue_category),
   };
+}
+
+function uuidToBytes(uuid: string) {
+  return Uint8Array.from(uuid.replace(/-/gu, "").match(/.{2}/gu)?.map((byte) => parseInt(byte, 16)) ?? []);
+}
+
+function bytesToUuid(bytes: Uint8Array) {
+  const hex = Array.from(bytes).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+}
+
+async function deterministicNotificationId(eventId: string, kind: string) {
+  const namespaceBytes = uuidToBytes(NOTIFICATION_ID_NAMESPACE);
+  const nameBytes = new TextEncoder().encode(`${eventId}:${kind}`);
+  const bytes = new Uint8Array(namespaceBytes.length + nameBytes.length);
+  bytes.set(namespaceBytes);
+  bytes.set(nameBytes, namespaceBytes.length);
+  const hash = new Uint8Array(await crypto.subtle.digest("SHA-1", bytes));
+  const uuidBytes = hash.slice(0, 16);
+  uuidBytes[6] = (uuidBytes[6] & 0x0f) | 0x50;
+  uuidBytes[8] = (uuidBytes[8] & 0x3f) | 0x80;
+  return bytesToUuid(uuidBytes);
 }
 
 async function findIssueAuthorUid(
@@ -327,30 +351,76 @@ async function sendPushes(
   }));
 }
 
-async function processEvent(supabase: ReturnType<typeof createClient>, event: OutboxEvent) {
-  await syncNotionForEvent(supabase, event);
+async function insertNotification(
+  supabase: ReturnType<typeof createClient>,
+  notification: Record<string, unknown>,
+) {
+  const { error } = await supabase
+    .schema("app_private")
+    .from("notifications")
+    .insert(notification);
+  if (!error) return true;
+  if (error.code === "23505") return false;
+  throw error;
+}
 
+async function sendPushesWithoutBlockingOutbox(
+  supabase: ReturnType<typeof createClient>,
+  notification: Record<string, unknown>,
+) {
+  try {
+    await sendPushes(supabase, notification);
+  } catch (error) {
+    await supabase.schema("app_private").from("push_delivery_logs").insert({
+      error_message: errorMessage(error),
+      notification_type: asString(notification.type),
+      status: "failed",
+      target_id: asString(notification.target_id),
+      target_type: asString(notification.target_type),
+      token_uid: "",
+    });
+  }
+}
+
+async function createNotificationsForEvent(
+  supabase: ReturnType<typeof createClient>,
+  event: OutboxEvent,
+) {
   const notification = await resolveNotification(supabase, event);
   if (notification) {
-    const { error } = await supabase
-      .schema("app_private")
-      .from("notifications")
-      .insert(notification);
-    if (error) throw error;
-    await sendPushes(supabase, notification);
+    const notificationWithId = {
+      ...notification,
+      id: await deterministicNotificationId(event.id, "primary"),
+    };
+    const inserted = await insertNotification(supabase, notificationWithId);
+    if (inserted) {
+      await sendPushesWithoutBlockingOutbox(supabase, notificationWithId);
+    }
   }
 
   const approvalNotification = notificationForReviewApproval(event);
   if (approvalNotification) {
-    const { error } = await supabase
-      .schema("app_private")
-      .from("notifications")
-      .insert(approvalNotification);
-    if (error) throw error;
-    await sendPushes(supabase, approvalNotification);
+    const notificationWithId = {
+      ...approvalNotification,
+      id: await deterministicNotificationId(event.id, "review-approval"),
+    };
+    const inserted = await insertNotification(supabase, notificationWithId);
+    if (inserted) {
+      await sendPushesWithoutBlockingOutbox(supabase, notificationWithId);
+    }
   }
 
-  if (notification || approvalNotification) return;
+  return {
+    hasNotification: Boolean(notification || approvalNotification),
+  };
+}
+
+async function processEvent(supabase: ReturnType<typeof createClient>, event: OutboxEvent) {
+  const { hasNotification } = await createNotificationsForEvent(supabase, event);
+
+  await syncNotionForEvent(supabase, event);
+
+  if (hasNotification) return;
 
   if (
     event.event_type === "announcement.updated"

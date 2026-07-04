@@ -155,8 +155,8 @@ export function useIssueBuckets(deps: BucketDeps) {
 
   function activateBucket(statusBucket: IssueStatusBucket) {
     const bucket = getBucketState(statusBucket);
-    if (activeFilter.value === 'my-proposals' || bucket.initialized || bucket.loading) return;
-    void loadBucket(statusBucket);
+    if (activeFilter.value === 'my-proposals' || bucket.loading || bucket.refreshing) return;
+    void loadBucket(statusBucket, { silent: bucket.initialized });
   }
 
   function refreshBucket(statusBucket: IssueStatusBucket) {
