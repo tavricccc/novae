@@ -19,7 +19,7 @@
 - eslint.config.js：ESLint 規則與 Vue / TypeScript 的 lint 設定。
 - firebase.json：Firebase CLI 專案設定（不含 hosting 區塊，前端改由 Vercel 部署）。
 - vercel.json：Vercel 前端部署設定，包含靜態資源快取規則（assets 長快取、sw.js 不快取）與 SPA fallback rewrite。
-- supabase/config.toml：Supabase 本機與部署設定，限制 Data API 暴露 `app_api`，並設定登入同步、Cloudinary webhook、outbox worker 與刪除工作 Edge Functions 的 JWT 驗證模式。
+- supabase/config.toml：Supabase 本機與部署設定，暴露 `app_api` 與供 service role Edge Functions 使用的 `app_private` schema，並設定登入同步、Cloudinary webhook、outbox worker 與刪除工作 Edge Functions 的 JWT 驗證模式。
 - .firebaserc：Firebase 專案綁定設定，請填入自己的 Firebase 專案 ID。
 - .env.example：本機與部署環境變數範本，包含 App 名稱、短名稱、Firebase Auth / FCM public config、Supabase public config 與選配 App Check 開關 / site key。
 - .gitignore：Git 忽略規則。
@@ -37,7 +37,7 @@
 
 ## Supabase 後端服務 (supabase/)
 
-- supabase/config.toml：Supabase 本機與部署設定，限制 Data API 暴露 `app_api`，並設定登入同步、受控 action、Cloudinary webhook、outbox worker 與刪除工作 Edge Functions 的 JWT 驗證模式。
+- supabase/config.toml：Supabase 本機與部署設定，暴露 `app_api` 與供 service role Edge Functions 使用的 `app_private` schema，並設定登入同步、受控 action、Cloudinary webhook、outbox worker 與刪除工作 Edge Functions 的 JWT 驗證模式。
 - supabase/migrations/202607020001_supabase_foundation.sql：Supabase 初始 migration，建立 `app_private` / `app_api` schema、Firebase JWT helper、RLS 基礎、核心資料檢查、查詢索引、hard delete RPC、outbox batch claim 與 statement-level worker wake-up。
 - supabase/migrations/202607020002_app_backend_actions.sql：補齊提案、公告、留言、通知、推播 token、使用者頭像、圖片 metadata、Notion page mapping 與維護紀錄等 Supabase app tables，並維護搜尋欄位、計數同步、updated_at 與常用查詢索引。
 - supabase/functions/backendAction/index.ts：前端受控 action 入口，經共用 Firebase 驗證與 HTTP 邊界確認後查詢使用者角色，依 action 處理提案、公告、留言、附議、通知、推播偏好、Dashboard、使用者角色與 Cloudinary 上傳 session，並提供部署流程使用的受密鑰保護健康檢查。

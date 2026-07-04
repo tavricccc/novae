@@ -69,7 +69,7 @@ test('Supabase backend deployment owns database and Edge Functions', async () =>
   assert.doesNotMatch(workflow, /firebase-tools|firestore:rules|storage|Cloud Functions/u);
   assert.match(config, /\[functions\.backendAction\]/u);
   assert.match(config, /\[functions\.backendAction\]\s*verify_jwt = false/u);
-  assert.match(config, /schemas = \["app_api"\]/u);
+  assert.match(config, /schemas = \["app_api", "app_private"\]/u);
 });
 
 test('Supabase schema includes RLS helpers, app tables, and hard-delete support', async () => {

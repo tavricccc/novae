@@ -1,7 +1,7 @@
 project_id = "srp"
 
 [api]
-schemas = ["app_api"]
+schemas = ["app_api", "app_private"]
 
 [functions.syncUser]
 verify_jwt = false
