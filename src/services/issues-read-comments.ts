@@ -4,6 +4,7 @@ import { toReadableBackendError } from './issues-core';
 import type { CommentResponseRecord } from './issues-read-shared';
 import { READ_REQUEST_TIMEOUT_MS } from '@/lib/request';
 import { getRouteRequestSignal } from '@/lib/route-request';
+import { normalizeDate } from './issues-core';
 
 interface CommentCursor {
   id: string;
@@ -17,6 +18,14 @@ interface FetchCommentsOptions {
 function getCommentRequestSignal(options?: FetchCommentsOptions) {
   if (options && 'signal' in options) return options.signal ?? undefined;
   return getRouteRequestSignal();
+}
+
+function normalizeCommentCursor(data: unknown): CommentCursor | null {
+  if (!data || typeof data !== 'object') return null;
+  const record = data as Record<string, unknown>;
+  const id = typeof record.id === 'string' ? record.id : '';
+  const createdAt = normalizeDate(record.createdAtMs ?? record.created_at);
+  return id && createdAt ? { id, createdAtMs: createdAt.getTime() } : null;
 }
 
 export async function fetchComments(
@@ -46,7 +55,7 @@ export async function fetchComments(
         created_at: comment.created_at_ms === null ? null : new Date(comment.created_at_ms),
         updated_at: comment.updated_at_ms === null ? null : new Date(comment.updated_at_ms),
       })),
-      cursor: result.data.cursor,
+      cursor: normalizeCommentCursor(result.data.cursor),
       hasMore: result.data.hasMore,
     } satisfies { comments: CommentRecord[]; cursor: CommentCursor | null; hasMore: boolean };
   } catch (error) {

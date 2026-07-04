@@ -39,7 +39,7 @@ export function useAppResume(handler: ResumeHandler) {
   onScopeDispose(unregister);
 }
 
-function registerAppResumeHandler(handler: ResumeHandler) {
+export function registerAppResumeHandler(handler: ResumeHandler) {
   handlers.add(handler);
   return () => handlers.delete(handler);
 }

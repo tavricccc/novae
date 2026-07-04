@@ -78,6 +78,8 @@ test('Supabase schema includes RLS helpers, app tables, and hard-delete support'
     await read('supabase/migrations/202607020002_app_backend_actions.sql'),
     await read('supabase/migrations/202607041434_expose_app_schemas.sql'),
     await read('supabase/migrations/202607041437_grant_service_role_app_private.sql'),
+    await read('supabase/migrations/202607041517_enable_notification_realtime.sql'),
+    await read('supabase/migrations/202607041750_add_backend_action_idempotency.sql'),
   ].join('\n');
 
   assert.match(migrations, /create schema if not exists app_private/u);
@@ -98,6 +100,15 @@ test('Supabase schema includes RLS helpers, app tables, and hard-delete support'
   assert.match(migrations, /notify pgrst, 'reload config'/u);
   assert.match(migrations, /grant all privileges on all tables in schema app_private to service_role/u);
   assert.match(migrations, /alter default privileges in schema app_private/u);
+  assert.match(migrations, /grant select on app_private\.notifications to authenticated/u);
+  assert.match(migrations, /grant select on app_private\.notification_states to authenticated/u);
+  assert.match(migrations, /alter publication supabase_realtime add table app_private\.notifications/u);
+  assert.match(migrations, /alter publication supabase_realtime add table app_private\.notification_states/u);
+  assert.match(migrations, /create table if not exists app_private\.idempotency_keys/u);
+  assert.match(migrations, /primary key \(uid, action, request_id\)/u);
+  assert.match(migrations, /create or replace function app_api\.claim_idempotency_key/u);
+  assert.match(migrations, /create or replace function app_api\.complete_idempotency_key/u);
+  assert.match(migrations, /create or replace function app_api\.release_idempotency_key/u);
 });
 
 test('backendAction covers frontend actions and Cloudinary direct upload', async () => {
@@ -135,6 +146,11 @@ test('backendAction covers frontend actions and Cloudinary direct upload', async
   assert.match(backendAction, /x-healthcheck-secret/u);
   assert.match(backendAction, /APP_SUPABASE_SERVICE_ROLE_KEY/u);
   assert.match(backendAction, /requestId/u);
+  assert.match(backendAction, /const idempotentActions = new Set/u);
+  assert.match(backendAction, /async function runWithIdempotency/u);
+  assert.match(backendAction, /claim_idempotency_key/u);
+  assert.match(backendAction, /complete_idempotency_key/u);
+  assert.match(backendAction, /release_idempotency_key/u);
   assert.match(backendAction, /console\.error\(JSON\.stringify/u);
   assert.match(backendAction, /requireMethod\(request, "POST"\)/u);
   assert.match(backendAction, /readJsonRecord/u);
@@ -149,6 +165,7 @@ test('backendAction covers frontend actions and Cloudinary direct upload', async
   assert.match(http, /is not configured/u);
   assert.match(http, /record\.message/u);
   assert.match(http, /record\.details/u);
+  assert.match(http, /request-in-progress/u);
   assert.doesNotMatch(session, /adminEmails/u);
 });
 
@@ -190,6 +207,48 @@ test('outbox, webhooks, FCM, and Notion deletion marks are guarded', async () =>
   assert.doesNotMatch(notion, /archived: true/u);
 });
 
+test('backend list actions use stable cursor pagination at the service boundary', async () => {
+  const backendAction = await read('supabase/functions/backendAction/index.ts');
+  const issuePages = await read('src/services/issues-read-pages.ts');
+  const issueComments = await read('src/services/issues-read-comments.ts');
+  const announcements = await read('src/services/announcements.ts');
+  const notifications = await read('src/services/notifications.ts');
+
+  assert.match(backendAction, /function applyDescendingDateCursor/u);
+  assert.match(backendAction, /function applyAscendingDateCursor/u);
+  assert.match(backendAction, /if \(action === "listIssues" \|\| action === "searchIssues"\)/u);
+  assert.match(backendAction, /sort === "most-supported"/u);
+  assert.match(backendAction, /sort === "ending-soon"/u);
+  assert.match(backendAction, /action === "listIssues" && cursorId && cursorCreatedAt/u);
+  assert.match(backendAction, /if \(action === "listComments"\)/u);
+  assert.match(backendAction, /if \(action === "listAnnouncementComments"\)/u);
+  assert.match(backendAction, /if \(action === "listNotifications"\)/u);
+  assert.match(backendAction, /cursor: notifications\.length > pageSize/u);
+  assert.match(issuePages, /normalizeIssueCursor\(result\.data\.cursor\)/u);
+  assert.match(issueComments, /normalizeCommentCursor\(result\.data\.cursor\)/u);
+  assert.match(announcements, /normalizeAnnouncementCursor\(result\.data\.cursor\)/u);
+  assert.match(announcements, /normalizeCommentCursor\(result\.data\.cursor\)/u);
+  assert.match(notifications, /normalizeNotificationCursor\(result\.data\.cursor\)/u);
+});
+
+test('personal notification writes and pushes are scoped to the recipient', async () => {
+  const backendAction = await read('supabase/functions/backendAction/index.ts');
+  const outboxWorker = await read('supabase/functions/outboxWorker/index.ts');
+
+  assert.match(backendAction, /event_type: "issue\.comment_created"/u);
+  assert.match(backendAction, /payload: \{ content: data\.content, issue_id: issueId \}/u);
+  assert.match(backendAction, /event_type: "issue\.status_changed"/u);
+  assert.match(backendAction, /issue_category: data\.category/u);
+  assert.match(backendAction, /event_type: "issue\.deleted"/u);
+  assert.match(backendAction, /author_uid: issue\.author_uid/u);
+  assert.match(backendAction, /event_type: "announcement\.comment_created"/u);
+  assert.match(outboxWorker, /async function findIssueAuthorUid/u);
+  assert.match(outboxWorker, /async function resolveNotification/u);
+  assert.match(outboxWorker, /recipientUid === event\.actor_uid/u);
+  assert.match(outboxWorker, /recipient_uid: recipientUid/u);
+  assert.match(outboxWorker, /query = query\.eq\("uid", recipientUid\)/u);
+});
+
 test('Markdown upload images support batch cache bypass for expired URLs', async () => {
   const uploads = await read('src/services/uploads.ts');
   const resolvedMarkdown = await read('src/composables/useResolvedMarkdown.ts');
@@ -202,4 +261,19 @@ test('Markdown upload images support batch cache bypass for expired URLs', async
   assert.match(resolvedMarkdown, /expiresAtByUploadId/u);
   assert.match(markdownRenderer, /@error\.capture/u);
   assert.match(markdownRenderer, /@click\.capture/u);
+});
+
+test('notification realtime subscriptions are shared and collision-resistant', async () => {
+  const notificationsComposable = await read('src/composables/useNotifications.ts');
+  const notificationsService = await read('src/services/notifications.ts');
+  const appResume = await read('src/composables/useAppResume.ts');
+
+  assert.match(notificationsComposable, /let initialized = false/u);
+  assert.match(notificationsComposable, /ensureNotificationsInitialized/u);
+  assert.match(notificationsComposable, /registerAppResumeHandler\(startSubscriptions\)/u);
+  assert.doesNotMatch(notificationsComposable, /onScopeDispose\(clearSubscriptions\)/u);
+  assert.match(notificationsService, /let realtimeChannelSerial = 0/u);
+  assert.match(notificationsService, /channelName = `notifications:\$\{source\}:\$\{uid\}:\$\{realtimeChannelSerial \+= 1\}`/u);
+  assert.match(notificationsService, /channelName = `notification-state:\$\{uid\}:\$\{realtimeChannelSerial \+= 1\}`/u);
+  assert.match(appResume, /export function registerAppResumeHandler/u);
 });

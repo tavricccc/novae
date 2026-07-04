@@ -42,10 +42,12 @@
 - supabase/migrations/202607020002_app_backend_actions.sql：補齊提案、公告、留言、通知、推播 token、使用者頭像、圖片 metadata、Notion page mapping 與維護紀錄等 Supabase app tables，並維護搜尋欄位、計數同步、updated_at 與常用查詢索引。
 - supabase/migrations/202607041434_expose_app_schemas.sql：設定 hosted PostgREST exposed schemas，讓部署後的 Edge Functions 可透過 service role 存取 `app_private`，並 reload PostgREST 設定與 schema cache。
 - supabase/migrations/202607041437_grant_service_role_app_private.sql：授權 service role 存取 `app_private` tables 與 sequences，供 Edge Functions 以後端身份執行受控資料操作。
-- supabase/functions/backendAction/index.ts：前端受控 action 入口，經共用 Firebase 驗證與 HTTP 邊界確認後查詢使用者角色，依 action 處理提案、公告、留言、附議、通知、推播偏好、Dashboard、使用者角色與 Cloudinary 上傳 session，並提供部署流程使用的受密鑰保護健康檢查。
+- supabase/migrations/202607041517_enable_notification_realtime.sql：授權登入使用者依 RLS 讀取通知 realtime 所需資料，並將通知與通知狀態表加入 Supabase Realtime publication。
+- supabase/migrations/202607041750_add_backend_action_idempotency.sql：建立受控 action 冪等鍵資料表與 claim / complete / release RPC，避免同一請求重送造成重複寫入。
+- supabase/functions/backendAction/index.ts：前端受控 action 入口，經共用 Firebase 驗證與 HTTP 邊界確認後查詢使用者角色，依 action 處理提案、公告、留言、附議、通知、推播偏好、Dashboard、使用者角色與 Cloudinary 上傳 session；列表型讀取使用穩定 cursor 分頁，寫入型 action 以 request id 保護重送不重複執行，並提供部署流程使用的受密鑰保護健康檢查。
 - supabase/functions/syncUser/index.ts：Firebase 登入後同步使用者 custom claim 的 Edge Function，與受控 action 共用登入資格驗證。
 - supabase/functions/cloudinaryWebhook/index.ts：Cloudinary 上傳完成 webhook，限制 POST、驗證簽章並安全解析 payload 後將 pending upload 轉為 ready。
-- supabase/functions/outboxWorker/index.ts：Outbox worker wake-up endpoint，限制 POST 並驗證 secret 後批次 claim pending events，寫入通知、派送 FCM，並將刪除事件對應的 Notion page 標記為「已刪除」。
+- supabase/functions/outboxWorker/index.ts：Outbox worker wake-up endpoint，限制 POST 並驗證 secret 後批次 claim pending events，依事件建立廣播或個人通知、將個人推播限制在收件人裝置，並將刪除事件對應的 Notion page 標記為「已刪除」。
 - supabase/functions/processDeletionJobs/index.ts：外部資源刪除工作入口，限制 POST 並驗證 secret 後處理 Cloudinary / Notion 清理，保留失敗的可重試 metadata。
 - supabase/functions/_shared/env.ts：Edge Functions 環境變數讀取 helper。
 - supabase/functions/_shared/http.ts：Edge Functions 共用 CORS、POST method guard、JSON / text response、JSON body 解析與錯誤狀態對應 helper。
@@ -194,7 +196,7 @@
 - src/composables/useShareUrl.ts：分享 URL 複製 helper，優先使用 Clipboard API 並在失敗時 fallback 到 textarea copy。
 - src/composables/useMarkdown.ts：Markdown 解析與 DOMPurify 消毒，支援 `![alt|寬x高](url)` 圖片尺寸語法、清單續行顯示修正，並輸出 lazy/decode 屬性。
 - src/composables/useResolvedMarkdown.ts：解析 Markdown 中的 `srp-upload://` 圖片，透過 Cloud Function 換取 preview/full signed URL 後供渲染元件使用。
-- src/composables/useNotifications.ts：合併 broadcast/admin/user 三來源通知、分來源 cursor 載入更多、閱讀游標與紅點狀態；使用訂閱版本避免舊帳號快照回寫。
+- src/composables/useNotifications.ts：以共享通知資料源合併 broadcast/admin/user 三來源通知、分來源 cursor 載入更多、閱讀游標與紅點狀態；集中管理 realtime 訂閱與版本，避免多個通知入口建立重複連線或回寫舊帳號快照。
 - src/composables/usePushNotifications.ts：Web Push 推播偏好管理，負責瀏覽器支援與權限狀態、目前裝置 service worker token 註冊 / 關閉、通知分類偏好、跨裝置狀態校正與前景訊息 toast。
 - src/composables/useAnnouncements.ts：公告列表依排序快取分段讀取、依螢幕高度決定讀取批量、手動重新整理、底部自動載入更多與載入 / 錯誤狀態管理。
 - src/composables/useAnnouncementManagement.ts：公告頁管理流程，整合公告列表讀取、id 路由選取、單筆讀取、分享、編輯、新增、背景刪除與明確讚狀態。
@@ -250,14 +252,14 @@
 - src/services/issues-normalize.ts：提案資料正規化、預設值、bucket 判定、cursor、支援狀態與 page result helper。
 - src/services/issues-query.ts：提案 bucket 查詢參數相容 helper。
 - src/services/issues-read.ts：提案唯讀 service 匯出入口，只 re-export 分頁搜尋、使用者提案、私有作者與留言讀取子服務。
-- src/services/issues-read-pages.ts：提案排序分頁讀取、載入更多與標題搜尋讀取。
+- src/services/issues-read-pages.ts：提案排序分頁讀取、載入更多與標題搜尋讀取，並在服務邊界正規化後端 cursor。
 - src/services/issues-read-user.ts：使用者提案與已附議提案 id 一次性讀取。
 - src/services/issues-read-private-author.ts：公共議題私有作者 metadata 讀取。
-- src/services/issues-read-comments.ts：提案留言讀取與日期正規化。
+- src/services/issues-read-comments.ts：提案留言讀取、日期與 cursor 正規化。
 - src/services/issues-read-shared.ts：提案 read service 共用 response 型別。
 - src/services/issues-write.ts：所有寫入、附議、留言與審核異動，統一呼叫 Supabase 後端安全端點。
-- src/services/notifications.ts：App 內通知來源訂閱、閱讀狀態、單裝置 Web Push token 與通知分類偏好服務。
-- src/services/announcements.ts：公告排序分頁、單筆讀取、讚與留言異動服務。
+- src/services/notifications.ts：App 內通知來源訂閱、閱讀狀態、單裝置 Web Push token 與通知分類偏好服務；realtime channel 使用唯一 topic，並正規化通知分頁 cursor，避免重新連線時與尚未移除的舊訂閱衝突。
+- src/services/announcements.ts：公告排序分頁、單筆讀取、讚與留言異動服務，並在服務邊界正規化公告與留言分頁 cursor。
 - src/services/dashboard.ts：平台 Dashboard 與登入使用紀錄服務，將後端 stats / operations response 正規化為前端 Date 型別。
 - src/services/uploads.ts：Cloudinary 圖片直傳服務，向後端取得簽名 session 後直傳 Cloudinary，並提供圖片 URL 解析、快取與刪除 action。
 - src/services/users-read.ts：作者頭像讀取服務，透過後端批次取得 uid 對應的最新快取頭像。

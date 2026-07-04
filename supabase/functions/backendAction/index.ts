@@ -31,6 +31,19 @@ function asBoolean(value: unknown, fallback = false) {
   return typeof value === "boolean" ? value : fallback;
 }
 
+function asDateIso(value: unknown) {
+  const rawValue = typeof value === "number" || typeof value === "string" ? value : "";
+  const date = new Date(rawValue);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : "";
+}
+
+function asUuid(value: unknown) {
+  const text = asString(value);
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(text)
+    ? text
+    : "";
+}
+
 function toMs(value: unknown) {
   if (!value) return null;
   const date = new Date(String(value));
@@ -134,6 +147,125 @@ async function upsertNotificationState(supabase: ReturnType<typeof createClient>
 
 function cursorRange(pageSize: number) {
   return { from: 0, to: Math.max(0, Math.min(pageSize, 50)) };
+}
+
+function readCursor(payload: JsonRecord) {
+  return asRecord(payload.cursor);
+}
+
+function readCursorDate(payload: JsonRecord, key: string, fallbackKey?: string) {
+  return asDateIso(payload[key] ?? (fallbackKey ? payload[fallbackKey] : undefined));
+}
+
+function applyDescendingDateCursor<TQuery>(
+  query: TQuery,
+  cursor: JsonRecord,
+  dateColumn: string,
+) {
+  const id = asUuid(cursor.id);
+  const date = readCursorDate(cursor, `${dateColumn}Ms`, dateColumn);
+  if (!id || !date || typeof query !== "object" || query === null || !("or" in query)) return query;
+  return (query as { or: (filters: string) => TQuery }).or(
+    `${dateColumn}.lt.${date},and(${dateColumn}.eq.${date},id.lt.${id})`,
+  );
+}
+
+function applyAscendingDateCursor<TQuery>(
+  query: TQuery,
+  cursor: JsonRecord,
+  dateColumn: string,
+) {
+  const id = asUuid(cursor.id);
+  const date = readCursorDate(cursor, `${dateColumn}Ms`, dateColumn);
+  if (!id || !date || typeof query !== "object" || query === null || !("or" in query)) return query;
+  return (query as { or: (filters: string) => TQuery }).or(
+    `${dateColumn}.gt.${date},and(${dateColumn}.eq.${date},id.gt.${id})`,
+  );
+}
+
+function commentCursor(comment: JsonRecord) {
+  return { id: comment.id, createdAtMs: comment.created_at_ms };
+}
+
+function announcementCursor(announcement: JsonRecord, sort: string) {
+  const cursor: JsonRecord = {
+    id: announcement.id,
+    publishedAtMs: announcement.published_at_ms,
+  };
+  if (sort === "most-liked") cursor.sortNumber = announcement.like_count;
+  if (sort === "most-commented") cursor.sortNumber = announcement.comment_count;
+  return cursor;
+}
+
+function notificationCursor(notification: JsonRecord) {
+  return { id: notification.id, createdAtMs: notification.created_at_ms };
+}
+
+const idempotentActions = new Set([
+  "createImageUploadSession",
+  "finalizeImageUpload",
+  "deleteUploadedImage",
+  "createIssue",
+  "moderateIssueStatus",
+  "toggleSupport",
+  "deleteIssue",
+  "createComment",
+  "deleteComment",
+  "createAnnouncement",
+  "updateAnnouncement",
+  "deleteAnnouncement",
+  "createAnnouncementComment",
+  "deleteAnnouncementComment",
+]);
+
+async function runWithIdempotency(
+  action: string,
+  payload: JsonRecord,
+  auth: AuthContext,
+  supabase: ReturnType<typeof createClient>,
+  execute: () => Promise<JsonRecord>,
+) {
+  const requestId = asString(payload.requestId);
+  if (!requestId || !idempotentActions.has(action)) {
+    return await execute();
+  }
+
+  const { data: claimData, error: claimError } = await supabase
+    .schema("app_api")
+    .rpc("claim_idempotency_key", {
+      action_name: action,
+      actor_uid: auth.uid,
+      request_id: requestId,
+    })
+    .single();
+  if (claimError) throw claimError;
+
+  const claim = asRecord(claimData);
+  if (claim.completed === true) return asRecord(claim.response);
+  if (claim.claimed !== true) throw new Error("request-in-progress");
+
+  try {
+    const response = await execute();
+    const { error: completeError } = await supabase
+      .schema("app_api")
+      .rpc("complete_idempotency_key", {
+        action_name: action,
+        action_response: response,
+        actor_uid: auth.uid,
+        request_id: requestId,
+      });
+    if (completeError) throw completeError;
+    return response;
+  } catch (error) {
+    await supabase
+      .schema("app_api")
+      .rpc("release_idempotency_key", {
+        action_name: action,
+        actor_uid: auth.uid,
+        request_id: requestId,
+      });
+    throw error;
+  }
 }
 
 async function handleAction(
@@ -287,7 +419,7 @@ async function handleAction(
       target_type: "issue",
       target_id: data.id,
       actor_uid: auth.uid,
-      payload: { issue_id: data.id, title, category },
+      payload: { category, content, issue_id: data.id, title },
     });
     return { issue: issueToResponse(data as JsonRecord) };
   }
@@ -299,10 +431,28 @@ async function handleAction(
   if (action === "listIssues" || action === "searchIssues") {
     const pageSize = Math.min(Math.max(Math.round(asNumber(payload.pageSize, 20)), 1), 50);
     const range = cursorRange(pageSize);
+    const sort = asString(payload.sort) === "most-supported"
+      ? "most-supported"
+      : asString(payload.sort) === "ending-soon"
+        ? "ending-soon"
+        : "latest";
     let query = supabase.schema("app_private").from("issues").select("*")
-      .eq("category", asString(payload.activeFilter))
-      .order(asString(payload.sort) === "most-supported" ? "support_count" : "created_at", { ascending: false })
-      .range(range.from, range.to);
+      .eq("category", asString(payload.activeFilter));
+    if (sort === "most-supported") {
+      query = query
+        .order("support_count", { ascending: false })
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false });
+    } else if (sort === "ending-soon") {
+      query = query
+        .order("support_deadline_at", { ascending: true, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false });
+    } else {
+      query = query
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false });
+    }
     const statusBucket = asString(payload.statusBucket, "active");
     query = statusBucket === "closed"
       ? query.in("status", ["auto-rejected", "review-rejected", "infeasible", "completed"])
@@ -310,11 +460,41 @@ async function handleAction(
     if (action === "searchIssues") {
       query = query.ilike("title_search", `%${asString(payload.titleQuery).toLowerCase()}%`);
     }
+    const cursor = readCursor(payload);
+    const cursorId = asUuid(cursor.id);
+    const cursorCreatedAt = readCursorDate(cursor, "created_at");
+    if (action === "listIssues" && cursorId && cursorCreatedAt) {
+      if (sort === "most-supported") {
+        const supportCount = asNumber(cursor.sort_number, Number.NaN);
+        if (Number.isFinite(supportCount)) {
+          query = query.or(`support_count.lt.${supportCount},and(support_count.eq.${supportCount},created_at.lt.${cursorCreatedAt}),and(support_count.eq.${supportCount},created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`);
+        }
+      } else if (sort === "ending-soon") {
+        const supportDeadlineAt = readCursorDate(cursor, "sort_date");
+        if (supportDeadlineAt) {
+          query = query.or(`support_deadline_at.gt.${supportDeadlineAt},and(support_deadline_at.eq.${supportDeadlineAt},created_at.lt.${cursorCreatedAt}),and(support_deadline_at.eq.${supportDeadlineAt},created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`);
+        } else {
+          query = query.is("support_deadline_at", null)
+            .or(`created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`);
+        }
+      } else {
+        query = applyDescendingDateCursor(query, cursor, "created_at");
+      }
+    }
+    query = query.range(range.from, range.to);
     const { data, error } = await query;
     if (error) throw error;
     const rows = (data ?? []).map((issue) => issueToResponse(issue as JsonRecord));
+    const lastIssue = rows[Math.min(pageSize - 1, rows.length - 1)];
     return {
-      cursor: rows.length > pageSize ? { id: rows[pageSize - 1].id, created_at: rows[pageSize - 1].created_at_ms } : null,
+      cursor: rows.length > pageSize && lastIssue
+        ? {
+            id: lastIssue.id,
+            created_at: lastIssue.created_at_ms,
+            sort_date: sort === "ending-soon" ? lastIssue.support_deadline_at_ms : undefined,
+            sort_number: sort === "most-supported" ? lastIssue.support_count : undefined,
+          }
+        : null,
       hasMore: rows.length > pageSize,
       issues: rows.slice(0, pageSize),
       limited: rows.length > pageSize,
@@ -386,7 +566,7 @@ async function handleAction(
       target_type: "issue",
       target_id: issue.id,
       actor_uid: auth.uid,
-      payload: { issue_id: issue.id },
+      payload: { author_uid: issue.author_uid, issue_category: issue.category, issue_id: issue.id, title: issue.title },
     });
     if (outboxError) throw outboxError;
     const { error } = await supabase.schema("app_private").from("issues").delete().eq("id", issue.id);
@@ -396,12 +576,15 @@ async function handleAction(
 
   if (action === "listComments") {
     const pageSize = 20;
-    const { data, error } = await supabase.schema("app_private").from("comments").select("*").eq("issue_id", asString(payload.issueId)).order("created_at", { ascending: true }).limit(pageSize + 1);
+    let query = supabase.schema("app_private").from("comments").select("*").eq("issue_id", asString(payload.issueId));
+    query = applyAscendingDateCursor(query, readCursor(payload), "created_at");
+    const { data, error } = await query.order("created_at", { ascending: true }).order("id", { ascending: true }).limit(pageSize + 1);
     if (error) throw error;
     const comments = (data ?? []).map((comment) => commentToResponse(comment as JsonRecord));
+    const lastComment = comments[Math.min(pageSize - 1, comments.length - 1)];
     return {
       comments: comments.slice(0, pageSize),
-      cursor: comments.length > pageSize ? { id: comments[pageSize - 1].id, createdAtMs: comments[pageSize - 1].created_at_ms } : null,
+      cursor: comments.length > pageSize && lastComment ? commentCursor(lastComment) : null,
       hasMore: comments.length > pageSize,
     };
   }
@@ -422,7 +605,7 @@ async function handleAction(
       target_type: "issue",
       target_id: issueId,
       actor_uid: auth.uid,
-      payload: { issue_id: issueId },
+      payload: { content: data.content, issue_id: issueId },
     });
     return { comment: commentToResponse(data as JsonRecord) };
   }
@@ -443,7 +626,26 @@ async function handleAction(
     const pageSize = Math.min(Math.max(Math.round(asNumber(payload.pageSize, 10)), 1), 30);
     const sort = asString(payload.sort, "latest");
     const orderColumn = sort === "most-liked" ? "like_count" : sort === "most-commented" ? "comment_count" : "published_at";
-    const { data, error } = await supabase.schema("app_private").from("announcements").select("*").order(orderColumn, { ascending: false }).limit(pageSize + 1);
+    let query = supabase.schema("app_private").from("announcements").select("*")
+      .order(orderColumn, { ascending: false });
+    if (orderColumn !== "published_at") {
+      query = query.order("published_at", { ascending: false });
+    }
+    query = query.order("id", { ascending: false });
+    const cursor = readCursor(payload);
+    const cursorId = asUuid(cursor.id);
+    const cursorPublishedAt = readCursorDate(cursor, "publishedAtMs", "published_at");
+    if (cursorId && cursorPublishedAt) {
+      if (sort === "most-liked" || sort === "most-commented") {
+        const sortNumber = asNumber(cursor.sortNumber, Number.NaN);
+        if (Number.isFinite(sortNumber)) {
+          query = query.or(`${orderColumn}.lt.${sortNumber},and(${orderColumn}.eq.${sortNumber},published_at.lt.${cursorPublishedAt}),and(${orderColumn}.eq.${sortNumber},published_at.eq.${cursorPublishedAt},id.lt.${cursorId})`);
+        }
+      } else {
+        query = query.or(`published_at.lt.${cursorPublishedAt},and(published_at.eq.${cursorPublishedAt},id.lt.${cursorId})`);
+      }
+    }
+    const { data, error } = await query.limit(pageSize + 1);
     if (error) throw error;
     const ids = (data ?? []).map((item) => item.id);
     const { data: likes } = ids.length
@@ -457,7 +659,12 @@ async function handleAction(
       updated_at_ms: toMs(item.updated_at),
       published_at_ms: toMs(item.published_at),
     }));
-    return { announcements: announcements.slice(0, pageSize), cursor: null, hasMore: announcements.length > pageSize };
+    const lastAnnouncement = announcements[Math.min(pageSize - 1, announcements.length - 1)];
+    return {
+      announcements: announcements.slice(0, pageSize),
+      cursor: announcements.length > pageSize && lastAnnouncement ? announcementCursor(lastAnnouncement, sort) : null,
+      hasMore: announcements.length > pageSize,
+    };
   }
 
   if (action === "getAnnouncement") {
@@ -477,7 +684,7 @@ async function handleAction(
       content: asString(payload.content),
     }).select("*").single();
     if (error) throw error;
-    await supabase.schema("app_private").from("outbox_events").insert({ event_type: "announcement.created", target_type: "announcement", target_id: data.id, actor_uid: auth.uid, payload: { title: data.title } });
+    await supabase.schema("app_private").from("outbox_events").insert({ event_type: "announcement.created", target_type: "announcement", target_id: data.id, actor_uid: auth.uid, payload: { content: data.content, title: data.title } });
     return { announcement: { ...data, created_at_ms: toMs(data.created_at), updated_at_ms: toMs(data.updated_at), published_at_ms: toMs(data.published_at) } };
   }
 
@@ -510,10 +717,18 @@ async function handleAction(
   }
 
   if (action === "listAnnouncementComments") {
-    const { data, error } = await supabase.schema("app_private").from("announcement_comments").select("*").eq("announcement_id", asString(payload.announcementId)).order("created_at", { ascending: true }).limit(21);
+    const pageSize = 20;
+    let query = supabase.schema("app_private").from("announcement_comments").select("*").eq("announcement_id", asString(payload.announcementId));
+    query = applyAscendingDateCursor(query, readCursor(payload), "created_at");
+    const { data, error } = await query.order("created_at", { ascending: true }).order("id", { ascending: true }).limit(pageSize + 1);
     if (error) throw error;
     const comments = (data ?? []).map((comment) => commentToResponse(comment as JsonRecord));
-    return { comments: comments.slice(0, 20), cursor: null, hasMore: comments.length > 20 };
+    const lastComment = comments[Math.min(pageSize - 1, comments.length - 1)];
+    return {
+      comments: comments.slice(0, pageSize),
+      cursor: comments.length > pageSize && lastComment ? commentCursor(lastComment) : null,
+      hasMore: comments.length > pageSize,
+    };
   }
 
   if (action === "createAnnouncementComment") {
@@ -527,8 +742,15 @@ async function handleAction(
       is_admin_comment: asBoolean(payload.isAdminComment) && auth.isAdmin,
     }).select("*").single();
     if (error) throw error;
-    const { data: announcement, error: announcementError } = await supabase.schema("app_private").from("announcements").select("comment_count").eq("id", announcementId).single();
+    const { data: announcement, error: announcementError } = await supabase.schema("app_private").from("announcements").select("comment_count,title").eq("id", announcementId).single();
     if (announcementError) throw announcementError;
+    await supabase.schema("app_private").from("outbox_events").insert({
+      event_type: "announcement.comment_created",
+      target_type: "announcement",
+      target_id: announcementId,
+      actor_uid: auth.uid,
+      payload: { announcement_id: announcementId, content: data.content, title: announcement.title },
+    });
     return { comment: commentToResponse(data as JsonRecord), comment_count: announcement.comment_count ?? 0 };
   }
 
@@ -546,15 +768,23 @@ async function handleAction(
 
   if (action === "listNotifications") {
     const source = asString(payload.source, "broadcast");
+    const pageSize = Math.min(Math.max(Math.round(asNumber(payload.pageSize, 10)), 1), 30);
     const state = await upsertNotificationState(supabase, auth.uid);
     const openedAt = source === "admin" ? state.admin_opened_at : source === "user" ? state.user_opened_at : state.broadcast_opened_at;
-    let query = supabase.schema("app_private").from("notifications").select("*").eq("source", source).order("created_at", { ascending: false }).limit(Math.min(Math.round(asNumber(payload.pageSize, 10)), 30) + 1);
+    let query = supabase.schema("app_private").from("notifications").select("*").eq("source", source);
     if (source === "user") query = query.eq("recipient_uid", auth.uid);
     if (source === "admin" && !auth.isAdmin) return { notifications: [], cursor: null, hasMore: false };
+    query = applyDescendingDateCursor(query, readCursor(payload), "created_at");
+    query = query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize + 1);
     const { data, error } = await query;
     if (error) throw error;
     const notifications = (data ?? []).map((notification) => notificationToResponse(notification as JsonRecord, openedAt));
-    return { notifications, cursor: null, hasMore: false };
+    const lastNotification = notifications[Math.min(pageSize - 1, notifications.length - 1)];
+    return {
+      notifications: notifications.slice(0, pageSize),
+      cursor: notifications.length > pageSize && lastNotification ? notificationCursor(lastNotification) : null,
+      hasMore: notifications.length > pageSize,
+    };
   }
 
   if (action === "getNotificationReadState") {
@@ -694,7 +924,13 @@ Deno.serve(async (request) => {
     }
 
     const auth = await requireAuth(supabase, request);
-    const data = await handleAction(action, payload, auth, supabase);
+    const data = await runWithIdempotency(
+      action,
+      payload,
+      auth,
+      supabase,
+      () => handleAction(action, payload, auth, supabase),
+    );
     return jsonResponse(data);
   } catch (error) {
     const status = errorStatus(error);

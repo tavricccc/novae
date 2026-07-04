@@ -144,6 +144,21 @@ function toIssueCursor(issue: IssueRecord, sort: IssueSortOption = 'latest'): Is
   return cursor;
 }
 
+export function normalizeIssueCursor(data: unknown): IssueCursor | null {
+  if (!data || typeof data !== 'object') return null;
+  const record = data as Record<string, unknown>;
+  const id = typeof record.id === 'string' ? record.id : '';
+  const createdAt = normalizeDate(record.created_at);
+  if (!id || !createdAt) return null;
+
+  return {
+    id,
+    created_at: createdAt,
+    sort_date: normalizeDate(record.sort_date),
+    sort_number: typeof record.sort_number === 'number' ? record.sort_number : null,
+  };
+}
+
 export function withSupportState(issues: IssueRecord[], supportedIssueIds?: Set<string>) {
   if (!supportedIssueIds) {
     return issues;

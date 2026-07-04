@@ -2,6 +2,51 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "提升操作送出穩定性",
+    version: "v1.8.46",
+    date: "2026-07-04",
+    time: "17:50",
+    items: [
+      {
+        title: "改善網路重試時可能重複送出內容的防護。",
+      },
+      {
+        title: "提升新增、編輯與刪除操作的處理一致性。",
+      },
+    ],
+  },
+  {
+    title: "提升資料載入與通知可靠性",
+    version: "v1.8.45",
+    date: "2026-07-04",
+    time: "17:43",
+    items: [
+      {
+        title: "改善列表載入更多時的資料銜接穩定性。",
+      },
+      {
+        title: "修正個人通知可能無法即時顯示或配送範圍不精準的問題。",
+      },
+      {
+        title: "提升通知與留言更新後的同步可靠性。",
+      },
+    ],
+  },
+  {
+    title: "提升通知中心穩定性",
+    version: "v1.8.44",
+    date: "2026-07-04",
+    time: "15:11",
+    items: [
+      {
+        title: "修正登入後通知中心可能無法即時載入的問題。",
+      },
+      {
+        title: "改善通知未讀狀態在不同入口之間的同步一致性。",
+      },
+    ],
+  },
+  {
     title: "修正後端資料權限設定",
     version: "v1.8.43",
     date: "2026-07-04",

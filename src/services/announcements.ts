@@ -10,10 +10,38 @@ import { READ_REQUEST_TIMEOUT_MS, RequestFailure } from '@/lib/request';
 import { normalizeDate, toReadableBackendError } from '@/services/issues-core';
 
 const ANNOUNCEMENT_LIMIT = 10;
-export type AnnouncementCursor = { id: string; publishedAtMs: number } | null;
+export type AnnouncementCursor = { id: string; publishedAtMs: number; sortNumber?: number | null } | null;
+type CommentCursor = { id: string; createdAtMs: number } | null;
 
 function dateFromMs(value: unknown) {
   return typeof value === 'number' ? new Date(value) : normalizeDate(value);
+}
+
+function numberFromDateLike(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  const date = normalizeDate(value);
+  return date ? date.getTime() : null;
+}
+
+function normalizeAnnouncementCursor(data: unknown): AnnouncementCursor {
+  if (!data || typeof data !== 'object') return null;
+  const record = data as Record<string, unknown>;
+  const id = typeof record.id === 'string' ? record.id : '';
+  const publishedAtMs = numberFromDateLike(record.publishedAtMs ?? record.published_at);
+  if (!id || publishedAtMs === null) return null;
+  return {
+    id,
+    publishedAtMs,
+    sortNumber: typeof record.sortNumber === 'number' ? record.sortNumber : null,
+  };
+}
+
+function normalizeCommentCursor(data: unknown): CommentCursor {
+  if (!data || typeof data !== 'object') return null;
+  const record = data as Record<string, unknown>;
+  const id = typeof record.id === 'string' ? record.id : '';
+  const createdAtMs = numberFromDateLike(record.createdAtMs ?? record.created_at);
+  return id && createdAtMs !== null ? { id, createdAtMs } : null;
 }
 
 function normalizeAnnouncementRecord(data: Record<string, unknown>): AnnouncementRecord {
@@ -62,7 +90,7 @@ export async function fetchAnnouncementsPage(
     const result = await fn({ cursor, currentUid, pageSize, sort });
     return {
       announcements: result.data.announcements.map(normalizeAnnouncementRecord),
-      cursor: result.data.cursor,
+      cursor: normalizeAnnouncementCursor(result.data.cursor),
       hasMore: result.data.hasMore,
     };
   } catch (error) {
@@ -116,12 +144,12 @@ export async function setAnnouncementLike(announcementId: string, liked: boolean
 
 export async function fetchAnnouncementComments(
   announcementId: string,
-  cursor?: { id: string; createdAtMs: number } | null,
+  cursor?: CommentCursor,
   options: { signal?: AbortSignal | null } = {},
 ) {
   const fn = invokeBackendAction<
-    { announcementId: string; cursor?: { id: string; createdAtMs: number } | null },
-    { comments: Array<Record<string, unknown>>; cursor: { id: string; createdAtMs: number } | null; hasMore: boolean }
+    { announcementId: string; cursor?: CommentCursor },
+    { comments: Array<Record<string, unknown>>; cursor: CommentCursor; hasMore: boolean }
   >('listAnnouncementComments', {
     signal: 'signal' in options ? options.signal ?? undefined : undefined,
     timeoutMs: READ_REQUEST_TIMEOUT_MS,
@@ -129,11 +157,11 @@ export async function fetchAnnouncementComments(
   const result = await fn({ announcementId, cursor });
   return {
     comments: result.data.comments.map(normalizeAnnouncementComment),
-    cursor: result.data.cursor,
+    cursor: normalizeCommentCursor(result.data.cursor),
     hasMore: result.data.hasMore,
   } satisfies {
     comments: AnnouncementCommentRecord[];
-    cursor: { id: string; createdAtMs: number } | null;
+    cursor: CommentCursor;
     hasMore: boolean;
   };
 }

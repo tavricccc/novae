@@ -2,7 +2,7 @@ import type { IssueCursor, IssueFilter, IssueRecord, IssueSortOption, IssueStatu
 import { buildTitleSearchTokens, normalizeSearchText } from '@/lib/search';
 import { READ_REQUEST_TIMEOUT_MS } from '@/lib/request';
 import { invokeBackendAction } from '@/services/backend-action';
-import { TABLE_PAGE_SIZE, normalizeIssuePage, normalizeIssueRecord, toReadableBackendError, withSupportState } from './issues-core';
+import { TABLE_PAGE_SIZE, normalizeIssueCursor, normalizeIssueRecord, toReadableBackendError, withSupportState } from './issues-core';
 
 function normalizeIssueList(records: Record<string, unknown>[]) {
   return records.map((record) => normalizeIssueRecord(String(record.id ?? ''), record));
@@ -44,7 +44,7 @@ export async function fetchIssuesPageByStatus(
       uid,
     });
     return {
-      cursor: result.data.cursor,
+      cursor: normalizeIssueCursor(result.data.cursor),
       hasMore: result.data.hasMore,
       issues: withSupportState(normalizeIssueList(result.data.issues), options?.supportedIssueIds),
     };

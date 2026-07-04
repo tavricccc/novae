@@ -72,6 +72,7 @@ export function errorStatus(error: unknown) {
   if (message === "not-found") return 404;
   if (message === "missing action" || message.startsWith("Unsupported action:")) return 400;
   if (message === "invalid-json") return 400;
+  if (message === "request-in-progress") return 409;
   if (message.endsWith(" is not configured.")) return 503;
   return 500;
 }

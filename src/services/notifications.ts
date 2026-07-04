@@ -16,6 +16,7 @@ import {
 } from './issues-core';
 
 const NOTIFICATION_SOURCE_PAGE_SIZE = 10;
+let realtimeChannelSerial = 0;
 
 type NotificationCursor = { createdAtMs: number; id: string } | null;
 
@@ -90,6 +91,14 @@ function normalizeNotificationType(value: unknown): NotificationType {
   return 'issue_comment_created';
 }
 
+function normalizeNotificationCursor(data: unknown): NotificationCursor {
+  if (!data || typeof data !== 'object') return null;
+  const record = data as Record<string, unknown>;
+  const id = typeof record.id === 'string' ? record.id : '';
+  const createdAt = normalizeDate(record.createdAtMs ?? record.created_at);
+  return id && createdAt ? { id, createdAtMs: createdAt.getTime() } : null;
+}
+
 function normalizeTargetType(value: unknown): NotificationTargetType {
   return value === 'announcement' ? 'announcement' : 'issue';
 }
@@ -133,16 +142,17 @@ export function subscribeNotificationSource(
   onError?: (error: Error) => void,
 ) {
   const client = getSupabaseClient();
+  const channelName = `notifications:${source}:${uid}:${realtimeChannelSerial += 1}`;
   const refresh = () => {
     void fetchNotificationSourcePage(source, uid, null)
       .then(callback)
       .catch((error) => onError?.(toReadableBackendError(error)));
   };
   const channel = client
-    .channel(`notifications:${source}:${uid}`)
+    .channel(channelName)
     .on('postgres_changes', {
       event: '*',
-      schema: 'app_api',
+      schema: 'app_private',
       table: 'notifications',
     }, refresh)
     .subscribe();
@@ -165,7 +175,7 @@ export async function fetchNotificationSourcePage(
     >('listNotifications', { timeoutMs: READ_REQUEST_TIMEOUT_MS });
     const result = await fn({ cursor, pageSize: NOTIFICATION_SOURCE_PAGE_SIZE, source, uid });
     return {
-      cursor: result.data.cursor,
+      cursor: normalizeNotificationCursor(result.data.cursor),
       hasMore: result.data.hasMore,
       notifications: result.data.notifications.map((notification) => normalizeNotificationRecord(source, notification)),
     };
@@ -180,16 +190,17 @@ export function subscribeNotificationReadState(
   onError?: (error: Error) => void,
 ) {
   const client = getSupabaseClient();
+  const channelName = `notification-state:${uid}:${realtimeChannelSerial += 1}`;
   const refresh = () => {
     void getNotificationReadState(uid)
       .then(callback)
       .catch((error) => onError?.(toReadableBackendError(error)));
   };
   const channel = client
-    .channel(`notification-state:${uid}`)
+    .channel(channelName)
     .on('postgres_changes', {
       event: '*',
-      schema: 'app_api',
+      schema: 'app_private',
       table: 'notification_states',
     }, refresh)
     .subscribe();

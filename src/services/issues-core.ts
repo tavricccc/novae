@@ -12,6 +12,7 @@ import {
 import {
   issueBelongsToBucket,
   normalizeDate,
+  normalizeIssueCursor,
   normalizeIssuePage,
   normalizeIssueRecord,
   normalizeStatus,
@@ -35,6 +36,7 @@ export {
   chunkList,
   issueBelongsToBucket,
   normalizeDate,
+  normalizeIssueCursor,
   normalizeIssuePage,
   normalizeIssueRecord,
   normalizeStatus,

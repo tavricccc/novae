@@ -102,6 +102,43 @@ function notificationForEvent(event: OutboxEvent) {
   return null;
 }
 
+async function findIssueAuthorUid(
+  supabase: ReturnType<typeof createClient>,
+  event: OutboxEvent,
+) {
+  const payloadAuthorUid = asString(event.payload.author_uid);
+  if (payloadAuthorUid) return payloadAuthorUid;
+
+  const { data, error } = await supabase
+    .schema("app_private")
+    .from("issues")
+    .select("author_uid")
+    .eq("id", event.target_id)
+    .maybeSingle();
+  if (error) throw error;
+  return asString(data?.author_uid);
+}
+
+async function resolveNotification(
+  supabase: ReturnType<typeof createClient>,
+  event: OutboxEvent,
+) {
+  const notification = notificationForEvent(event);
+  if (!notification) return null;
+
+  if (
+    event.event_type === "issue.comment_created"
+    || event.event_type === "issue.status_changed"
+    || event.event_type === "issue.deleted"
+  ) {
+    const recipientUid = await findIssueAuthorUid(supabase, event);
+    if (!recipientUid || recipientUid === event.actor_uid) return null;
+    return { ...notification, recipient_uid: recipientUid };
+  }
+
+  return notification;
+}
+
 async function markMappedNotionPageDeleted(
   supabase: ReturnType<typeof createClient>,
   targetType: string,
@@ -151,11 +188,16 @@ async function sendPushes(
   supabase: ReturnType<typeof createClient>,
   notification: Record<string, unknown>,
 ) {
-  const { data, error } = await supabase
+  let query = supabase
     .schema("app_private")
     .from("push_tokens")
     .select("token")
     .limit(200);
+  const recipientUid = asString(notification.recipient_uid);
+  if (recipientUid) {
+    query = query.eq("uid", recipientUid);
+  }
+  const { data, error } = await query;
   if (error) throw error;
 
   await Promise.allSettled((data ?? []).map((row) => sendFcmMessage({
@@ -175,7 +217,7 @@ async function sendPushes(
 async function processEvent(supabase: ReturnType<typeof createClient>, event: OutboxEvent) {
   await syncNotionForEvent(supabase, event);
 
-  const notification = notificationForEvent(event);
+  const notification = await resolveNotification(supabase, event);
   if (notification) {
     const { error } = await supabase
       .schema("app_private")
