@@ -314,7 +314,11 @@ async function sendPushes(
     else if (adminUids.length > 0) query = query.in("uid", adminUids);
     const { data, error } = await query;
     if (error) throw error;
-    tokens.push(...(data ?? []));
+    for (const row of data ?? []) {
+      const token = asString(row.token);
+      if (!token || tokens.some((existing) => existing.token === token)) continue;
+      tokens.push({ token, uid: asString(row.uid) });
+    }
     if ((data ?? []).length < 200) break;
   }
 
@@ -352,10 +356,6 @@ async function sendPushes(
     try {
       await sendFcmMessage({
         token: row.token,
-        notification: {
-          title: asString(notification.title),
-          body: asString(notification.body_preview),
-        },
         data: {
           body: asString(notification.body_preview),
           issue_category: category,

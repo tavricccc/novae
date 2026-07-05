@@ -6,7 +6,6 @@
       </div>
 
       <div class="startup-screen__copy">
-        <p class="startup-screen__eyebrow">學生學權提案平台</p>
         <h1 class="startup-screen__title">{{ appTitle }}</h1>
         <p class="startup-screen__tagline">正在準備</p>
       </div>
@@ -122,17 +121,12 @@ const appTitle = import.meta.env.VITE_APP_TITLE ?? 'SRP';
   gap: 0.35rem;
 }
 
-.startup-screen__eyebrow,
 .startup-screen__tagline {
   margin: 0;
   color: rgb(var(--color-outline));
   font-size: 0.875rem;
   font-weight: 700;
   line-height: 1.5;
-}
-
-.startup-screen__eyebrow {
-  letter-spacing: 0;
 }
 
 .startup-screen__title {
@@ -147,10 +141,10 @@ const appTitle = import.meta.env.VITE_APP_TITLE ?? 'SRP';
 .startup-screen__loader {
   box-sizing: border-box;
   display: block;
-  height: 3.75rem;
-  width: 3.75rem;
+  height: 1.625rem;
+  width: 1.625rem;
   overflow: visible;
-  padding: 0.1875rem;
+  padding: 0.125rem;
   color: rgb(var(--color-on-surface));
 }
 
@@ -161,7 +155,7 @@ const appTitle = import.meta.env.VITE_APP_TITLE ?? 'SRP';
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
-  stroke-width: 0.375rem;
+  stroke-width: 0.3125rem;
   transform-origin: center;
 }
 

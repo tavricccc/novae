@@ -2,8 +2,22 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "提升通知與啟動體驗",
+    version: "v2.0.36",
+    date: "2026-07-06",
+    time: "00:26",
+    items: [
+      {
+        title: "修正推播通知可能重複出現的情況。",
+      },
+      {
+        title: "優化啟動畫面呈現，讓載入狀態更簡潔。",
+      },
+    ],
+  },
+  {
     title: "優化啟動畫面",
-    version: "v1.8.65",
+    version: "v2.0.35",
     date: "2026-07-06",
     time: "00:19",
     items: [
@@ -14,7 +28,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升版本更新體驗",
-    version: "v1.8.64",
+    version: "v2.0.34",
     date: "2026-07-06",
     time: "00:15",
     items: [
@@ -25,7 +39,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升通知可靠性",
-    version: "v1.8.63",
+    version: "v2.0.33",
     date: "2026-07-06",
     time: "00:09",
     items: [
@@ -36,7 +50,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升部署穩定性",
-    version: "v1.8.62",
+    version: "v2.0.32",
     date: "2026-07-06",
     time: "00:03",
     items: [
@@ -47,7 +61,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "改善內容讀取與維護流程",
-    version: "v1.8.61",
+    version: "v2.0.31",
     date: "2026-07-05",
     time: "22:13",
     items: [
@@ -61,7 +75,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "強化內容異動可靠性",
-    version: "v1.8.60",
+    version: "v2.0.30",
     date: "2026-07-05",
     time: "22:11",
     items: [
@@ -72,7 +86,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "改善附議與推播處理",
-    version: "v1.8.59",
+    version: "v2.0.29",
     date: "2026-07-05",
     time: "22:07",
     items: [
@@ -86,7 +100,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升系統效能與維護穩定性",
-    version: "v1.8.58",
+    version: "v2.0.28",
     date: "2026-07-05",
     time: "22:03",
     items: [
@@ -100,7 +114,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "完善管理統計與提案瀏覽",
-    version: "v1.8.57",
+    version: "v2.0.27",
     date: "2026-07-05",
     time: "21:58",
     items: [
@@ -114,7 +128,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升提案與通知可靠性",
-    version: "v1.8.56",
+    version: "v2.0.26",
     date: "2026-07-05",
     time: "21:22",
     items: [
@@ -131,7 +145,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "改善通知瀏覽與更新體驗",
-    version: "v1.8.55",
+    version: "v2.0.25",
     date: "2026-07-05",
     time: "21:09",
     items: [
@@ -148,7 +162,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升圖片上傳穩定性",
-    version: "v1.8.54",
+    version: "v2.0.24",
     date: "2026-07-05",
     time: "14:51",
     items: [
@@ -159,7 +173,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "完善圖片與維護設定",
-    version: "v1.8.53",
+    version: "v2.0.23",
     date: "2026-07-05",
     time: "14:41",
     items: [
@@ -176,7 +190,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "強化內容安全與同步可靠性",
-    version: "v1.8.52",
+    version: "v2.0.22",
     date: "2026-07-05",
     time: "14:22",
     items: [
@@ -199,7 +213,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升系統維護穩定性",
-    version: "v1.8.51",
+    version: "v2.0.21",
     date: "2026-07-05",
     time: "13:49",
     items: [
@@ -219,7 +233,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升提案瀏覽與通知可靠性",
-    version: "v1.8.50",
+    version: "v2.0.20",
     date: "2026-07-05",
     time: "03:11",
     items: [
@@ -257,7 +271,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升通知與同步可靠性",
-    version: "v1.8.49",
+    version: "v2.0.19",
     date: "2026-07-05",
     time: "01:00",
     items: [
@@ -277,7 +291,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "修正提案權限與管理員入口",
-    version: "v1.8.48",
+    version: "v2.0.18",
     date: "2026-07-04",
     time: "21:52",
     items: [
@@ -294,7 +308,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "改善列表更新與操作防護",
-    version: "v1.8.47",
+    version: "v2.0.17",
     date: "2026-07-04",
     time: "21:43",
     items: [
@@ -308,7 +322,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升操作送出穩定性",
-    version: "v1.8.46",
+    version: "v2.0.16",
     date: "2026-07-04",
     time: "17:50",
     items: [
@@ -322,7 +336,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升資料載入與通知可靠性",
-    version: "v1.8.45",
+    version: "v2.0.15",
     date: "2026-07-04",
     time: "17:43",
     items: [
@@ -339,7 +353,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升通知中心穩定性",
-    version: "v1.8.44",
+    version: "v2.0.14",
     date: "2026-07-04",
     time: "15:11",
     items: [
@@ -353,7 +367,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "修正後端資料權限設定",
-    version: "v1.8.43",
+    version: "v2.0.13",
     date: "2026-07-04",
     time: "14:37",
     items: [
@@ -367,7 +381,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "修正後端資料存取設定",
-    version: "v1.8.42",
+    version: "v2.0.12",
     date: "2026-07-04",
     time: "14:34",
     items: [
@@ -381,7 +395,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "修正後端資料讀取設定",
-    version: "v1.8.41",
+    version: "v2.0.11",
     date: "2026-07-04",
     time: "09:51",
     items: [
@@ -395,7 +409,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "改善後端錯誤回報",
-    version: "v1.8.40",
+    version: "v2.0.10",
     date: "2026-07-04",
     time: "09:47",
     items: [
@@ -406,7 +420,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "強化後端異常追蹤",
-    version: "v1.8.39",
+    version: "v2.0.9",
     date: "2026-07-04",
     time: "09:43",
     items: [
@@ -417,7 +431,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "強化後端部署檢查",
-    version: "v1.8.38",
+    version: "v2.0.8",
     date: "2026-07-04",
     time: "09:39",
     items: [
@@ -431,7 +445,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "修正後端服務設定問題",
-    version: "v1.8.37",
+    version: "v2.0.7",
     date: "2026-07-04",
     time: "09:31",
     items: [
@@ -445,7 +459,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "修正後端操作錯誤提示",
-    version: "v1.8.36",
+    version: "v2.0.6",
     date: "2026-07-04",
     time: "00:29",
     items: [
@@ -459,7 +473,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升後端服務穩定性",
-    version: "v1.8.35",
+    version: "v2.0.5",
     date: "2026-07-04",
     time: "00:23",
     items: [
@@ -476,7 +490,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "修正登入後資料載入問題",
-    version: "v1.8.34",
+    version: "v2.0.4",
     date: "2026-07-04",
     time: "00:14",
     items: [
@@ -490,7 +504,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升登入流程穩定性",
-    version: "v1.8.33",
+    version: "v2.0.3",
     date: "2026-07-04",
     time: "00:09",
     items: [
@@ -504,7 +518,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升資料同步可靠性",
-    version: "v1.8.32",
+    version: "v2.0.2",
     date: "2026-07-04",
     time: "00:05",
     items: [
@@ -521,7 +535,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "支援 Notion 提案同步",
-    version: "v1.8.31",
+    version: "v2.0.1",
     date: "2026-07-03",
     time: "23:08",
     items: [
@@ -544,7 +558,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   },
   {
     title: "提升部署維護穩定性",
-    version: "v1.8.30",
+    version: "v2.0.0",
     date: "2026-07-03",
     time: "09:30",
     items: [
