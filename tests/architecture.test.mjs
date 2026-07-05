@@ -278,6 +278,7 @@ test('personal notification writes and pushes are scoped to the recipient', asyn
   assert.match(securityMigration, /'issue\.deleted'/u);
   assert.match(securityMigration, /'author_uid', issue_record\.author_uid/u);
   assert.match(outboxWorker, /async function findIssueAuthorUid/u);
+  assert.match(outboxWorker, /asString\(event\.payload\.issue_author_uid\)\s*\|\|\s*asString\(event\.payload\.author_uid\)/u);
   assert.match(outboxWorker, /async function resolveNotification/u);
   assert.match(outboxWorker, /recipientUid === event\.actor_uid/u);
   assert.match(outboxWorker, /recipient_uid: recipientUid/u);

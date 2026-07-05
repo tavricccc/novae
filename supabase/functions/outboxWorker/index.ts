@@ -184,8 +184,8 @@ async function findIssueAuthorUid(
   supabase: AppSupabase,
   event: OutboxEvent,
 ) {
-  const payloadAuthorUid = asString(event.payload.author_uid)
-    || asString(event.payload.issue_author_uid);
+  const payloadAuthorUid = asString(event.payload.issue_author_uid)
+    || asString(event.payload.author_uid);
   if (payloadAuthorUid) return payloadAuthorUid;
 
   const { data, error } = await supabase
