@@ -4,7 +4,10 @@ import { resetAppConnection } from '@/lib/reconnect';
 
 const updateAvailable = ref(false);
 const checking = ref(false);
+const remoteVersion = ref('');
 let lastCheckedAt = 0;
+
+const AUTO_RELOAD_STORAGE_KEY = 'srp:auto-update-reloaded-version';
 
 interface VersionResponse {
   version?: string;
@@ -25,10 +28,11 @@ async function checkAppVersion() {
     });
 
     const data = await response.json() as VersionResponse;
-    const remoteVersion = typeof data.version === 'string' ? data.version : '';
+    const nextRemoteVersion = typeof data.version === 'string' ? data.version : '';
+    remoteVersion.value = nextRemoteVersion;
     updateAvailable.value = Boolean(
-      remoteVersion
-      && remoteVersion !== __APP_VERSION__,
+      nextRemoteVersion
+      && nextRemoteVersion !== __APP_VERSION__,
     );
   } catch {
     return;
@@ -63,14 +67,30 @@ export async function initializeAppUpdate() {
 }
 
 export function useAppUpdate() {
-  async function reloadApp() {
+  function canAutoReloadCurrentVersion() {
+    if (!remoteVersion.value) return false;
+    return sessionStorage.getItem(AUTO_RELOAD_STORAGE_KEY) !== remoteVersion.value;
+  }
+
+  async function reloadApp(options: { automatic?: boolean } = {}) {
+    if (options.automatic && !canAutoReloadCurrentVersion()) {
+      return;
+    }
+
+    if (options.automatic && remoteVersion.value) {
+      sessionStorage.setItem(AUTO_RELOAD_STORAGE_KEY, remoteVersion.value);
+    }
+
+    await updateServiceWorker();
     await resetAppConnection();
     window.location.reload();
   }
 
   return {
+    canAutoReloadCurrentVersion,
     checking: readonly(checking),
     reloadApp,
+    remoteVersion: readonly(remoteVersion),
     updateAvailable: readonly(updateAvailable),
   };
 }

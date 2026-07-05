@@ -52,7 +52,7 @@ if (typeof document !== 'undefined') {
   document.documentElement.dataset.appRelease = APP_RELEASE_MARKER;
 }
 
-const { reloadApp, updateAvailable } = useAppUpdate();
+const { canAutoReloadCurrentVersion, reloadApp, updateAvailable } = useAppUpdate();
 const { open: startupGateOpen } = useAppStartupGate();
 const route = useRoute();
 const router = useRouter();
@@ -127,7 +127,9 @@ async function enablePushFromPrompt() {
 watch(
   [updateAvailable, startupGateOpen],
   ([hasUpdate, isStarting]) => {
-    if (hasUpdate && isStarting) void reloadApp();
+    if (hasUpdate && isStarting && canAutoReloadCurrentVersion()) {
+      void reloadApp({ automatic: true });
+    }
   },
   { immediate: true },
 );
