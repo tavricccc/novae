@@ -42,6 +42,7 @@ import { useAppStartupGate } from '@/composables/useAppStartupGate';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { usePushNotifications } from '@/composables/usePushNotifications';
 import { useSession } from '@/composables/useSession';
+import { useToast } from '@/composables/useToast';
 import { requestAppInstallPrompt } from '@/lib/pwa-install';
 import { ref, watch } from 'vue';
 import { DEFAULT_ISSUE_ROUTE_FILTER } from '@/constants/categories';
@@ -170,5 +171,25 @@ watch(
     }
   },
   { immediate: true },
+);
+
+const { showToast } = useToast();
+
+watch(
+  startupGateOpen,
+  (open) => {
+    if (!open) {
+      const pendingToast = localStorage.getItem('srp:pending-update-toast') === '1';
+      const lastVersion = localStorage.getItem('srp:last-app-version');
+      const isNewVersion = lastVersion && lastVersion !== __APP_VERSION__;
+
+      if (pendingToast || isNewVersion) {
+        showToast('版本已成功更新', 'success');
+        localStorage.removeItem('srp:pending-update-toast');
+      }
+      localStorage.setItem('srp:last-app-version', __APP_VERSION__);
+    }
+  },
+  { immediate: true }
 );
 </script>

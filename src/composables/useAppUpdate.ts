@@ -81,6 +81,7 @@ export function useAppUpdate() {
       sessionStorage.setItem(AUTO_RELOAD_STORAGE_KEY, remoteVersion.value);
     }
 
+    localStorage.setItem('srp:pending-update-toast', '1');
     await updateServiceWorker();
     await resetAppConnection();
     window.location.reload();
