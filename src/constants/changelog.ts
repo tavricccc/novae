@@ -2,6 +2,17 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "優化版本更新提示",
+    version: "v2.0.41",
+    date: "2026-07-06",
+    time: "00:56",
+    items: [
+      {
+        title: "新增版本成功更新提示，當偵測到應用程式版本更新完成時，自動於啟動後顯示成功更新提示訊息。",
+      },
+    ],
+  },
+  {
     title: "調整深色模式配色",
     version: "v2.0.40",
     date: "2026-07-06",

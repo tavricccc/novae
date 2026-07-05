@@ -42,6 +42,7 @@ import { useAppStartupGate } from '@/composables/useAppStartupGate';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { usePushNotifications } from '@/composables/usePushNotifications';
 import { useSession } from '@/composables/useSession';
+import { useToast } from '@/composables/useToast';
 import { requestAppInstallPrompt } from '@/lib/pwa-install';
 import { ref, watch } from 'vue';
 import { DEFAULT_ISSUE_ROUTE_FILTER } from '@/constants/categories';
@@ -167,6 +168,22 @@ watch(
         name: 'login',
         query: { redirect: route.fullPath },
       });
+    }
+  },
+  { immediate: true },
+);
+
+const { showToast } = useToast();
+
+watch(
+  startupGateOpen,
+  (open) => {
+    if (!open) {
+      const lastVersion = localStorage.getItem('srp:last-app-version');
+      if (lastVersion && lastVersion !== __APP_VERSION__) {
+        showToast('版本已成功更新', 'success');
+      }
+      localStorage.setItem('srp:last-app-version', __APP_VERSION__);
     }
   },
   { immediate: true },
