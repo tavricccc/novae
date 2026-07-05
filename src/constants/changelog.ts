@@ -2,17 +2,6 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
-    title: "調整深色模式配色",
-    version: "v2.0.40",
-    date: "2026-07-06",
-    time: "00:54",
-    items: [
-      {
-        title: "調整深色模式下的配色方案，使整體介面色彩表現更為協調與一致。",
-      },
-    ],
-  },
-  {
     title: "優化載入動畫視覺效果",
     version: "v2.0.39",
     date: "2026-07-06",
