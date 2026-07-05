@@ -1,7 +1,6 @@
 import { computed, reactive, watch, type Ref } from 'vue';
 import { fetchUserIssues } from '@/services/issues';
-import { waitForMinimumDuration } from '@/lib/page-size';
-import type { IssueFilter, IssueRecord, IssueSortOption } from '@/types';
+import type { IssueCursor, IssueFilter, IssueRecord, IssueSortOption } from '@/types';
 
 type IssueBoardFilter = IssueFilter | 'my-proposals';
 
@@ -16,7 +15,8 @@ export function useUserIssuesData(
   const userIssuesState = reactive({
     allIssues: [] as IssueRecord[],
     error: '',
-    loadedCount: pageSize.value,
+    cursor: null as IssueCursor | null,
+    hasMore: false,
     loading: false,
     loadingMore: false,
     refreshing: false,
@@ -24,25 +24,8 @@ export function useUserIssuesData(
 
   let requestToken = 0;
 
-  const sortedIssues = computed(() => {
-    const nextIssues = [...userIssuesState.allIssues];
-    if (sortOption.value === 'most-supported') {
-      return nextIssues.sort((left, right) =>
-        right.support_count - left.support_count
-        || (right.created_at?.getTime() ?? 0) - (left.created_at?.getTime() ?? 0)
-      );
-    }
-    if (sortOption.value === 'ending-soon') {
-      return nextIssues.sort((left, right) =>
-        (left.support_deadline_at?.getTime() ?? Number.POSITIVE_INFINITY)
-        - (right.support_deadline_at?.getTime() ?? Number.POSITIVE_INFINITY)
-        || (right.created_at?.getTime() ?? 0) - (left.created_at?.getTime() ?? 0)
-      );
-    }
-    return nextIssues;
-  });
-  const visibleIssues = computed(() => sortedIssues.value.slice(0, userIssuesState.loadedCount));
-  const hasMore = computed(() => userIssuesState.loadedCount < sortedIssues.value.length);
+  const visibleIssues = computed(() => userIssuesState.allIssues);
+  const hasMore = computed(() => userIssuesState.hasMore);
 
   function addUserIssue(issue: IssueRecord) {
     const issueMap = new Map(userIssuesState.allIssues.map((entry) => [entry.id, entry]));
@@ -68,7 +51,8 @@ export function useUserIssuesData(
     stopUserIssuesRequest();
     userIssuesState.allIssues = [];
     userIssuesState.error = '';
-    userIssuesState.loadedCount = pageSize.value;
+    userIssuesState.cursor = null;
+    userIssuesState.hasMore = false;
   }
 
   function bumpUserIssuesRequestToken() {
@@ -84,7 +68,6 @@ export function useUserIssuesData(
 
     const currentToken = ++requestToken;
     userIssuesState.error = '';
-    userIssuesState.loadedCount = pageSize.value;
     if (options.silent && userIssuesState.allIssues.length > 0) {
       userIssuesState.refreshing = true;
     } else {
@@ -92,9 +75,15 @@ export function useUserIssuesData(
     }
 
     try {
-      const issues = await fetchUserIssues(uid, { supportedIssueIds: supportedIssueIds.value });
+      const page = await fetchUserIssues(uid, null, {
+        pageSize: pageSize.value,
+        sort: sortOption.value,
+        supportedIssueIds: supportedIssueIds.value,
+      });
       if (currentToken !== requestToken) return;
-      userIssuesState.allIssues = issues;
+      userIssuesState.allIssues = page.issues;
+      userIssuesState.cursor = page.cursor;
+      userIssuesState.hasMore = page.hasMore;
       userIssuesState.error = '';
     } catch {
       if (currentToken === requestToken && userIssuesState.allIssues.length === 0) {
@@ -110,11 +99,20 @@ export function useUserIssuesData(
 
   async function loadMoreUserIssues() {
     if (!hasMore.value || userIssuesState.loadingMore) return;
-    const startedAt = Date.now();
     userIssuesState.loadingMore = true;
-    await waitForMinimumDuration(startedAt, 200);
-    userIssuesState.loadedCount += pageSize.value;
-    userIssuesState.loadingMore = false;
+    try {
+      const page = await fetchUserIssues(userUid.value, userIssuesState.cursor, {
+        pageSize: pageSize.value,
+        sort: sortOption.value,
+        supportedIssueIds: supportedIssueIds.value,
+      });
+      const ids = new Set(userIssuesState.allIssues.map((issue) => issue.id));
+      userIssuesState.allIssues.push(...page.issues.filter((issue) => !ids.has(issue.id)));
+      userIssuesState.cursor = page.cursor;
+      userIssuesState.hasMore = page.hasMore;
+    } finally {
+      userIssuesState.loadingMore = false;
+    }
   }
 
   watch([activeFilter, userUid, isAllowedUser], () => {
@@ -128,9 +126,7 @@ export function useUserIssuesData(
     }));
   });
 
-  watch(sortOption, () => {
-    userIssuesState.loadedCount = pageSize.value;
-  });
+  watch(sortOption, () => void loadCurrentUserIssues());
 
   return {
     userIssuesState,

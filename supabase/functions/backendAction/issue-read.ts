@@ -118,16 +118,46 @@ async function listIssues(
   };
 }
 
-async function listUserIssues(auth: AuthContext, supabase: BackendSupabase) {
-  const { data, error } = await supabase
+async function listUserIssues(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
+  const pageSize = Math.min(Math.max(Math.round(asNumber(payload.pageSize, 20)), 1), 50);
+  const sort = asString(payload.sort, "latest");
+  let query = supabase
     .schema("app_private")
     .from("issues")
     .select("*")
-    .eq("author_uid", auth.uid)
-    .order("created_at", { ascending: false })
-    .limit(100);
+    .eq("author_uid", auth.uid);
+  const orderColumn = sort === "most-supported" ? "support_count" : sort === "ending-soon" ? "support_deadline_at" : "created_at";
+  query = query.order(orderColumn, { ascending: sort === "ending-soon", nullsFirst: false });
+  if (orderColumn !== "created_at") query = query.order("created_at", { ascending: false });
+  query = query.order("id", { ascending: false });
+  const cursor = readCursor(payload);
+  const cursorId = asUuid(cursor.id);
+  const cursorCreatedAt = readCursorDate(cursor, "created_at");
+  if (cursorId && cursorCreatedAt) {
+    if (sort === "most-supported") {
+      const count = asNumber(cursor.sort_number, Number.NaN);
+      if (Number.isFinite(count)) query = query.or(`support_count.lt.${count},and(support_count.eq.${count},created_at.lt.${cursorCreatedAt}),and(support_count.eq.${count},created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`);
+    } else if (sort === "ending-soon") {
+      const deadline = readCursorDate(cursor, "sort_date");
+      if (deadline) query = query.or(`support_deadline_at.gt.${deadline},and(support_deadline_at.eq.${deadline},created_at.lt.${cursorCreatedAt}),and(support_deadline_at.eq.${deadline},created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`);
+    } else {
+      query = applyDescendingDateCursor(query, cursor, "created_at");
+    }
+  }
+  const { data, error } = await query.limit(pageSize + 1);
   if (error) throw error;
-  return { issues: (data ?? []).map((issue) => issueToReadableResponse(issue as JsonRecord, auth)) };
+  const rows = (data ?? []).map((issue) => issueToReadableResponse(issue as JsonRecord, auth));
+  const last = rows[Math.min(pageSize - 1, rows.length - 1)];
+  return {
+    issues: rows.slice(0, pageSize),
+    hasMore: rows.length > pageSize,
+    cursor: rows.length > pageSize && last ? {
+      id: last.id,
+      created_at: last.created_at_ms,
+      sort_date: sort === "ending-soon" ? last.support_deadline_at_ms : undefined,
+      sort_number: sort === "most-supported" ? last.support_count : undefined,
+    } : null,
+  };
 }
 
 async function listSupportedIssueIds(auth: AuthContext, supabase: BackendSupabase) {
@@ -180,7 +210,7 @@ export async function handleIssueReadAction(
     return { issue: issueToReadableResponse(issue, auth) };
   }
   if (action === "listIssues" || action === "searchIssues") return listIssues(action, payload, auth, supabase);
-  if (action === "listUserIssues") return listUserIssues(auth, supabase);
+  if (action === "listUserIssues") return listUserIssues(payload, auth, supabase);
   if (action === "listMySupportedIssueIds") return listSupportedIssueIds(auth, supabase);
   if (action === "getPrivateIssueAuthor" || action === "batchGetPrivateIssueAuthors") {
     return getPrivateIssueAuthors(action, payload, auth, supabase);

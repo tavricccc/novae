@@ -37,6 +37,7 @@
 - supabase/migrations/202607050001_supabase_baseline.sql：單一 Supabase 基線 migration，完整建立 schema、RLS、資料表、RPC、trigger、Realtime publication、索引、冪等、清理排程、圖片時效網址與維護重試設定。
 - supabase/migrations/202607050002_fix_notification_realtime_rls.sql：讓通知 Realtime 的 RLS 依部署 healthcheck 保存的 Firebase project ID 驗證 token audience，確保重置後仍可正常訂閱。
 - supabase/migrations/202607050003_complete_platform_workflows.sql：完善附議達標與到期狀態、工作租約回收、永久統計計數及圖片刪除即時喚醒機制。
+- supabase/migrations/202607050004_dashboard_and_read_efficiency.sql：以資料庫聚合快照提供管理統計、維護狀態與分類成果，避免大量資料傳輸。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/types.ts：受控 action 共用 Supabase client、身份與 JSON record 型別。
 - supabase/functions/backendAction/utils.ts：受控 action 共用 cursor、時間、數值、布林與台北日界限工具。
@@ -275,7 +276,7 @@
 - src/services/issues-query.ts：提案 bucket 查詢參數相容 helper。
 - src/services/issues-read.ts：提案唯讀 service 匯出入口，只 re-export 分頁搜尋、使用者提案、私有作者與留言讀取子服務。
 - src/services/issues-read-pages.ts：提案排序分頁讀取、載入更多與標題搜尋讀取，並在服務邊界正規化後端 cursor。
-- src/services/issues-read-user.ts：使用者提案與已附議提案 id 一次性讀取。
+- src/services/issues-read-user.ts：使用者提案游標分頁與已附議提案 id 讀取。
 - src/services/issues-read-private-author.ts：公共議題私有作者 metadata 讀取。
 - src/services/issues-read-comments.ts：提案留言讀取、日期與 cursor 正規化。
 - src/services/issues-read-shared.ts：提案 read service 共用 response 型別。

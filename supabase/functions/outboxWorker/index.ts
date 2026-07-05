@@ -20,6 +20,8 @@ interface OutboxEvent {
   target_id: string;
   target_type: string;
   actor_uid: string;
+  notification_completed_at?: string | null;
+  notion_completed_at?: string | null;
 }
 
 const NOTIFICATION_ID_NAMESPACE = "52c06670-c364-4c0f-82d9-8f18bb9f311e";
@@ -437,9 +439,22 @@ async function createNotificationsForEvent(
 }
 
 async function processEvent(supabase: AppSupabase, event: OutboxEvent) {
-  const { hasNotification } = await createNotificationsForEvent(supabase, event);
+  let hasNotification: boolean;
+  if (!event.notification_completed_at) {
+    ({ hasNotification } = await createNotificationsForEvent(supabase, event));
+    const { error } = await supabase.schema("app_private").from("outbox_events")
+      .update({ notification_completed_at: new Date().toISOString() }).eq("id", event.id);
+    if (error) throw error;
+  } else {
+    hasNotification = Boolean(notificationForEvent(event));
+  }
 
-  await syncNotionForEvent(supabase, event);
+  if (!event.notion_completed_at) {
+    await syncNotionForEvent(supabase, event);
+    const { error } = await supabase.schema("app_private").from("outbox_events")
+      .update({ notion_completed_at: new Date().toISOString() }).eq("id", event.id);
+    if (error) throw error;
+  }
 
   if (hasNotification) return;
 

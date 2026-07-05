@@ -113,6 +113,8 @@ interface OutboxEventRow {
   next_attempt_at: string;
   occurred_at: string;
   locked_at: string | null;
+  notification_completed_at: string | null;
+  notion_completed_at: string | null;
   last_error: string | null;
   created_at: string;
   updated_at: string;
@@ -276,6 +278,7 @@ interface AppApiFunctions {
   complete_outbox_event: AppFunction<{ event_id: string }, void>;
   fail_deletion_job: AppFunction<{ error_message: string; job_id: string }, void>;
   fail_outbox_event: AppFunction<{ error_message: string; event_id: string }, void>;
+  get_platform_dashboard_snapshot: AppFunction<Record<string, never>, Json>;
   backend_delete_issue: AppFunction<{ actor_is_admin: boolean; actor_uid: string; issue_id: string }, void>;
   release_idempotency_key: AppFunction<{ action_name: string; actor_uid: string; request_id: string }, void>;
   run_maintenance_cleanup: AppFunction<Record<string, never>, Json>;
