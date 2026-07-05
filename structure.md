@@ -13,14 +13,12 @@
 - config/rate-limits.config.json：限流閾值與圖片壓縮設定編輯入口，定義提案/留言/上傳上限，以及圖片寬高與 WebP 品質等參數。
 - structure.md：本檔案，維護全站模組結構地圖。
 - AGENTS.md：給 AI 代理人的開發規範與維護要求。
-- package.json：專案名稱、依賴與 npm scripts 入口，包含完整驗證 build 與僅供部署使用的快速 Vite build。
+- package.json：專案名稱、依賴與 npm scripts 入口，包含前端型別 / lint / build、Edge Functions Deno check、架構測試與僅供部署使用的快速 Vite build。
 - package-lock.json：套件版本鎖定檔。
 - index.html：Vite 入口 HTML，掛載 Vue App，載入 favicon / PWA meta，並由 Vite env 注入標題。
 - eslint.config.js：ESLint 規則與 Vue / TypeScript 的 lint 設定。
-- firebase.json：Firebase CLI 專案設定（不含 hosting 區塊，前端改由 Vercel 部署）。
 - vercel.json：Vercel 前端部署設定，包含靜態資源快取規則（assets 長快取、sw.js 不快取）與 SPA fallback rewrite。
 - supabase/config.toml：Supabase 本機與部署設定，暴露 Supabase 預設 schema、`app_api` 與供 service role Edge Functions 使用的 `app_private` schema，並設定登入同步、Cloudinary webhook、outbox worker 與刪除工作 Edge Functions 的 JWT 驗證模式。
-- .firebaserc：Firebase 專案綁定設定，請填入自己的 Firebase 專案 ID。
 - .env.example：本機與部署環境變數範本，包含 App 名稱、短名稱、Firebase Auth / FCM public config、Supabase public config 與選配 App Check 開關 / site key。
 - .gitignore：Git 忽略規則。
 - postcss.config.cjs：PostCSS 設定，啟用 Tailwind 與 Autoprefixer。
@@ -29,8 +27,6 @@
 - tsconfig.app.json：前端 App 程式碼的 TypeScript 設定，包含 Vite 與 PWA client 型別。
 - tsconfig.node.json：Node / Vite 設定檔的 TypeScript 設定。
 - vite.config.ts：Vite 主設定，包含 Vue plugin、PWA manifest / service worker、HTML env 注入與 @ 路徑別名。
-- vite.config.js、vite.config.d.ts：Vite / TypeScript 產生或暫存輸出，已由 `.gitignore` 排除。
-- update_comments.cjs、update_dialog.cjs：舊版一次性更新輔助腳本，若再次使用前需先確認是否仍符合目前元件結構。
 - skills-lock.json：Copilot skills 相關鎖定檔，讓技能載入保持一致。
 
 ---
@@ -74,6 +70,7 @@
 - supabase/functions/_shared/http.ts：Edge Functions 共用 CORS、POST method guard、JSON / text response、JSON body 解析與錯誤狀態對應 helper。
 - supabase/functions/_shared/firebase-auth.ts：Edge Functions 共用 Firebase ID token lookup、校內網域、email verified 與使用者身份正規化 helper。
 - supabase/functions/_shared/cloudinary.ts：Cloudinary 簽名、直傳參數與 asset 刪除 helper。
+- supabase/functions/_shared/database.ts：Edge Functions 共用的 Supabase schema 型別，明確列出目前使用的 app_api / app_private table、row 與 RPC 欄位供 Deno 檢查。
 - supabase/functions/_shared/google-oauth.ts：Edge Functions 使用 `npm:google-auth-library` 取得並快取 Google OAuth access token，供 Firebase custom claims 與 FCM HTTP v1 使用。
 - supabase/functions/_shared/issue-categories.ts：由提案分類 config 產生的 Edge Functions 分類權限與行為常數，供受控 action 套用審核、私密讀取、作者隱藏與留言規則。
 - supabase/functions/_shared/fcm.ts：FCM HTTP v1 發送 helper，不依賴 Node Firebase Admin SDK。
@@ -202,7 +199,7 @@
 - src/composables/useIssueItemController.ts：列表列共用的提案項目控制器，組合顯示、附議、刪除、開啟詳情事件與管理員狀態 toast。
 - src/composables/useIssueComposerForm.ts：新增提案表單流程，負責驗證、Markdown 圖片上傳、送出後端 action、失敗清理與表單重置。
 - src/composables/useVoteSupport.ts：附議按鈕流程，負責登入檢查、optimistic UI、附議/取消附議 action 與錯誤回復。
-- src/composables/useIssueAdminStatus.ts：管理員提案狀態更新流程，負責下拉開關、狀態限制、審核 callable 與結果事件。
+- src/composables/useIssueAdminStatus.ts：管理員提案狀態更新流程，負責下拉開關、狀態限制、審核 action 與結果事件。
 - src/composables/useStatusStyling.ts：提案狀態對應 Tailwind class（支援 table-row / dialog / dot / button-text 四種變體）。
 - src/composables/useDeleteIssue.ts：刪除提案的確認對話框流程（isDeleteDialogOpen / confirmDelete / performDelete）。
 - src/composables/useBodyScrollLock.ts：對話框開啟時鎖定 body 捲動，並避開 iOS PWA 固定定位偏移造成的全螢幕 Dialog 截斷。
@@ -304,7 +301,7 @@
 - scripts/issue-category-config.mjs：提案分類 config 讀取、驗證與 TypeScript 產生 helper。
 - tests/architecture.test.mjs：防止舊 Firebase 資料路徑、舊部署目標、未受控後端 action、webhook 驗證與圖片解析流程回歸的靜態測試。
 - .github/workflows/deploy-frontend.yml：前端相關檔案 merge 後，使用 GitHub Environment secrets 執行 Vite build 並以 Vercel CLI 部署（main → production，dev → preview）。
-- .github/workflows/verify-pr.yml：PR 型別、lint、build、架構測試與 audit 驗證工作流。
+- .github/workflows/verify-pr.yml：PR 型別、lint、build、架構測試與 audit 驗證工作流；Edge Functions Deno 檢查保留為本機手動指令，不放入 PR workflow 以維持速度。
 - .github/workflows/deploy-backend.yml：Supabase 後端部署工作流，使用 npm / node_modules 快取並先跑架構檢查，再推送 migrations、以非保留名稱設定 Edge Function secrets、部署 Supabase Edge Functions 並打正式 endpoint 做健康檢查。
 - .github/workflows/reset-db.yml：手動觸發的 Supabase 資料庫重置工作流，重置資料庫架構並自動寫入對應環境的 outbox 與 Firebase 參數設定。
 

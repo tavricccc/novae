@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import type { Database } from "../_shared/database.ts";
 import { deleteCloudinaryAsset } from "../_shared/cloudinary.ts";
 import { requireEnv } from "../_shared/env.ts";
 import { errorMessage, jsonResponse, requireMethod } from "../_shared/http.ts";
@@ -21,7 +22,7 @@ Deno.serve(async (request) => {
   if (authFailure) return authFailure;
 
   try {
-    const supabase = createClient(
+    const supabase = createClient<Database>(
       requireEnv("SUPABASE_URL"),
       requireEnv("APP_SUPABASE_SERVICE_ROLE_KEY"),
       { auth: { persistSession: false } },

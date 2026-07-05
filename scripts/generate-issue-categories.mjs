@@ -12,7 +12,6 @@ const rendered = renderIssueCategoriesTs(config);
 
 const outputPaths = [
   path.join(projectRoot, 'src', 'generated', 'issue-categories.ts'),
-  path.join(projectRoot, 'functions', 'src', 'generated', 'issue-categories.ts'),
   path.join(projectRoot, 'supabase', 'functions', '_shared', 'issue-categories.ts'),
 ];
 

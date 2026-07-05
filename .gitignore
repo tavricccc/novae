@@ -7,13 +7,6 @@ vite.config.js
 vite.config.d.ts
 .npmrc
 
-functions/.env
-
-# Firebase emulator logs
-firestore-debug.log
-firebase-debug.log
-.firebase/
-ui-debug.log
 temp.jsonl
 .vercel
 .env*

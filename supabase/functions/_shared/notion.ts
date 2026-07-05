@@ -1,4 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import type { Database } from "./database.ts";
 import { optionalEnv, requireEnv } from "./env.ts";
 import { getIssueCategoryLabel } from "./issue-categories.ts";
 
@@ -17,6 +18,8 @@ const STATUS_LABELS: Record<string, string> = {
   "已刪除": "已刪除",
   "發布": "發布",
 };
+
+type AppSupabase = SupabaseClient<Database>;
 
 function translateStatus(status: string): string {
   return STATUS_LABELS[status] ?? status;
@@ -108,7 +111,7 @@ function appendBlock(pageId: string, content: string): Promise<unknown> {
  * configured database and record it in app_private.notion_pages.
  */
 async function getOrCreateNotionPage(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   targetType: string,
   targetId: string,
   title: string,
@@ -190,7 +193,7 @@ export async function markNotionPageDeleted(pageId: string): Promise<void> {
  * Queries the issues table to get full issue details.
  */
 export async function syncIssueCreatedToNotion(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   targetId: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
@@ -221,7 +224,7 @@ export async function syncIssueCreatedToNotion(
  * when an admin changes the issue status.
  */
 export async function syncIssueStatusChangedToNotion(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   targetId: string,
   payload: Record<string, unknown>,
 ): Promise<void> {
@@ -264,7 +267,7 @@ export async function syncIssueStatusChangedToNotion(
 }
 
 export async function syncIssueSupportToNotion(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   targetId: string,
 ): Promise<void> {
   if (!notionEnabled()) return;
@@ -302,7 +305,7 @@ export async function syncIssueSupportToNotion(
  * Skips silently if the issue has no Notion page yet.
  */
 export async function syncIssueCommentToNotion(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   targetId: string,
 ): Promise<void> {
   if (!notionEnabled()) return;
@@ -338,7 +341,7 @@ export async function syncIssueCommentToNotion(
  * Create a Notion page when a new announcement is published.
  */
 export async function syncAnnouncementCreatedToNotion(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   targetId: string,
   payload: Record<string, unknown>,
 ): Promise<void> {

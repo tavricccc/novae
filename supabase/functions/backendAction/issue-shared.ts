@@ -7,7 +7,7 @@ import {
 import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 import { toMs } from "./utils.ts";
 
-export function issueToResponse(issue: JsonRecord) {
+export function issueToResponse(issue: JsonRecord): JsonRecord {
   return {
     ...issue,
     created_at_ms: toMs(issue.created_at),
@@ -28,7 +28,7 @@ export function canReadIssue(issue: JsonRecord, auth: AuthContext) {
   return true;
 }
 
-export function issueToReadableResponse(issue: JsonRecord, auth: AuthContext) {
+export function issueToReadableResponse(issue: JsonRecord, auth: AuthContext): JsonRecord {
   const response = issueToResponse(issue);
   const authorUid = asString(issue.author_uid);
   const shouldHideAuthor = issueStoresAuthorPrivately(asString(issue.category))
@@ -43,7 +43,7 @@ export function issueToReadableResponse(issue: JsonRecord, auth: AuthContext) {
   return publicIssue;
 }
 
-export function commentToResponse(comment: JsonRecord) {
+export function commentToResponse(comment: JsonRecord): JsonRecord {
   return {
     ...comment,
     created_at_ms: toMs(comment.created_at),

@@ -16,6 +16,15 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
       {
         title: "提升審核通過通知與提案更新提醒的送達穩定性。",
       },
+      {
+        title: "改善審核通過通知內容，方便提案者掌握審核結果。",
+      },
+      {
+        title: "調整提案與公告通知文字，提升通知內容一致性。",
+      },
+      {
+        title: "提升維護穩定性。",
+      },
     ],
   },
   {

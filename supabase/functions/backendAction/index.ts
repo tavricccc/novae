@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import type { Database } from "../_shared/database.ts";
 import { requireEnv } from "../_shared/env.ts";
 import {
   asRecord,
@@ -120,7 +121,7 @@ Deno.serve(async (request) => {
     const payload = asRecord(body.payload);
     if (!action) throw new Error("missing action");
 
-    const supabase = createClient(
+    const supabase = createClient<Database>(
       requireEnv("SUPABASE_URL"),
       requireEnv("APP_SUPABASE_SERVICE_ROLE_KEY"),
       { auth: { persistSession: false } },

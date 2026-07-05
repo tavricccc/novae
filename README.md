@@ -17,12 +17,13 @@
 ## 架構
 
 - Vue 3、Vite、TypeScript、Vue Router
-- Firebase Authentication、Firebase Cloud Messaging、Firebase Hosting
+- Firebase Authentication、Firebase Cloud Messaging、Firebase App Check
+- Vercel 前端 Hosting
 - Supabase Postgres、RLS、Edge Functions、Database Webhooks / Cron
 - Cloudinary 圖片儲存與 delivery
 - Notion API
 
-Firebase 在此專案只保留登入、推播與 Hosting。業務資料、後端行為、圖片 metadata、通知狀態與維護工作都由 Supabase / Cloudinary 承接。
+Firebase 在此專案只保留登入、App Check 與推播。前端由 Vercel 部署；業務資料、後端行為、圖片 metadata、通知狀態與維護工作都由 Supabase / Cloudinary 承接。
 
 ## 本機開發
 
@@ -31,6 +32,8 @@ npm install
 npm run typecheck
 npm run lint
 npm run build
+npm run check:edge
+npm run test:architecture
 ```
 
 必要前端環境變數請參考 `.env.example`：
@@ -64,13 +67,15 @@ npm run generate:all
 
 GitHub Actions 使用 `production` 與 `development` 兩個 GitHub Environment。
 
-前端 Hosting workflow 需要：
+前端 Vercel workflow 需要：
 
 - Firebase web config：`VITE_FIREBASE_*`
 - 選配 App Check：`VITE_FIREBASE_APP_CHECK_ENABLED`、`VITE_RECAPTCHA_ENTERPRISE_SITE_KEY`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
-- `FIREBASE_SERVICE_ACCOUNT`
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
 
 Supabase 後端 workflow 需要：
 

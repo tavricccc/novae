@@ -2,8 +2,8 @@
 
 ## 工作前提
 
-1. 修改前先完整閱讀 `structure.md`，依既有模組找對應元件、composable、service 或 Functions domain，不另起平行實作。
-2. 搜尋與檢查一律避開 `node_modules`、`dist`、`functions/lib` 與其他產物目錄。
+1. 修改前先完整閱讀 `structure.md`，依既有模組找對應元件、composable、service 或 Supabase Edge Functions domain，不另起平行實作。
+2. 搜尋與檢查一律避開 `node_modules`、`dist`、`.vercel`、`.supabase` 與其他產物目錄。
 3. 不做 in-app browser preview；以型別、lint、build 與必要的靜態檢查驗證。
 4. 工作樹可能已有使用者修改，不覆蓋、不回復無關變更。
 5. 若需 staging，使用 `git add .`，不要逐檔 add。
@@ -16,10 +16,12 @@
 - `components/ui/`：無業務資料來源的共用 UI，不 import service 或 session 類 composable。
 - `composables/`：Vue 狀態、生命週期與流程協調；避免直接重複資料正規化或純函式。
 - `lib/`：無 Vue 相依的純函式、格式化與正規化工具。
-- `services/`：前端 Firestore 讀取與 callable API 邊界；元件不得直接查詢 Firestore。
+- `services/`：前端 Supabase Edge Function / Supabase client 邊界；元件不得直接查詢資料表或自行組後端 action。
 - `types/`：跨模組核心型別；共通欄位先抽 base interface，再由領域型別擴充。
-- `functions/src/core/`：後端初始化、身份、設定、request 邊界與共用驗證。
-- `functions/src/<domain>/`：各領域授權、資料異動與副作用；不要把業務邏輯放回 entrypoint。
+- `supabase/functions/_shared/`：Edge Functions 共用環境變數、HTTP、Firebase 驗證、FCM、Notion、Cloudinary、設定常數與 Supabase schema 型別。
+- `supabase/functions/backendAction/`：前端受控 action 入口與各領域後端流程；entrypoint 只做 CORS、驗證、冪等與分派。
+- `supabase/functions/<function>/`：獨立 Edge Function 入口，例如登入同步、上傳 webhook、outbox worker 與刪除工作；不要把跨領域業務流程塞回 entrypoint。
+- `supabase/migrations/`：Postgres schema、RLS、RPC、trigger、publication 與索引；修改 schema 行為時同步檢查 Edge Function 型別。
 
 ## 拆分與共用標準
 
@@ -50,7 +52,7 @@
 
 - Vue composable 使用 `useXxx`；元件使用 PascalCase；純函式名稱描述輸入與輸出結果。
 - Props、emits、slot props、service request/response 與 Functions request 必須有明確型別。
-- 外部資料、Firestore 文件與 callable payload 在驗證前使用 `unknown` 或 `Record<string, unknown>`，不要以 `any` 穿透邊界。
+- 外部資料、Supabase row / RPC response、webhook body 與 action payload 在驗證前使用 `unknown` 或 `Record<string, unknown>`，不要以 `any` 穿透邊界。
 - 重複的 union、record 欄位與 domain label 放到核心型別或 constants，不在元件內散落重定義。
 - 魔法數字與重複運算抽成具名常數或純函式，但避免建立只包一行且沒有語意價值的 helper。
 
@@ -65,9 +67,9 @@
 
 ## 安全與風險
 
-- 不因重構改變路由名稱、Firestore collection/field、Rules、Functions action、Storage path 或部署設定。
-- 權限與身份驗證必須留在 Functions / Rules；前端條件只負責顯示，不視為安全邊界。
-- 涉及資料 migration、Rules 行為、通知語意、Notion 同步或排程時保持保守；高風險改善列入報告，不順手改動。
+- 不因重構改變路由名稱、Supabase table/column/RPC、RLS、Edge Function action、Storage / Cloudinary path、Vercel 或 Supabase 部署設定。
+- 權限與身份驗證必須留在 Supabase RLS / Edge Functions；前端條件只負責顯示，不視為安全邊界。
+- 涉及 migrations、RLS 行為、通知語意、Notion 同步、outbox worker 或刪除工作時保持保守；高風險改善列入報告，不順手改動。
 
 ## 驗證流程
 
@@ -79,7 +81,7 @@
 
 完成後端修改後至少執行：
 
-1. `npm run build --prefix functions`
-2. `npm run verify:firestore-rules`
+1. `npm run check:edge`
+2. `npm run test:architecture`
 
-若修改 Firestore rules template，先執行 `npm run generate:firestore-rules`，再驗證產物。所有 warning 與失敗都要確認是否由本次修改造成，能修正就修正，不能修正則在報告中說明。
+若修改 Supabase migrations、Edge Function schema 型別或 shared helper，優先執行 `npm run check:edge` 與 `npm run test:architecture`。所有 warning 與失敗都要確認是否由本次修改造成，能修正就修正，不能修正則在報告中說明。

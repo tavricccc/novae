@@ -1,6 +1,7 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
+import type { Database } from "../_shared/database.ts";
 
-export type BackendSupabase = ReturnType<typeof createClient>;
+export type BackendSupabase = SupabaseClient<Database>;
 export type JsonRecord = Record<string, unknown>;
 
 export interface AuthContext {

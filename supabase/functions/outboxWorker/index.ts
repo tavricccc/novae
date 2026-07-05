@@ -1,4 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
+import type { Database } from "../_shared/database.ts";
 import { requireEnv } from "../_shared/env.ts";
 import { sendFcmMessage } from "../_shared/fcm.ts";
 import { errorMessage, jsonResponse, requireMethod } from "../_shared/http.ts";
@@ -22,6 +23,16 @@ interface OutboxEvent {
 }
 
 const NOTIFICATION_ID_NAMESPACE = "52c06670-c364-4c0f-82d9-8f18bb9f311e";
+const ISSUE_STATUS_LABELS: Record<string, string> = {
+  "auto-rejected": "未通過",
+  "completed": "已完成",
+  "infeasible": "無法實行",
+  "pending": "未回覆",
+  "processing": "處理中",
+  "review-rejected": "審核未通過",
+  "under-review": "待審核",
+};
+type AppSupabase = SupabaseClient<Database>;
 
 function asString(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
@@ -32,29 +43,33 @@ function preview(value: unknown) {
   return text.length > 80 ? `${text.slice(0, 80)}...` : text;
 }
 
+function issueStatusLabel(status: string) {
+  return ISSUE_STATUS_LABELS[status] ?? status;
+}
+
 function notificationForEvent(event: OutboxEvent) {
   const title = asString(event.payload.title, event.event_type);
   if (event.event_type === "issue.created") {
     if (asString(event.payload.status) === "under-review") {
       return {
-        source: "admin",
-        type: "issue_created",
-        target_type: "issue",
-        target_id: event.target_id,
-        title: `新提案待審核：${title}`,
-        actor_uid: event.actor_uid,
-        body_preview: preview(event.payload.content),
-        issue_category: asString(event.payload.category),
-      };
-    }
-    return {
-      source: "broadcast",
+      source: "admin",
       type: "issue_created",
       target_type: "issue",
       target_id: event.target_id,
-      title: `新增提案：${title}`,
+      title: `新提案待審核：${title}`,
       actor_uid: event.actor_uid,
-      body_preview: preview(event.payload.content),
+      body_preview: title,
+      issue_category: asString(event.payload.category),
+    };
+  }
+  return {
+      source: "admin",
+      type: "issue_created",
+      target_type: "issue",
+      target_id: event.target_id,
+      title: "新提案待處理",
+      actor_uid: event.actor_uid,
+      body_preview: title,
       issue_category: asString(event.payload.category),
     };
   }
@@ -78,23 +93,26 @@ function notificationForEvent(event: OutboxEvent) {
       type: "support_goal_met",
       target_type: "issue",
       target_id: event.target_id,
-      title: `提案已達附議門檻：${title}`,
+      title: "提案已達附議門檻",
       actor_uid: event.actor_uid,
-      body_preview: `${asString(event.payload.new_support_count)}/${asString(event.payload.support_goal)}`,
+      body_preview: title,
       issue_category: asString(event.payload.issue_category),
     };
   }
   if (event.event_type === "issue.status_changed") {
+    const oldStatus = asString(event.payload.old_status);
+    const newStatus = asString(event.payload.new_status);
+    const isReviewApproved = oldStatus === "under-review" && newStatus === "pending";
     return {
       source: "user",
       type: "issue_status_changed",
       target_type: "issue",
       target_id: event.target_id,
-      title: `提案狀態已更新：${title}`,
+      title: isReviewApproved ? `提案審核已通過：${title}` : "提案狀態已變更",
       actor_uid: event.actor_uid,
-      body_preview: preview(event.payload.reason),
-      old_status: asString(event.payload.old_status),
-      new_status: asString(event.payload.new_status),
+      body_preview: isReviewApproved ? "你的提案已通過審核並開放附議。" : `${title}現在狀態為${issueStatusLabel(newStatus)}`,
+      old_status: oldStatus,
+      new_status: newStatus,
       issue_category: asString(event.payload.issue_category),
     };
   }
@@ -104,8 +122,9 @@ function notificationForEvent(event: OutboxEvent) {
       type: "issue_deleted",
       target_type: "issue",
       target_id: event.target_id,
-      title: "提案已刪除",
+      title: "提案已被刪除",
       actor_uid: event.actor_uid,
+      body_preview: title,
     };
   }
   if (event.event_type === "announcement.created") {
@@ -114,9 +133,9 @@ function notificationForEvent(event: OutboxEvent) {
       type: "announcement_created",
       target_type: "announcement",
       target_id: event.target_id,
-      title: `新增公告：${title}`,
+      title: "有新的公告",
       actor_uid: event.actor_uid,
-      body_preview: preview(event.payload.content),
+      body_preview: title,
     };
   }
   if (event.event_type === "announcement.comment_created") {
@@ -133,26 +152,6 @@ function notificationForEvent(event: OutboxEvent) {
     };
   }
   return null;
-}
-
-function notificationForReviewApproval(event: OutboxEvent) {
-  if (
-    event.event_type !== "issue.status_changed"
-    || asString(event.payload.old_status) !== "under-review"
-    || asString(event.payload.new_status) !== "pending"
-  ) {
-    return null;
-  }
-  const title = asString(event.payload.title, event.event_type);
-  return {
-    source: "broadcast",
-    type: "issue_created",
-    target_type: "issue",
-    target_id: event.target_id,
-    title: `新增提案：${title}`,
-    actor_uid: event.actor_uid,
-    issue_category: asString(event.payload.issue_category),
-  };
 }
 
 function uuidToBytes(uuid: string) {
@@ -178,7 +177,7 @@ async function deterministicNotificationId(eventId: string, kind: string) {
 }
 
 async function findIssueAuthorUid(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   event: OutboxEvent,
 ) {
   const payloadAuthorUid = asString(event.payload.author_uid);
@@ -195,7 +194,7 @@ async function findIssueAuthorUid(
 }
 
 async function resolveNotification(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   event: OutboxEvent,
 ) {
   const notification = notificationForEvent(event);
@@ -208,7 +207,8 @@ async function resolveNotification(
     || event.event_type === "support.goal_met"
   ) {
     const recipientUid = await findIssueAuthorUid(supabase, event);
-    if (!recipientUid || recipientUid === event.actor_uid) return null;
+    if (!recipientUid) return null;
+    if (recipientUid === event.actor_uid && event.event_type !== "support.goal_met") return null;
     return { ...notification, recipient_uid: recipientUid };
   }
 
@@ -216,7 +216,7 @@ async function resolveNotification(
 }
 
 async function markMappedNotionPageDeleted(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   targetType: string,
   targetId: string,
 ) {
@@ -234,7 +234,7 @@ async function markMappedNotionPageDeleted(
 }
 
 async function syncNotionForEvent(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   event: OutboxEvent,
 ): Promise<void> {
   switch (event.event_type) {
@@ -266,7 +266,7 @@ async function syncNotionForEvent(
 }
 
 async function sendPushes(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   notification: Record<string, unknown>,
 ) {
   let query = supabase
@@ -352,7 +352,7 @@ async function sendPushes(
 }
 
 async function insertNotification(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   notification: Record<string, unknown>,
 ) {
   const { error } = await supabase
@@ -365,7 +365,7 @@ async function insertNotification(
 }
 
 async function sendPushesWithoutBlockingOutbox(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   notification: Record<string, unknown>,
 ) {
   try {
@@ -383,7 +383,7 @@ async function sendPushesWithoutBlockingOutbox(
 }
 
 async function createNotificationsForEvent(
-  supabase: ReturnType<typeof createClient>,
+  supabase: AppSupabase,
   event: OutboxEvent,
 ) {
   const notification = await resolveNotification(supabase, event);
@@ -398,24 +398,12 @@ async function createNotificationsForEvent(
     }
   }
 
-  const approvalNotification = notificationForReviewApproval(event);
-  if (approvalNotification) {
-    const notificationWithId = {
-      ...approvalNotification,
-      id: await deterministicNotificationId(event.id, "review-approval"),
-    };
-    const inserted = await insertNotification(supabase, notificationWithId);
-    if (inserted) {
-      await sendPushesWithoutBlockingOutbox(supabase, notificationWithId);
-    }
-  }
-
   return {
-    hasNotification: Boolean(notification || approvalNotification),
+    hasNotification: Boolean(notification),
   };
 }
 
-async function processEvent(supabase: ReturnType<typeof createClient>, event: OutboxEvent) {
+async function processEvent(supabase: AppSupabase, event: OutboxEvent) {
   const { hasNotification } = await createNotificationsForEvent(supabase, event);
 
   await syncNotionForEvent(supabase, event);
@@ -443,7 +431,7 @@ Deno.serve(async (request) => {
   if (authFailure) return authFailure;
 
   try {
-    const supabase = createClient(
+    const supabase = createClient<Database>(
       requireEnv("SUPABASE_URL"),
       requireEnv("APP_SUPABASE_SERVICE_ROLE_KEY"),
       { auth: { persistSession: false } },

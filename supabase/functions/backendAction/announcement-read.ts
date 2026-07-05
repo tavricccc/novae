@@ -47,7 +47,7 @@ async function getAnnouncement(payload: JsonRecord, auth: AuthContext, supabase:
   const { data, error } = await supabase.schema("app_private").from("announcements").select("*").eq("id", asString(payload.announcementId)).maybeSingle();
   if (error) throw error;
   if (!data) throw new Error("not-found");
-  const { data: like } = await supabase.schema("app_private").from("announcement_likes").select("uid").eq("uid", auth.uid).eq("announcement_id", data.id).maybeSingle();
+  const { data: like } = await supabase.schema("app_private").from("announcement_likes").select("uid").eq("uid", auth.uid).eq("announcement_id", asString(data.id)).maybeSingle();
   return { announcement: announcementToResponse(data as JsonRecord, Boolean(like)) };
 }
 
