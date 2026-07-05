@@ -2,6 +2,17 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "提升部署穩定性",
+    version: "v1.8.62",
+    date: "2026-07-06",
+    time: "00:03",
+    items: [
+      {
+        title: "修正正式環境建置流程，提升版本發布可靠性。",
+      },
+    ],
+  },
+  {
     title: "改善內容讀取與維護流程",
     version: "v1.8.61",
     date: "2026-07-05",

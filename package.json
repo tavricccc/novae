@@ -12,6 +12,7 @@
     "prelint": "npm run generate:all",
     "prebuild": "npm run generate:all",
     "build": "vue-tsc -b && vite build",
+    "build:deploy": "vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint . --ext .ts,.vue",
