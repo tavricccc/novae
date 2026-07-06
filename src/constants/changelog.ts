@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "最佳化靜態資源與資料快取原則",
+    version: "v2.0.53",
+    date: "2026-07-06",
+    time: "15:34",
+    items: [
+      {
+        title: "將應用程式資訊清單與根目錄靜態圖示的瀏覽器 HTTP 快取時間延長至一年，並配合版本防護控制確保更新即時生效。",
+      },
+      {
+        title: "將本機作者頭像快取上限放寬至 1000 筆，大幅減少重複的頭像網路請求。",
+      },
+    ],
+  },
+  {
     title: "最佳化載入指示器動畫",
     version: "v2.0.52",
     date: "2026-07-06",

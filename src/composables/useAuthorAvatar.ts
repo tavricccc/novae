@@ -2,7 +2,7 @@ import { computed, ref, toValue, watch, type MaybeRefOrGetter } from 'vue';
 import { fetchUserAvatarUrls } from '@/services/users-read';
 
 const AUTHOR_AVATAR_CACHE_KEY = 'srp:author-avatar-cache';
-const MAX_LOCAL_AVATAR_ENTRIES = 300;
+const MAX_LOCAL_AVATAR_ENTRIES = 1000;
 const AUTHOR_AVATAR_CACHE_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
 interface AuthorAvatarCacheEntry {
