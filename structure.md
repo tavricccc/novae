@@ -49,6 +49,7 @@
 - supabase/migrations/202607050005_remove_legacy_interfaces.sql：移除已由受控後端流程取代的舊資料讀取 view 與刪除入口。
 - supabase/migrations/202607050006_atomic_content_outbox.sql：以資料庫 trigger 讓提案、公告、留言與狀態事件和來源異動在同一交易建立。
 - supabase/migrations/202607060001_dashboard_failure_diagnostics.sql：擴充管理員 Dashboard 最近異常診斷欄位，並統一背景異常與維護紀錄的近期保留策略。
+- supabase/migrations/202607060002_cleanup_removed_issue_categories.sql：讓維護清理可依目前有效提案分類刪除已移除分類的資料庫提案與留言，排程清理相關 Cloudinary 圖片，並保留 Notion 備份頁面且標記為已刪除。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/types.ts：受控 action 共用 Supabase client、身份與 JSON record 型別。
 - supabase/functions/backendAction/utils.ts：受控 action 共用 cursor、時間、數值、布林與台北日界限工具。

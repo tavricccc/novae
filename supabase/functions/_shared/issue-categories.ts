@@ -100,29 +100,6 @@ export const ISSUE_CATEGORIES = [
       visibility: "school",
       enabledWhen: "readable"
     }
-  },
-  {
-    id: "test",
-    label: "測試",
-    readAccess: "school",
-    authorStorage: "issue",
-    support: {
-      enabled: false,
-      goal: null,
-      deadlineDays: null,
-      autoRejectUnmet: false
-    },
-    responseDeadline: {
-      start: "created",
-      days: 7
-    },
-    uploads: {
-      visibility: "school"
-    },
-    comments: {
-      visibility: "school",
-      enabledWhen: "readable"
-    }
   }
 ] as const satisfies readonly IssueCategoryConfig[];
 

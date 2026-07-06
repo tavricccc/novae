@@ -23,7 +23,11 @@ export async function getPlatformDashboard(supabase: BackendSupabase) {
   const counters = asRecord(snapshot.counters);
   const maintenance = asRecord(snapshot.maintenance);
   const maintenanceDetails = asRecord(maintenance.details);
-  const failedMaintenanceTasks = asCount(maintenanceDetails.failed_deletion_jobs_too_old) > 0
+  const failedDeletionJobs = Math.max(
+    asCount(maintenanceDetails.failed_deletion_jobs),
+    asCount(maintenanceDetails.failed_deletion_jobs_too_old),
+  );
+  const failedMaintenanceTasks = failedDeletionJobs > 0
     ? ["刪除工作失敗過久"]
     : [];
   const outboxFailed = asCount(snapshot.outbox_failed);

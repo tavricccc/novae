@@ -179,3 +179,21 @@ jobs:
             printf 'backendAction healthcheck failed with HTTP %s\n' "$status" >&2
             exit 1
           fi
+
+      - name: Run maintenance cleanup
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          response="$(curl -sS -w '\n%{http_code}' \
+            -X POST "https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/maintenanceCleanup" \
+            -H "content-type: application/json" \
+            -H "authorization: Bearer ${WEBHOOK_SECRET}" \
+            --data '{"signal":"post_deploy"}')"
+          status="$(printf '%s' "$response" | tail -n 1)"
+          body="$(printf '%s' "$response" | sed '$d')"
+          printf 'maintenance cleanup response: %s\n' "$body"
+          if [ "$status" != "200" ] || ! printf '%s' "$body" | grep -q '"ok":true'; then
+            printf 'maintenance cleanup failed with HTTP %s\n' "$status" >&2
+            exit 1
+          fi

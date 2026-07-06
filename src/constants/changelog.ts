@@ -2,6 +2,23 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "調整提案分類維護方式",
+    version: "v2.0.57",
+    date: "2026-07-06",
+    time: "22:08",
+    items: [
+      {
+        title: "移除測試用提案分類，簡化正式環境分類選項。",
+      },
+      {
+        title: "完善分類移除後的維護清理，降低舊資料與圖片資源殘留風險。",
+      },
+      {
+        title: "分類移除後會保留外部備份紀錄，並同步標示為已刪除。",
+      },
+    ],
+  },
+  {
     title: "調整成本評估說明",
     version: "v2.0.56",
     date: "2026-07-06",

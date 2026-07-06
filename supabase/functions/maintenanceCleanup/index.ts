@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import type { Database } from "../_shared/database.ts";
 import { requireEnv } from "../_shared/env.ts";
 import { errorMessage, jsonResponse, requireMethod } from "../_shared/http.ts";
+import { ISSUE_CATEGORY_IDS } from "../_shared/issue-categories.ts";
 import { requireBearerSecret } from "../_shared/webhook.ts";
 
 Deno.serve(async (request) => {
@@ -19,7 +20,7 @@ Deno.serve(async (request) => {
     );
     const { data, error } = await supabase
       .schema("app_api")
-      .rpc("run_maintenance_cleanup");
+      .rpc("run_maintenance_cleanup", { valid_issue_categories: [...ISSUE_CATEGORY_IDS] });
     if (error) throw error;
 
     const baseUrl = requireEnv("SUPABASE_URL").replace(/\/+$/u, "");

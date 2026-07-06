@@ -63,6 +63,8 @@ test('Supabase backend deployment owns database and Edge Functions', async () =>
   assert.match(workflow, /x-healthcheck-secret/u);
   assert.match(workflow, /supabase functions deploy outboxWorker/u);
   assert.match(workflow, /supabase functions deploy maintenanceCleanup/u);
+  assert.match(workflow, /Run maintenance cleanup/u);
+  assert.match(workflow, /functions\/v1\/maintenanceCleanup/u);
   assert.match(workflow, /SUPABASE_ACCESS_TOKEN/u);
   assert.match(workflow, /CLOUDINARY_API_SECRET/u);
   assert.match(workflow, /APP_SUPABASE_SERVICE_ROLE_KEY/u);
@@ -222,11 +224,33 @@ test('outbox, webhooks, FCM, and Notion deletion marks are guarded', async () =>
   assert.match(maintenanceCleanup, /requireBearerSecret/u);
   assert.match(maintenanceCleanup, /requireMethod\(request, "POST"\)/u);
   assert.match(maintenanceCleanup, /run_maintenance_cleanup/u);
+  assert.match(maintenanceCleanup, /ISSUE_CATEGORY_IDS/u);
+  assert.match(maintenanceCleanup, /valid_issue_categories/u);
   assert.match(notion, /name: "已刪除"/u);
   assert.match(notion, /ensureSelectOption/u);
   assert.match(notion, /"分類": \{ select: \{ name: categoryLabel \} \}/u);
   assert.match(notion, /"狀態": \{ select: \{ name: statusLabel \} \}/u);
   assert.doesNotMatch(notion, /archived: true/u);
+});
+
+test('removed issue categories are cleaned and Notion backups are marked deleted', async () => {
+  const cleanupMigration = await read('supabase/migrations/202607060002_cleanup_removed_issue_categories.sql');
+  const maintenanceCleanup = await read('supabase/functions/maintenanceCleanup/index.ts');
+  const workflow = await read('.github/workflows/deploy-backend.yml');
+
+  assert.match(cleanupMigration, /valid_issue_categories text\[\]/u);
+  assert.match(cleanupMigration, /where not \(category = any\(valid_issue_categories\)\)/u);
+  assert.match(cleanupMigration, /attached_target_type = 'issue'/u);
+  assert.match(cleanupMigration, /attached_target_type = 'comment'/u);
+  assert.match(cleanupMigration, /insert into app_private\.deletion_jobs \(target_type, target_id, cloudinary_public_id\)/u);
+  assert.match(cleanupMigration, /insert into app_private\.outbox_events \(event_type, target_type, target_id, actor_uid, payload\)/u);
+  assert.match(cleanupMigration, /'issue\.deleted'/u);
+  assert.match(cleanupMigration, /delete from app_private\.uploads/u);
+  assert.match(cleanupMigration, /delete from app_private\.issues/u);
+  assert.doesNotMatch(cleanupMigration, /notion_pages|notion_page_id/u);
+  assert.match(maintenanceCleanup, /ISSUE_CATEGORY_IDS/u);
+  assert.match(maintenanceCleanup, /valid_issue_categories: \[\.\.\.ISSUE_CATEGORY_IDS\]/u);
+  assert.match(workflow, /Run maintenance cleanup/u);
 });
 
 test('backend list actions use stable cursor pagination at the service boundary', async () => {

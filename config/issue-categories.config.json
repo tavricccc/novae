@@ -31,16 +31,6 @@
         "enabled": false
       },
       "responseDeadlineDays": 7
-    },
-    {
-      "id": "test",
-      "label": "測試",
-      "readAccess": "school",
-      "authorVisible": true,
-      "support": {
-        "enabled": false
-      },
-      "responseDeadlineDays": 7
     }
   ]
 }
