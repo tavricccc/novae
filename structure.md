@@ -187,11 +187,11 @@
 - src/composables/useAppInstallPrompt.ts：PWA 安裝提示狀態管理，處理 standalone 判斷、beforeinstallprompt、iOS Safari 手動引導、in-app browser 優先權與 sessionStorage 關閉記錄。
 - src/composables/useAppUpdate.ts：手動註冊無快取 service worker，啟動時檢查一次 `version.json`，並管理強制更新提示狀態。
 - src/composables/useTimedMessage.ts：短效訊息 helper，負責 toast 觸發訊息的逾時清空。
-- src/composables/useMinimumLoading.ts：將真實載入狀態與至少 150ms 的切換回饋合併，供快取命中的提案分頁、公告與留言 skeleton 共用。
+- src/composables/useMinimumLoading.ts：讓提案分頁、公告與留言 skeleton 直接跟隨真實載入狀態，避免快取命中時保留額外等待。
 - src/composables/useLoadingTimeout.ts：監看頁面 loading，超過指定時間後切換到可重試的網路異常 fallback。
 - src/composables/useNetworkStatus.ts：共用瀏覽器線上 / 離線狀態監聽，供載入逾時與讀取錯誤提示判斷目前連線狀態。
 - src/composables/useAppResume.ts：集中監聽 pageshow 與 visibilitychange；iOS PWA 從背景或 bfcache 恢復時 abort 舊 request scope，供通知等即時狀態重新連線使用。
-- src/composables/useAppStartupGate.ts：合併最短啟動畫面時間、router readiness、authChecking、userLoading、appInitializing 與 appReady，控制 AppStartupScreen 顯示時機。
+- src/composables/useAppStartupGate.ts：合併 router readiness、authChecking、userLoading、appInitializing 與 appReady，控制 AppStartupScreen 顯示時機。
 - src/composables/useIssueBuckets.ts：依使用者、權限、分類、狀態、排序與頁面大小快取提案分段列表；使用一次性讀取、手動重新整理與底部自動載入更多，並以版本 token 忽略快速切換後晚到的結果。
 - src/composables/useInfiniteScroll.ts：共用 IntersectionObserver 底部哨兵 helper，供提案、公告與留言列表接近底部時自動載入更多。
 - src/composables/useIssueSearch.ts：提案搜尋狀態管理，包含 700ms debounce、最短 3 字門檻、最多 50 筆 n-gram 候選與 5 分鐘結果快取。

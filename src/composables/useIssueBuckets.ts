@@ -1,6 +1,5 @@
 import { computed, onBeforeUnmount, reactive, watch, type Ref } from 'vue';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
-import { waitForMinimumDuration } from '@/lib/page-size';
 import { fetchIssuesPageByStatus } from '@/services/issues';
 import type { IssueCursor, IssueFilter, IssueRecord, IssueSortOption, IssueStatusBucket } from '@/types';
 
@@ -104,7 +103,6 @@ export function useIssueBuckets(deps: BucketDeps) {
     if (!options.append && (bucket.loading || bucket.refreshing)) return;
 
     const version = getBucketVersion(bucket);
-    const startedAt = Date.now();
     const cursor = options.append ? bucket.cursor : null;
     bucket.error = '';
     if (options.append) {
@@ -143,9 +141,6 @@ export function useIssueBuckets(deps: BucketDeps) {
       }
     } finally {
       if (version === getBucketVersion(bucket)) {
-        if (options.append) {
-          await waitForMinimumDuration(startedAt, 200);
-        }
         bucket.loading = false;
         bucket.loadingMore = false;
         bucket.refreshing = false;

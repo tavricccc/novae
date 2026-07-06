@@ -2,7 +2,7 @@ import { computed, onScopeDispose, reactive, ref, watch, type Ref } from 'vue';
 import type { AnnouncementRecord, AnnouncementSortOption } from '@/types';
 import { fetchAnnouncementsPage, type AnnouncementCursor } from '@/services/announcements';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
-import { resolveViewportPageSize, waitForMinimumDuration } from '@/lib/page-size';
+import { resolveViewportPageSize } from '@/lib/page-size';
 
 interface UseAnnouncementsOptions {
   immediate?: boolean;
@@ -131,7 +131,6 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
     const state = currentState.value;
     if (!state.hasMore || !state.cursor || state.loadingMore) return;
     const currentVersion = getVersion(state);
-    const startedAt = Date.now();
     state.loadingMore = true;
     state.error = '';
 
@@ -149,7 +148,6 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
       }
     } finally {
       if (currentVersion === getVersion(state)) {
-        await waitForMinimumDuration(startedAt, 200);
         state.loadingMore = false;
       }
     }

@@ -9,7 +9,6 @@ import { useSession } from '@/composables/useSession';
 import { useToast } from '@/composables/useToast';
 import { formatRequestError, isAbortFailure, RequestFailure } from '@/lib/request';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
-import { waitForMinimumDuration } from '@/lib/page-size';
 import { isContentUnavailableError } from '@/services/issues-core';
 
 export function useAnnouncementComments(
@@ -94,7 +93,6 @@ export function useAnnouncementComments(
   async function loadMoreComments() {
     const id = announcementId();
     if (!id || !hasMore.value || !cursor.value || loadingMore.value) return;
-    const startedAt = Date.now();
     loadingMore.value = true;
     try {
       const page = await fetchAnnouncementComments(id, cursor.value, { signal: null });
@@ -113,7 +111,6 @@ export function useAnnouncementComments(
         );
       }
     } finally {
-      await waitForMinimumDuration(startedAt, 200);
       loadingMore.value = false;
     }
   }

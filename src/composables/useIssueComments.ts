@@ -5,7 +5,6 @@ import { createComment, deleteComment, fetchComments } from '@/services/issues';
 import type { CommentRecord, DiscussionCommentRecord } from '@/types';
 import { formatRequestError, isAbortFailure, RequestFailure } from '@/lib/request';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
-import { waitForMinimumDuration } from '@/lib/page-size';
 import { isContentUnavailableError } from '@/services/issues-core';
 
 export function useIssueComments(issueId: Ref<string>, onContentUnavailable?: (issueId: string) => void) {
@@ -89,7 +88,6 @@ export function useIssueComments(issueId: Ref<string>, onContentUnavailable?: (i
 
   async function loadMoreComments() {
     if (!hasMore.value || !cursor.value || loadingMore.value) return;
-    const startedAt = Date.now();
     loadingMore.value = true;
     try {
       const page = await fetchComments(issueId.value, cursor.value, { signal: null });
@@ -108,7 +106,6 @@ export function useIssueComments(issueId: Ref<string>, onContentUnavailable?: (i
         );
       }
     } finally {
-      await waitForMinimumDuration(startedAt, 200);
       loadingMore.value = false;
     }
   }

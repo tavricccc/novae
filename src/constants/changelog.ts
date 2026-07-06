@@ -2,6 +2,17 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "提升頁面載入速度",
+    version: "v2.0.45",
+    date: "2026-07-06",
+    time: "12:36",
+    items: [
+      {
+        title: "改善開啟 App、切換頁面與載入更多內容時的等待體驗，讓已完成讀取的內容能更快顯示。",
+      },
+    ],
+  },
+  {
     title: "最佳化登入畫面視覺呈現",
     version: "v2.0.44",
     date: "2026-07-06",
