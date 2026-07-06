@@ -8,6 +8,7 @@ const remoteVersion = ref('');
 let lastCheckedAt = 0;
 
 const AUTO_RELOAD_STORAGE_KEY = 'srp:auto-update-reloaded-version';
+const PENDING_UPDATE_VERSION_STORAGE_KEY = 'srp:pending-update-version';
 
 interface VersionResponse {
   version?: string;
@@ -81,7 +82,9 @@ export function useAppUpdate() {
       sessionStorage.setItem(AUTO_RELOAD_STORAGE_KEY, remoteVersion.value);
     }
 
-    localStorage.setItem('srp:pending-update-toast', '1');
+    if (remoteVersion.value) {
+      localStorage.setItem(PENDING_UPDATE_VERSION_STORAGE_KEY, remoteVersion.value);
+    }
     await updateServiceWorker();
     await resetAppConnection();
     window.location.reload();

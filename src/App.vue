@@ -48,6 +48,9 @@ import { ref, watch } from 'vue';
 import { DEFAULT_ISSUE_ROUTE_FILTER } from '@/constants/categories';
 
 const APP_RELEASE_MARKER = '2026-06-27-1516';
+const LAST_APP_VERSION_STORAGE_KEY = 'srp:last-app-version';
+const LEGACY_PENDING_UPDATE_TOAST_STORAGE_KEY = 'srp:pending-update-toast';
+const PENDING_UPDATE_VERSION_STORAGE_KEY = 'srp:pending-update-version';
 
 if (typeof document !== 'undefined') {
   document.documentElement.dataset.appRelease = APP_RELEASE_MARKER;
@@ -179,15 +182,23 @@ watch(
   startupGateOpen,
   (open) => {
     if (!open) {
-      const pendingToast = localStorage.getItem('srp:pending-update-toast') === '1';
-      const lastVersion = localStorage.getItem('srp:last-app-version');
-      const isNewVersion = lastVersion && lastVersion !== __APP_VERSION__;
+      const lastVersion = localStorage.getItem(LAST_APP_VERSION_STORAGE_KEY);
+      const pendingUpdateVersion = localStorage.getItem(PENDING_UPDATE_VERSION_STORAGE_KEY);
+      const isNewVersion = Boolean(lastVersion && lastVersion !== __APP_VERSION__);
+      const completedPendingUpdate = Boolean(
+        pendingUpdateVersion
+        && pendingUpdateVersion === __APP_VERSION__
+        && isNewVersion,
+      );
 
-      if (pendingToast || isNewVersion) {
+      if (completedPendingUpdate || (isNewVersion && !pendingUpdateVersion)) {
         showToast('版本已成功更新', 'success');
-        localStorage.removeItem('srp:pending-update-toast');
       }
-      localStorage.setItem('srp:last-app-version', __APP_VERSION__);
+      localStorage.removeItem(LEGACY_PENDING_UPDATE_TOAST_STORAGE_KEY);
+      if (completedPendingUpdate) {
+        localStorage.removeItem(PENDING_UPDATE_VERSION_STORAGE_KEY);
+      }
+      localStorage.setItem(LAST_APP_VERSION_STORAGE_KEY, __APP_VERSION__);
     }
   },
   { immediate: true }
