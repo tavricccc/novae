@@ -9,6 +9,14 @@
 ## 根目錄
 
 - README.md：專案摘要。
+- docs/README.md：開源專案文件索引，依採用、部署、維護與成熟度評估情境導向各主題文件。
+- docs/project-overview.md：專案總覽、適用情境、核心功能、成熟度設計與開源採用建議。
+- docs/architecture.md：技術棧、前後端分層、資料流、Edge Functions、資料庫、圖片、通知、部署與架構測試說明。
+- docs/costs.md：正式環境成本估算、主要雲端服務成本來源、免費方案起步建議、用量風險與升級判斷。
+- docs/configuration.md：分類、讀取權限、附議、作者顯示、限流、圖片與環境變數設定指南。
+- docs/security.md：登入、授權、RLS、後端受控 action、secret、圖片、webhook 與開源部署安全清單。
+- docs/operations.md：上線後檢查、Dashboard 判讀、錯誤處理、資料保留、背景工作、部署與日常維護指南。
+- docs/deployment-guide.md：正式環境部署教學，提供 fork 專案、建立 GitHub production Environment、各項 secrets 取得位置、GitHub Actions 部署順序與前端公開設定邊界說明。
 - config/issue-categories.config.json：提案分類與細部權限設定唯一編輯入口，定義分類 id、顯示名稱、讀取權限、附議限制與回覆期限等詳細配置。
 - config/rate-limits.config.json：限流閾值、各內容圖片數量與圖片壓縮設定編輯入口，定義提案／公告／留言上傳張數，以及圖片寬高與 WebP 品質等參數。
 - structure.md：本檔案，維護全站模組結構地圖。

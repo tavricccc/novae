@@ -63,9 +63,21 @@ npm run test:architecture
 npm run generate:all
 ```
 
+## 專案文件
+
+完整開源文件請見 [docs/README.md](docs/README.md)，包含：
+
+- [專案總覽與亮點](docs/project-overview.md)
+- [技術架構](docs/architecture.md)
+- [成本估算](docs/costs.md)
+- [設定指南](docs/configuration.md)
+- [資安與隱私模型](docs/security.md)
+- [維運指南](docs/operations.md)
+- [正式環境部署教學](docs/deployment-guide.md)
+
 ## 部署
 
-GitHub Actions 使用 `production` 與 `development` 兩個 GitHub Environment。
+GitHub Actions 使用 `production` 與 `development` 兩個 GitHub Environment。第一次部署請先閱讀 [正式環境部署教學](docs/deployment-guide.md)，依照教學 fork 專案、建立 `production` Environment、填入 secrets，並依序執行後端與前端部署 workflow。
 
 前端 Vercel workflow 需要：
 
@@ -84,13 +96,19 @@ Supabase 後端 workflow 需要：
 - `SUPABASE_DB_PASSWORD`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `FIREBASE_PROJECT_ID`
-- `FIREBASE_SERVICE_ACCOUNT_JSON`
+- `FIREBASE_WEB_API_KEY`
+- `GOOGLE_SERVICE_ACCOUNT_JSON`
+- `ALLOWED_DOMAIN`
+- `ADMIN_EMAILS`
 - `CLOUDINARY_CLOUD_NAME`
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
 - `CLOUDINARY_WEBHOOK_SECRET`
 - `WEBHOOK_SECRET`
 - `NOTION_TOKEN`
+- `NOTION_DATABASE_ID`
 - `NOTION_VERSION`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
 
 後端部署 workflow 會執行 Supabase migrations、設定 Edge Function secrets，並部署 `syncUser`、`backendAction`、`cloudinaryWebhook`、`outboxWorker`、`processDeletionJobs`、`maintenanceCleanup`。資料維護主要由 Supabase cron 執行，`maintenanceCleanup` 保留為手動觸發入口；另有手動 Cloudinary reset workflow，可清除目前 Cloudinary cloud 內的 image / video / raw 資源。
