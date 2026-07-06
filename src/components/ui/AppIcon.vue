@@ -57,6 +57,10 @@
       <path d="M18.2 9A7 7 0 0 0 6.3 6.8L4 9" />
       <path d="M5.8 15A7 7 0 0 0 17.7 17.2L20 15" />
     </template>
+    <template v-else-if="name === 'reply'">
+      <path d="M9 7 4 12l5 5" />
+      <path d="M5 12h8.5a5.5 5.5 0 0 1 5.5 5.5V18" />
+    </template>
     <template v-else-if="name === 'search'">
       <circle cx="11" cy="11" r="7" />
       <path d="m20 20-3.5-3.5" />
@@ -156,6 +160,7 @@ export type AppIconName =
   | 'lock'
   | 'megaphone'
   | 'refresh'
+  | 'reply'
   | 'search'
   | 'send'
   | 'settings'

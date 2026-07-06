@@ -33,27 +33,30 @@
               <MarkdownMediaContent :content="comment.content" :fallback-alt="`${comment.author_name} 的留言圖片`" />
             </div>
           </div>
-          <CompactActionMenu
-            v-if="canDelete"
-            class="shrink-0 self-start opacity-80 transition-opacity group-hover:opacity-100"
-            :delete-disabled="deleting"
-            :delete-label="deleting ? '刪除中...' : '刪除留言'"
-            :show-edit="false"
-            title="管理留言"
-            @delete="emit('delete')"
-          />
+          <div v-if="(!isReply && canReply) || canDelete" class="-mr-1 flex shrink-0 items-center gap-0.5 self-start">
+            <button
+              v-if="!isReply && canReply"
+              type="button"
+              class="button-toolbar h-8 w-8 rounded-full p-0 opacity-80 transition-opacity group-hover:opacity-100"
+              aria-label="回覆留言"
+              title="回覆留言"
+              @click="emit('reply')"
+            >
+              <AppIcon name="reply" :size="4" :stroke-width="2" />
+            </button>
+            <CompactActionMenu
+              v-if="canDelete"
+              class="shrink-0 opacity-80 transition-opacity group-hover:opacity-100"
+              :delete-disabled="deleting"
+              :delete-label="deleting ? '刪除中...' : '刪除留言'"
+              :show-edit="false"
+              title="管理留言"
+              @delete="emit('delete')"
+            />
+          </div>
         </div>
 
         <div v-if="!isReply" class="mt-1 flex flex-wrap items-center gap-1.5">
-          <button
-            v-if="canReply"
-            type="button"
-            class="button-toolbar h-7 rounded-full px-2.5 text-xs font-semibold"
-            @click="emit('reply')"
-          >
-            回覆
-          </button>
-
           <button
             v-if="hasReplies"
             type="button"
@@ -176,21 +179,7 @@ const repliesToggleLabel = computed(() => (
   margin-left: 1.25rem;
 }
 
-.reply-list::before {
-  position: absolute;
-  top: 0.875rem;
-  left: -1.75rem;
-  width: 1.75rem;
-  height: 1rem;
-  border-bottom: 1px solid rgb(226 232 240);
-  border-left: 1px solid rgb(226 232 240);
-  border-bottom-left-radius: 1rem;
-  content: '';
-  pointer-events: none;
-}
-
-:global(.dark) .comment-with-replies::before,
-:global(.dark) .reply-list::before {
+:global(.dark) .comment-with-replies::before {
   border-color: rgb(30 41 59);
 }
 </style>

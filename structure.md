@@ -118,7 +118,7 @@
 共用、無業務邏輯、純展示元件，可被任何場景複用：
 
 - LoadingSpinner.vue：可設定尺寸的 loading spinner SVG 元件（雙層環 + 自訂縮放脈動動畫）。
-- AppIcon.vue：共用線性圖示元件，集中 chart、comment、close、edit、image、lock、send、warning、inbox 等常用 UI icon，降低元件內嵌 SVG 重複。
+- AppIcon.vue：共用線性圖示元件，集中 chart、comment、reply、close、edit、image、lock、send、warning、inbox 等常用 UI icon，降低元件內嵌 SVG 重複。
 - EmptyStatePanel.vue：通用空狀態 / 錯誤狀態面板，統一 icon（支援 chart、comment、lock、warning、inbox）、標題、描述與可選重試按鈕，用於看板分頁、公告、留言與 Dashboard。
 - MarkdownImageEditor.vue：Markdown 文字 + 圖片預覽編輯器展示元件，只處理 toolbar、縮圖、預覽與輸入事件；內建 slash 指令選單與 Markdown 表格 block 邊界控制，上傳與儲存流程仍由各自 composable / parent 控制。
 - MarkdownToolbar.vue：Markdown 編輯器專用格式化工具列，集中粗體、斜體、標題、清單、表格、水平線等功能按鈕。
