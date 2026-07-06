@@ -137,7 +137,7 @@
             <div class="dashboard-section-head">
               <div>
                 <h3 class="dashboard-section-title">最近異常</h3>
-                <p class="dashboard-section-subtitle">Notion 與 outbox 最近失敗摘要。</p>
+                <p class="dashboard-section-subtitle">背景處理、推播與清理工作的最近失敗摘要。</p>
               </div>
             </div>
             <div v-if="recentFailureRows.length > 0" class="mt-4 space-y-3">
@@ -150,7 +150,14 @@
                   <p class="text-sm font-bold text-ink-900 dark:text-ink-100">{{ failure.sourceLabel }}</p>
                   <p class="text-xs font-semibold text-ink-400 dark:text-ink-500">{{ failure.updatedLabel }}</p>
                 </div>
-                <p class="mt-1 text-xs font-semibold text-error">{{ failure.status }}</p>
+                <div class="mt-2 grid gap-1.5 text-xs leading-5 text-ink-500 dark:text-ink-400">
+                  <p><span class="font-bold text-ink-700 dark:text-ink-200">狀態：</span><span class="font-semibold text-error">{{ failure.status }}</span></p>
+                  <p><span class="font-bold text-ink-700 dark:text-ink-200">類型：</span>{{ failure.detailLabel }}</p>
+                  <p><span class="font-bold text-ink-700 dark:text-ink-200">目標：</span><span class="break-all">{{ failure.targetLabel }}</span></p>
+                  <p v-if="failure.attempt_count > 0"><span class="font-bold text-ink-700 dark:text-ink-200">嘗試：</span>{{ failure.attempt_count }} 次</p>
+                  <p><span class="font-bold text-ink-700 dark:text-ink-200">建立：</span>{{ failure.createdLabel }}</p>
+                  <p v-if="failure.next_attempt_at"><span class="font-bold text-ink-700 dark:text-ink-200">下次重試：</span>{{ failure.nextAttemptLabel }}</p>
+                </div>
                 <p class="mt-2 text-xs leading-5 text-ink-500 dark:text-ink-400">{{ failure.message }}</p>
                 <p class="mt-1 break-all text-[11px] font-medium text-ink-400 dark:text-ink-500">
                   追蹤碼：{{ failure.id }}

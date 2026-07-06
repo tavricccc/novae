@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "完善管理員異常檢視",
+    version: "v2.0.48",
+    date: "2026-07-06",
+    time: "14:57",
+    items: [
+      {
+        title: "新增管理員儀表板異常細節，協助直接查看失敗類型、目標、嘗試次數與重試時間。",
+      },
+      {
+        title: "調整背景異常紀錄保留時間，統一以近期資料為主要檢視範圍。",
+      },
+    ],
+  },
+  {
     title: "修正版本更新提示",
     version: "v2.0.47",
     date: "2026-07-06",

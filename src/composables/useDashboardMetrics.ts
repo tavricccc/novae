@@ -129,7 +129,15 @@ export function useDashboardMetrics(
           ? 'Outbox'
           : failure.source === 'push'
             ? '推播'
-            : failure.source,
+            : failure.source === 'cleanup'
+              ? '清理'
+              : failure.source,
+      createdLabel: formatDate(failure.created_at) || '時間未知',
+      detailLabel: failure.detail_type || failure.target_type || '未標示類型',
+      nextAttemptLabel: formatDate(failure.next_attempt_at) || '尚未排程',
+      targetLabel: failure.target_type && failure.target_id
+        ? `${failure.target_type} / ${failure.target_id}`
+        : failure.target_type || failure.target_id || '未標示目標',
       updatedLabel: formatDate(failure.updated_at) || '時間未知',
       message: failure.message || '未提供錯誤訊息',
     }));

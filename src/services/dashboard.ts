@@ -24,9 +24,15 @@ interface DashboardResponse {
     };
     recent_failures: Array<{
       id: string;
+      attempt_count: number;
+      created_at_ms: number | null;
+      detail_type: string;
       source: string;
       status: string;
       message: string;
+      next_attempt_at_ms: number | null;
+      target_id: string;
+      target_type: string;
       updated_at_ms: number | null;
     }>;
   };
@@ -96,9 +102,15 @@ export async function fetchPlatformDashboard(): Promise<PlatformDashboardData> {
         },
         recent_failures: operations.recent_failures.map((failure) => ({
           id: failure.id,
+          attempt_count: failure.attempt_count,
+          created_at: toDate(failure.created_at_ms),
+          detail_type: failure.detail_type,
           source: failure.source,
           status: failure.status,
           message: failure.message,
+          next_attempt_at: toDate(failure.next_attempt_at_ms),
+          target_id: failure.target_id,
+          target_type: failure.target_type,
           updated_at: toDate(failure.updated_at_ms),
         })),
       },

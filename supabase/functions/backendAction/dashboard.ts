@@ -29,6 +29,7 @@ export async function getPlatformDashboard(supabase: BackendSupabase) {
   const outboxFailed = asCount(snapshot.outbox_failed);
   const outboxPending = asCount(snapshot.outbox_pending);
   const pushFailed = asCount(snapshot.push_failed);
+  const deletionFailed = asCount(snapshot.deletion_failed);
   const deletionPending = asCount(snapshot.deletion_pending);
   const uploadPending = asCount(snapshot.upload_pending);
   const recentFailures = Array.isArray(snapshot.recent_failures)
@@ -36,9 +37,15 @@ export async function getPlatformDashboard(supabase: BackendSupabase) {
       const failure = asRecord(entry);
       return {
         id: asString(failure.id),
+        attempt_count: asCount(failure.attempt_count),
+        created_at_ms: toMs(failure.created_at),
+        detail_type: asString(failure.detail_type),
         message: asString(failure.message),
+        next_attempt_at_ms: toMs(failure.next_attempt_at),
         source: asString(failure.source, "outbox"),
         status: asString(failure.status),
+        target_id: asString(failure.target_id),
+        target_type: asString(failure.target_type),
         updated_at_ms: toMs(failure.updated_at),
       };
     })
@@ -69,7 +76,7 @@ export async function getPlatformDashboard(supabase: BackendSupabase) {
       failed_push_delivery_count: pushFailed,
       next_sync_count: asCount(snapshot.notion_pending),
       oldest_pending_sync_at_ms: toMs(snapshot.oldest_pending_notion_at),
-      overall_status: outboxFailed > 0 || pushFailed > 0
+      overall_status: outboxFailed > 0 || pushFailed > 0 || deletionFailed > 0
         ? "critical"
         : outboxPending > 0 || deletionPending > 0 || uploadPending > 0
           ? "attention"

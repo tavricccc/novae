@@ -115,9 +115,15 @@ type PlatformDashboardStatus = 'healthy' | 'attention' | 'critical';
 
 interface PlatformDashboardFailure {
   id: string;
-  source: 'notion' | 'outbox' | string;
+  source: 'outbox' | 'push' | 'cleanup' | string;
   status: string;
   message: string;
+  detail_type: string;
+  target_type: string;
+  target_id: string;
+  attempt_count: number;
+  next_attempt_at: Date | null;
+  created_at: Date | null;
   updated_at: Date | null;
 }
 
