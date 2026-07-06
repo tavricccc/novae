@@ -10,7 +10,7 @@
       aria-describedby="app-install-prompt-description"
       tabindex="-1"
     >
-      <div class="min-h-0 flex-1 overflow-y-auto px-5 pt-6 pb-2 md:px-8 md:pt-8 md:pb-3">
+      <div class="min-h-0 flex-1 overflow-y-auto px-5 pt-6 pb-5 md:px-8 md:pt-8 md:pb-6">
         <div class="flex items-start justify-between gap-4 pb-2">
           <div class="flex min-w-0 items-start gap-4">
             <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/60 bg-white/90 shadow-sm dark:border-ink-700/80 dark:bg-ink-900/80" aria-hidden="true">

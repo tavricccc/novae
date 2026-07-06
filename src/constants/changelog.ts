@@ -13,9 +13,6 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
       {
         title: "移除安裝提示對話框的關閉按鈕，簡化介面引導流程。",
       },
-      {
-        title: "縮減對話框文字內容與底部操作區之間的間距，提升版面緊湊感與一致性。",
-      },
     ],
   },
   {
