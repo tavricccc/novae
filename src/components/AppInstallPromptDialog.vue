@@ -1,8 +1,8 @@
 <template>
-  <DialogOverlay :open="open" z-index-class="z-[80]">
+  <DialogOverlay :open="open" padded z-index-class="z-[80]">
     <section
       ref="dialogRef"
-      class="panel dialog-card flex flex-col !overflow-hidden max-md:h-full max-md:w-full max-md:max-w-none max-md:rounded-none max-md:border-0 max-md:!p-0 md:max-w-2xl md:max-h-[min(85dvh,780px)]"
+      class="panel dialog-card flex flex-col !overflow-hidden md:max-w-2xl md:max-h-[min(85dvh,780px)]"
       data-dialog-root
       role="dialog"
       aria-modal="true"
@@ -10,7 +10,7 @@
       aria-describedby="app-install-prompt-description"
       tabindex="-1"
     >
-      <div class="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-[max(1.25rem,env(safe-area-inset-top))] md:px-8 md:pt-8 md:pb-6">
+      <div class="min-h-0 flex-1 overflow-y-auto px-5 pt-6 pb-5 md:px-8 md:pt-8 md:pb-6">
         <div class="flex items-start justify-between gap-4 pb-2">
           <div class="flex min-w-0 items-start gap-4">
             <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/60 bg-white/90 shadow-sm dark:border-ink-700/80 dark:bg-ink-900/80" aria-hidden="true">
@@ -26,15 +26,6 @@
               </p>
             </div>
           </div>
-
-          <button
-            type="button"
-            class="button-toolbar h-10 w-10 shrink-0 rounded-full p-0"
-            aria-label="關閉安裝提示"
-            @click="handleSecondaryAction"
-          >
-            <AppIcon name="close" :size="4" :stroke-width="2.4" />
-          </button>
         </div>
 
         <div class="mt-5">
@@ -93,7 +84,7 @@
         </div>
       </div>
 
-      <div class="dialog-actions border-t border-ink-100 bg-white/95 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 backdrop-blur dark:border-ink-800 dark:bg-ink-950/95 md:px-8 md:pb-8 md:pt-4">
+      <div class="dialog-actions border-t border-ink-100 bg-white/95 px-5 pb-6 pt-4 backdrop-blur dark:border-ink-800 dark:bg-ink-950/95 md:px-8 md:pb-8 md:pt-4">
         <button
           type="button"
           class="button-secondary"

@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "調整安裝提示對話框樣式",
+    version: "v2.0.51",
+    date: "2026-07-06",
+    time: "15:16",
+    items: [
+      {
+        title: "調整安裝提示對話框在行動裝置上的呈現方式為卡片樣式，與平板電腦版保持一致視覺設計。",
+      },
+      {
+        title: "移除安裝提示對話框的關閉按鈕，簡化介面引導流程。",
+      },
+    ],
+  },
+  {
     title: "最佳化安裝引導與更新提示流程",
     version: "v2.0.50",
     date: "2026-07-06",
