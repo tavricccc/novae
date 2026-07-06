@@ -101,6 +101,10 @@ export function normalizeIssueRecord(id: string, data: Record<string, unknown>):
     response_deadline_at: normalizeDate(
       data.response_deadline_at
     ) ?? defaults.response_deadline_at,
+    result_content: typeof data.result_content === 'string'
+      ? data.result_content
+      : undefined,
+    result_updated_at: normalizeDate(data.result_updated_at),
     support_met_at: normalizeDate(
       data.support_met_at
     ) ?? defaults.support_met_at,

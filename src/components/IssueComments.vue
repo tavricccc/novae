@@ -59,8 +59,8 @@ const {
   submitError,
 } = useIssueComments(toRef(props, 'issueId'), (issueId) => emit('contentUnavailable', issueId));
 
-async function handleSubmitComment(payload: { content: string; isAdminComment: boolean }) {
-  return submitComment(payload.content, payload.isAdminComment);
+async function handleSubmitComment(payload: { content: string; parentCommentId: string | null }) {
+  return submitComment(payload.content, payload.parentCommentId);
 }
 
 function canDeleteThreadComment(comment: DiscussionCommentRecord) {

@@ -57,8 +57,8 @@ const {
   (announcementId) => emit('contentUnavailable', announcementId),
 );
 
-async function handleSubmit(payload: { content: string; isAdminComment: boolean }) {
-  return submitComment(payload.content, payload.isAdminComment);
+async function handleSubmit(payload: { content: string; parentCommentId: string | null }) {
+  return submitComment(payload.content, payload.parentCommentId);
 }
 
 function canDeleteThreadComment(comment: DiscussionCommentRecord) {

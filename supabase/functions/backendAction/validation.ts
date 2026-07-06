@@ -4,6 +4,7 @@ export const INPUT_LIMITS = {
   title: 120,
   content: 5_000,
   comment: 2_000,
+  issueResult: 2_000,
   rejectionReason: 500,
   search: 120,
 } as const;

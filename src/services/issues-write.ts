@@ -2,6 +2,7 @@ import type {
   CommentRecord,
   CommentInput,
   ComposerInput,
+  DiscussionCommentRecord,
   IssueRecord,
   IssueStatus,
 } from '@/types';
@@ -26,6 +27,8 @@ interface IssueResponseRecord {
   updated_at_ms: number | null;
   support_deadline_at_ms: number | null;
   response_deadline_at_ms: number | null;
+  result_content?: string | null;
+  result_updated_at_ms?: number | null;
   support_met_at_ms: number | null;
   review_rejection_reason?: string;
   author_uid?: string;
@@ -56,6 +59,8 @@ function normalizeIssueResponse(issue: IssueResponseRecord): IssueRecord {
     updated_at: dateFromMs(issue.updated_at_ms),
     support_deadline_at: dateFromMs(issue.support_deadline_at_ms),
     response_deadline_at: dateFromMs(issue.response_deadline_at_ms),
+    result_content: issue.result_content ?? undefined,
+    result_updated_at: dateFromMs(issue.result_updated_at_ms),
     support_met_at: dateFromMs(issue.support_met_at_ms),
     review_rejection_reason: issue.review_rejection_reason,
     author_uid: issue.author_uid,
@@ -70,10 +75,10 @@ function normalizeIssueResponse(issue: IssueResponseRecord): IssueRecord {
   return record;
 }
 
-function normalizeCommentResponse(comment: CommentResponseRecord): CommentRecord {
+function normalizeDiscussionCommentResponse(comment: CommentResponseRecord): DiscussionCommentRecord {
   return {
     id: comment.id,
-    issue_id: comment.issue_id,
+    parent_comment_id: comment.parent_comment_id,
     content: comment.content,
     author_uid: comment.author_uid,
     author_name: comment.author_name,
@@ -81,6 +86,14 @@ function normalizeCommentResponse(comment: CommentResponseRecord): CommentRecord
     is_admin_comment: comment.is_admin_comment,
     created_at: dateFromMs(comment.created_at_ms),
     updated_at: dateFromMs(comment.updated_at_ms),
+    replies: (comment.replies ?? []).map(normalizeDiscussionCommentResponse),
+  };
+}
+
+function normalizeCommentResponse(comment: CommentResponseRecord): CommentRecord {
+  return {
+    ...normalizeDiscussionCommentResponse(comment),
+    issue_id: comment.issue_id,
   };
 }
 
@@ -111,6 +124,19 @@ export async function moderateIssueStatus(issueId: string, status: IssueStatus, 
       { issue: IssueResponseRecord }
     >('moderateIssueStatus');
     const result = await fn({ issueId, status, reason, requestId: createRequestId() });
+    return normalizeIssueResponse(result.data.issue);
+  } catch (error) {
+    throw toReadableBackendError(error);
+  }
+}
+
+export async function updateIssueResult(issueId: string, resultContent: string) {
+  try {
+    const fn = invokeBackendAction<
+      { issueId: string; resultContent: string; requestId: string },
+      { issue: IssueResponseRecord }
+    >('updateIssueResult');
+    const result = await fn({ issueId, resultContent, requestId: createRequestId() });
     return normalizeIssueResponse(result.data.issue);
   } catch (error) {
     throw toReadableBackendError(error);
@@ -154,17 +180,17 @@ export async function deleteIssue(
 export async function createComment(
   issueId: string,
   input: CommentInput,
-  isAdminComment = false,
+  parentCommentId: string | null = null,
 ) {
   try {
     const fn = invokeBackendAction<
-      { issueId: string; content: string; isAdminComment: boolean; requestId: string },
+      { issueId: string; content: string; parentCommentId?: string | null; requestId: string },
       { comment: CommentResponseRecord }
     >('createComment');
     const result = await fn({
       issueId,
       content: input.content,
-      isAdminComment,
+      parentCommentId,
       requestId: createRequestId(),
     });
     return normalizeCommentResponse(result.data.comment);

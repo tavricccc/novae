@@ -1,6 +1,7 @@
 export interface CommentResponseRecord {
   id: string;
   issue_id: string;
+  parent_comment_id: string | null;
   content: string;
   author_uid: string;
   author_name: string;
@@ -8,4 +9,5 @@ export interface CommentResponseRecord {
   is_admin_comment: boolean;
   created_at_ms: number | null;
   updated_at_ms: number | null;
+  replies?: CommentResponseRecord[];
 }

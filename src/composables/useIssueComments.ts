@@ -114,7 +114,7 @@ export function useIssueComments(issueId: Ref<string>, onContentUnavailable?: (i
     return comment.author_uid === user.value?.uid || isAdmin.value;
   }
 
-  async function submitComment(content: string, isAdminComment: boolean) {
+  async function submitComment(content: string, parentCommentId: string | null = null) {
     submitError.value = '';
 
     if (!user.value?.email || !user.value.displayName) {
@@ -135,13 +135,26 @@ export function useIssueComments(issueId: Ref<string>, onContentUnavailable?: (i
       const comment = await createComment(
         issueId.value,
         { content },
-        isAdmin.value && isAdminComment,
+        parentCommentId,
       );
-      const commentMap = new Map(comments.value.map((entry) => [entry.id, entry]));
-      commentMap.set(comment.id, comment);
-      comments.value = Array.from(commentMap.values()).sort((left, right) =>
-        (left.created_at?.getTime() ?? 0) - (right.created_at?.getTime() ?? 0)
-      );
+      if (parentCommentId) {
+        comments.value = comments.value.map((entry) =>
+          entry.id === parentCommentId
+            ? {
+              ...entry,
+              replies: [...entry.replies, comment].sort((left, right) =>
+                (left.created_at?.getTime() ?? 0) - (right.created_at?.getTime() ?? 0)
+              ),
+            }
+            : entry
+        );
+      } else {
+        const commentMap = new Map(comments.value.map((entry) => [entry.id, entry]));
+        commentMap.set(comment.id, comment);
+        comments.value = Array.from(commentMap.values()).sort((left, right) =>
+          (left.created_at?.getTime() ?? 0) - (right.created_at?.getTime() ?? 0)
+        );
+      }
       loaded.value = true;
 
       return true;
@@ -163,7 +176,12 @@ export function useIssueComments(issueId: Ref<string>, onContentUnavailable?: (i
 
     try {
       await deleteComment(commentId);
-      comments.value = comments.value.filter((comment) => comment.id !== commentId);
+      comments.value = comments.value
+        .filter((comment) => comment.id !== commentId)
+        .map((comment) => ({
+          ...comment,
+          replies: comment.replies.filter((reply) => reply.id !== commentId),
+        }));
     } catch {
       submitError.value = '刪除失敗，請稍後再試。';
       showToast(submitError.value, 'error');

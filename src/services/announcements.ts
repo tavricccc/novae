@@ -66,6 +66,7 @@ function normalizeAnnouncementComment(data: Record<string, unknown>): Announceme
   return {
     id: String(data.id ?? ''),
     announcement_id: String(data.announcement_id ?? ''),
+    parent_comment_id: typeof data.parent_comment_id === 'string' ? data.parent_comment_id : null,
     content: String(data.content ?? ''),
     author_uid: String(data.author_uid ?? ''),
     author_name: String(data.author_name ?? '匿名使用者'),
@@ -73,6 +74,12 @@ function normalizeAnnouncementComment(data: Record<string, unknown>): Announceme
     is_admin_comment: Boolean(data.is_admin_comment),
     created_at: dateFromMs(data.created_at_ms ?? data.created_at),
     updated_at: dateFromMs(data.updated_at_ms ?? data.updated_at),
+    replies: Array.isArray(data.replies)
+      ? data.replies.map((reply) => normalizeAnnouncementComment({
+        ...(reply as Record<string, unknown>),
+        announcement_id: data.announcement_id,
+      }))
+      : [],
   };
 }
 
@@ -164,12 +171,12 @@ export async function fetchAnnouncementComments(
   };
 }
 
-export async function createAnnouncementComment(announcementId: string, content: string, isAdminComment: boolean) {
+export async function createAnnouncementComment(announcementId: string, content: string, parentCommentId: string | null = null) {
   const fn = invokeBackendAction<
-    { announcementId: string; content: string; isAdminComment: boolean; requestId: string },
+    { announcementId: string; content: string; parentCommentId?: string | null; requestId: string },
     { comment: Record<string, unknown>; comment_count: number }
   >('createAnnouncementComment');
-  const result = await fn({ announcementId, content, isAdminComment, requestId: createRequestId() });
+  const result = await fn({ announcementId, content, parentCommentId, requestId: createRequestId() });
   return {
     comment: normalizeAnnouncementComment(result.data.comment),
     comment_count: result.data.comment_count,

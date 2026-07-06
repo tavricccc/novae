@@ -16,32 +16,20 @@
     </button>
 
     <div class="min-h-8 pr-10">
-      <div v-if="isAdmin" class="space-y-1.5">
-        <label class="pl-1 text-xs font-semibold tracking-wide text-ink-600 dark:text-ink-300">發言身分</label>
-        <SegmentedControl
-          :model-value="commentMode"
-          :options="commentModeOptions"
-          @update:model-value="(value) => (commentMode = value)"
-        />
-      </div>
-      <div v-else class="flex items-center gap-2">
+      <div class="flex items-center gap-2">
         <img
           v-if="myPhotoUrl"
           :src="myPhotoUrl"
           alt="當前頭像"
           class="h-7 w-7 rounded-full border border-ink-200 object-cover shadow-sm dark:border-ink-800"
         />
-        <span class="text-sm font-semibold text-ink-600 dark:text-ink-300">新增留言</span>
+        <span class="text-sm font-semibold text-ink-600 dark:text-ink-300">{{ parentCommentId ? '新增回覆' : '新增留言' }}</span>
       </div>
     </div>
 
     <div
       class="overflow-hidden rounded-2xl border transition-all duration-300 focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20"
-      :class="[
-        commentMode === 'admin' && isAdmin
-          ? 'border-primary bg-transparent focus-within:border-primary focus-within:ring-primary/20'
-          : 'border-ink-200 bg-white dark:border-ink-800 dark:bg-ink-950/40'
-      ]"
+      :class="'border-ink-200 bg-white dark:border-ink-800 dark:bg-ink-950/40'"
     >
       <div v-if="!showPreview">
         <div v-if="imageUrls.length" class="flex gap-3 px-5 pt-4">
@@ -68,7 +56,7 @@
           class="min-h-[96px] w-full resize-none border-none bg-transparent px-5 py-4 font-sans text-base text-ink-800 outline-none placeholder:text-ink-400 focus:ring-0 dark:text-ink-100 dark:placeholder:text-ink-500 md:text-sm"
           autocomplete="off"
           maxlength="2000"
-          :placeholder="isAdmin && commentMode === 'admin' ? '以官方身分輸入回覆...' : '留下您的留言討論...'"
+          :placeholder="parentCommentId ? '留下你的回覆...' : '留下你的留言討論...'"
           :disabled="submitting"
         ></textarea>
       </div>
@@ -89,7 +77,7 @@
             class="h-6 w-6 rounded-full border border-ink-200 object-cover shadow-sm dark:border-ink-800"
           />
           <span class="min-w-0 truncate text-xs font-medium text-ink-500 dark:text-ink-400">
-            {{ isAdmin && commentMode === 'admin' ? '官方回覆' : '一般發言' }}
+            {{ parentCommentId ? '回覆' : '留言' }}
           </span>
         </div>
 
@@ -128,11 +116,7 @@
           <button
             type="submit"
             class="button-icon-filled h-10 min-h-10 w-10 sm:h-8 sm:min-h-8 sm:w-8"
-            :class="[
-              commentMode === 'admin' && isAdmin
-                ? 'bg-primary text-on-primary hover:bg-primary/90'
-                : 'bg-ink-900 hover:bg-ink-800 dark:bg-ink-100 dark:text-ink-900 dark:hover:bg-ink-200'
-            ]"
+            :class="'bg-ink-900 hover:bg-ink-800 dark:bg-ink-100 dark:text-ink-900 dark:hover:bg-ink-200'"
             :disabled="submitting || uploading || (!commentContent.trim() && imageUrls.length === 0)"
             :title="submitting ? '傳送中...' : '送出留言'"
             aria-label="送出留言"
@@ -153,7 +137,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue';
-import SegmentedControl from '@/components/SegmentedControl.vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import { useMarkdownImageUpload } from '@/composables/useMarkdownImageUpload';
@@ -164,22 +147,22 @@ import { RATE_LIMITS } from '@/generated/rate-limits';
 const props = defineProps<{
   error: string;
   issueId?: string;
+  parentCommentId?: string | null;
   submitting: boolean;
   targetId?: string;
 }>();
 
 const emit = defineEmits<{
   close: [];
-  submit: [payload: { content: string; isAdminComment: boolean }];
+  submit: [payload: { content: string; parentCommentId: string | null }];
 }>();
 
-const { isAdmin, user, customPhotoUrl } = useSession();
+const { user, customPhotoUrl } = useSession();
 const { showToast } = useToast();
 const myPhotoUrl = computed(() => customPhotoUrl.value || user.value?.photoURL || null);
 const composerId = computed(() => props.issueId ?? props.targetId ?? 'default');
 
 const commentContent = ref('');
-const commentMode = ref<'public' | 'admin'>('public');
 const showPreview = ref(false);
 const {
   fileInputRef: commentFileInputRef,
@@ -199,17 +182,6 @@ const {
 });
 const submittedImages = ref<Awaited<ReturnType<typeof uploadImagesAndBuildContent>>['uploadedImages']>([]);
 
-const commentModeOptions: Array<{ value: 'public' | 'admin'; label: string }> = [
-  { value: 'public', label: '一般留言' },
-  { value: 'admin', label: '官方回覆' },
-];
-
-watch(isAdmin, (nextIsAdmin) => {
-  if (!nextIsAdmin) {
-    commentMode.value = 'public';
-  }
-});
-
 nextTick(() => {
   commentTextareaRef.value?.focus();
 });
@@ -221,7 +193,7 @@ async function submit() {
 
     emit('submit', {
       content: uploadResult.content,
-      isAdminComment: commentMode.value === 'admin',
+      parentCommentId: props.parentCommentId ?? null,
     });
   } catch {
     uploadError.value = '圖片上傳失敗，請稍後再試。';

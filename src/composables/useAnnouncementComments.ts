@@ -115,19 +115,32 @@ export function useAnnouncementComments(
     }
   }
 
-  async function submitComment(content: string, isAdminComment: boolean) {
+  async function submitComment(content: string, parentCommentId: string | null = null) {
     const id = announcementId();
     if (!id) return false;
 
     submitting.value = true;
     error.value = '';
     try {
-      const result = await createAnnouncementComment(id, content, isAdminComment);
-      const commentMap = new Map(comments.value.map((comment) => [comment.id, comment]));
-      commentMap.set(result.comment.id, result.comment);
-      comments.value = Array.from(commentMap.values()).sort((left, right) =>
-        (left.created_at?.getTime() ?? 0) - (right.created_at?.getTime() ?? 0)
-      );
+      const result = await createAnnouncementComment(id, content, parentCommentId);
+      if (parentCommentId) {
+        comments.value = comments.value.map((comment) =>
+          comment.id === parentCommentId
+            ? {
+              ...comment,
+              replies: [...comment.replies, result.comment].sort((left, right) =>
+                (left.created_at?.getTime() ?? 0) - (right.created_at?.getTime() ?? 0)
+              ),
+            }
+            : comment
+        );
+      } else {
+        const commentMap = new Map(comments.value.map((comment) => [comment.id, comment]));
+        commentMap.set(result.comment.id, result.comment);
+        comments.value = Array.from(commentMap.values()).sort((left, right) =>
+          (left.created_at?.getTime() ?? 0) - (right.created_at?.getTime() ?? 0)
+        );
+      }
       loaded.value = true;
       onCommentCountChanged?.({ announcementId: id, commentCount: result.comment_count });
       return true;
@@ -148,7 +161,12 @@ export function useAnnouncementComments(
     error.value = '';
     try {
       const result = await deleteAnnouncementComment(commentId);
-      comments.value = comments.value.filter((comment) => comment.id !== commentId);
+      comments.value = comments.value
+        .filter((comment) => comment.id !== commentId)
+        .map((comment) => ({
+          ...comment,
+          replies: comment.replies.filter((reply) => reply.id !== commentId),
+        }));
       onCommentCountChanged?.({
         announcementId: result.announcement_id,
         commentCount: result.comment_count,

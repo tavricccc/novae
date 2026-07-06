@@ -106,6 +106,7 @@
     @close="closeIssueDetails"
     @content-unavailable="handleRouteIssueUnavailable"
     @delete="confirmRouteIssueDelete"
+    @issue-updated="handleIssueUpdatedFromList"
     @share="copyRouteIssueUrl"
     @supported="handleRouteIssueSupport"
   />

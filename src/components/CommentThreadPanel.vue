@@ -74,8 +74,13 @@
           :key="comment.id"
           :comment="comment"
           :can-delete="canDeleteComment(comment)"
+          :can-delete-reply="canDeleteComment"
+          :can-reply="canCompose"
           :deleting="deletingId === comment.id"
+          :deleting-id="deletingId"
           @delete="requestDeleteComment(comment.id)"
+          @delete-reply="requestDeleteComment"
+          @reply="openReplyComposer(comment.id)"
         />
         <SkeletonCommentList v-if="loadingMore" class="mt-2" :count="2" />
         <div v-if="hasMore" ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
@@ -97,6 +102,7 @@
       <CommentComposer
         v-else
         :target-id="targetId"
+        :parent-comment-id="replyingToCommentId || null"
         :submitting="submitting"
         :error="submitError"
         @close="closeComposer"
@@ -147,7 +153,7 @@ const props = withDefaults(defineProps<{
   onDeleteComment: (commentId: string) => Promise<void>;
   onLoadMore?: () => Promise<void>;
   onRefresh: () => Promise<void>;
-  onSubmitComment: (payload: { content: string; isAdminComment: boolean }) => Promise<boolean>;
+  onSubmitComment: (payload: { content: string; parentCommentId: string | null }) => Promise<boolean>;
   disabledComposerLabel?: string;
 }>(), {
   canCompose: true,
@@ -159,6 +165,7 @@ const props = withDefaults(defineProps<{
 });
 
 const isComposerOpen = ref(false);
+const replyingToCommentId = ref('');
 const commentPendingDelete = ref('');
 const { visibleLoading } = useMinimumLoading(toRef(props, 'loading'));
 const infiniteScrollDisabled = computed(() => props.loading || props.loadingMore || !props.hasMore);
@@ -195,13 +202,21 @@ function closeComposer() {
   }
 
   isComposerOpen.value = false;
+  replyingToCommentId.value = '';
 }
 
-async function handleSubmitComment(payload: { content: string; isAdminComment: boolean }) {
+function openReplyComposer(commentId: string) {
+  if (!props.canCompose) return;
+  replyingToCommentId.value = commentId;
+  isComposerOpen.value = true;
+}
+
+async function handleSubmitComment(payload: { content: string; parentCommentId: string | null }) {
   if (!props.canCompose) return false;
   const success = await props.onSubmitComment(payload);
   if (success) {
     isComposerOpen.value = false;
+    replyingToCommentId.value = '';
   }
 }
 </script>

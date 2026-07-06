@@ -40,6 +40,8 @@ export interface IssueRecord {
   support_goal: number | null;
   support_deadline_at: Date | null;
   response_deadline_at: Date | null;
+  result_content?: string;
+  result_updated_at?: Date | null;
   support_met_at: Date | null;
   review_rejection_reason?: string;
   currentUserSupported?: boolean;
@@ -65,12 +67,14 @@ export interface IssuePageResult {
 export interface DiscussionCommentRecord {
   id: string;
   content: string;
+  parent_comment_id: string | null;
   author_uid: string;
   author_name: string;
   author_photo_url: string | null;
   is_admin_comment: boolean;
   created_at: Date | null;
   updated_at: Date | null;
+  replies: DiscussionCommentRecord[];
 }
 
 export interface CommentRecord extends DiscussionCommentRecord {

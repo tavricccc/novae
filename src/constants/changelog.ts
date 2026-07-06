@@ -2,6 +2,23 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善提案與留言討論體驗",
+    version: "v2.0.59",
+    date: "2026-07-07",
+    time: "00:49",
+    items: [
+      {
+        title: "新增留言回覆功能，提案與公告討論可針對單則留言延伸回應。",
+      },
+      {
+        title: "新增提案結果顯示，讓處理結論集中呈現在提案內容上方。",
+      },
+      {
+        title: "調整管理員回覆呈現方式，提案結果與一般留言分開顯示。",
+      },
+    ],
+  },
+  {
     title: "修正推播通知設定狀態",
     version: "v2.0.58",
     date: "2026-07-06",

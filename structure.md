@@ -50,6 +50,7 @@
 - supabase/migrations/202607050006_atomic_content_outbox.sql：以資料庫 trigger 讓提案、公告、留言與狀態事件和來源異動在同一交易建立。
 - supabase/migrations/202607060001_dashboard_failure_diagnostics.sql：擴充管理員 Dashboard 最近異常診斷欄位，並統一背景異常與維護紀錄的近期保留策略。
 - supabase/migrations/202607060002_cleanup_removed_issue_categories.sql：讓維護清理可依目前有效提案分類刪除已移除分類的資料庫提案與留言，排程清理相關 Cloudinary 圖片，並保留 Notion 備份頁面且標記為已刪除。
+- supabase/migrations/202607070001_nested_comments_and_issue_results.sql：新增提案結果欄位、提案與公告一層留言回覆關聯、父留言驗證與回覆查詢索引，並將既有管理員留言遷移為提案結果。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/types.ts：受控 action 共用 Supabase client、身份與 JSON record 型別。
 - supabase/functions/backendAction/utils.ts：受控 action 共用 cursor、時間、數值、布林與台北日界限工具。
@@ -61,15 +62,15 @@
 - supabase/functions/backendAction/issues.ts：提案 action 分派器，依 read / write / comments 子模組處理。
 - supabase/functions/backendAction/issue-read.ts：提案列表、搜尋、我的提案、已附議 id 與私密作者資料讀取；審核類別在查詢階段合併公開狀態與本人可讀私密狀態，避免分頁後過濾漏資料。
 - supabase/functions/backendAction/issue-create.ts：新增提案、分類審核狀態、作者私密保存、限流與建立通知/同步事件。
-- supabase/functions/backendAction/issue-moderation.ts：管理員提案狀態調整、審核退回原因、期限更新與狀態通知事件。
+- supabase/functions/backendAction/issue-moderation.ts：管理員提案狀態調整、審核退回原因、提案結果更新、期限更新與狀態通知事件。
 - supabase/functions/backendAction/issue-support.ts：提案附議/取消附議、附議數同步事件與達標通知事件。
 - supabase/functions/backendAction/issue-delete.ts：提案硬刪除與刪除通知/同步事件。
-- supabase/functions/backendAction/issue-comments.ts：提案留言分頁、新增、刪除、留言權限與留言通知事件。
+- supabase/functions/backendAction/issue-comments.ts：提案留言分頁、新增、刪除、一層回覆驗證、留言權限與留言通知事件。
 - supabase/functions/backendAction/announcements.ts：公告 action 分派器，依 read / write / comments 子模組處理。
 - supabase/functions/backendAction/announcement-shared.ts：公告回應正規化與 cursor helper。
 - supabase/functions/backendAction/announcement-read.ts：公告列表、排序 cursor 與單筆公告讀取。
 - supabase/functions/backendAction/announcement-write.ts：管理員公告新增、編輯、硬刪除與公告按讚 action。
-- supabase/functions/backendAction/announcement-comments.ts：公告留言分頁、新增、刪除與管理員通知事件。
+- supabase/functions/backendAction/announcement-comments.ts：公告留言分頁、新增、刪除、一層回覆驗證與管理員通知事件。
 - supabase/functions/backendAction/notifications.ts：App 內通知分頁、閱讀游標、Web Push token 與分類推播偏好 action。
 - supabase/functions/backendAction/dashboard.ts：管理員統計資料、同步/通知/推播/清理異常、最近維護排程結果彙整與分類使用概況。
 - supabase/functions/syncUser/index.ts：Firebase 登入後同步使用者 custom claim 與 Supabase app role 的 Edge Function，依 ADMIN_EMAILS 將使用者角色寫入 user_roles，與受控 action 共用登入資格驗證。
@@ -158,7 +159,7 @@
 - src/components/MarkdownRenderer.vue：將 Markdown 渲染為經 DOMPurify 過濾的安全 HTML，圖片支援尺寸屬性、lazy loading 與預留顯示空間以降低 layout shift。
 - src/components/NotificationBell.vue：頁首右上角 App 內通知中心，使用手機全螢幕面板／桌機右側 popover 呈現未讀數、通知類型圖示、載入與空狀態、分段載入及打開即已讀行為，並依通知目標路由至提案或公告詳情；推播設定統一由頭像設定面板管理。
 - src/components/MarkdownMediaContent.vue：Markdown 圖文分離共用內容元件，圖片置頂以兩欄寬度水平捲動、文字置於下方，支援點圖全螢幕預覽。
-- src/components/CommentThreadPanel.vue：提案與公告共用留言面板，統一留言列表、載入 / 錯誤 / 空狀態、重新整理、底部自動載入更多、浮動輸入面板與刪除確認。
+- src/components/CommentThreadPanel.vue：提案與公告共用留言面板，統一主留言與一層回覆列表、載入 / 錯誤 / 空狀態、重新整理、底部自動載入更多、浮動輸入面板與刪除確認。
 - src/components/CompactActionMenu.vue：可設定文字與項目的精簡三點操作選單，供公告列表與留言刪除等管理入口共用。
 - src/components/AnnouncementControls.vue：公告列表頂部控制列，對齊提案看板的工具按鈕樣式，提供排序選單、手動重新整理與管理員新增公告操作。
 - src/components/AnnouncementTable.vue：公告表格列表容器，比照提案看板設計表格結構，負責渲染公告列表行並轉發開啟詳情、編輯與刪除事件。
@@ -168,9 +169,9 @@
 - src/components/AnnouncementDetailActions.vue：公告詳情操作列，使用共用 DetailActionButton 以文字按鈕呈現讚、分享、編輯與刪除。
 - src/components/AnnouncementEditorDialog.vue：管理員公告新增/編輯對話框，沿用 Markdown 圖片延遲上傳流程，內容輸入與圖片預覽使用共用 MarkdownImageEditor。
 - src/components/AnnouncementComments.vue：公告留言區資料 wrapper，串接公告留言 composable 與共用 CommentThreadPanel。
-- src/components/CommentItem.vue：單則留言呈現元件，負責作者、官方回覆標籤、三點刪除選單與 Markdown 內容顯示。
-- src/components/CommentComposer.vue：留言浮動輸入面板，負責留言撰寫、預覽、圖片本機壓縮預覽與送出時上傳事件。
-- src/components/IssueDetailContent.vue：提案詳情內容區共用元件，統一桌機與手機的標題、作者與 Markdown 圖文分離內容呈現。
+- src/components/CommentItem.vue：單則留言呈現元件，負責作者、回覆入口、子回覆、三點刪除選單與 Markdown 內容顯示。
+- src/components/CommentComposer.vue：留言浮動輸入面板，負責主留言 / 回覆撰寫、預覽、圖片本機壓縮預覽與送出時上傳事件。
+- src/components/IssueDetailContent.vue：提案詳情內容區共用元件，統一桌機與手機的標題、作者、提案結果、審核未通過原因與 Markdown 圖文分離內容呈現。
 - src/components/IssueDetailSupportFooter.vue：提案詳情附議進度與日期資訊 footer，統一桌機與手機的分享、附議、管理員刪除按鈕、進度條與期限資訊。
 
 ### 看板與列表元件
@@ -180,7 +181,7 @@
 - src/components/IssueAdminMenu.vue：管理員狀態調整下拉選單展示層，供列表列與詳情操作使用；狀態更新流程委派給 `useIssueAdminStatus`。
 - src/components/IssueTableRow.vue：列表視圖單筆提案列展示層，桌面動態 grid、手機收折為單行精簡列；共用 `useIssueItemController` 處理提案互動狀態與開啟詳情事件。
 - src/components/IssueBoardTable.vue：列表視圖容器，含欄位標題列與提案列渲染；載入與分頁切換期間顯示 SkeletonTable。
-- src/components/IssueDetailsDialog.vue：提案全文詳細對話框。採用 `useIssueDisplay` 呈現附議進度與期限，公共議題對一般人隱藏作者，自己提案則顯示作者，作者或管理員可從詳情 footer 刪除提案。
+- src/components/IssueDetailsDialog.vue：提案全文詳細對話框。採用 `useIssueDisplay` 呈現附議進度與期限，公共議題對一般人隱藏作者，自己提案則顯示作者，管理員可編輯提案結果，作者或管理員可從詳情 footer 刪除提案。
 - src/components/IssueComments.vue：提案留言區資料 wrapper，串接提案留言 composable 與共用 CommentThreadPanel。
 - src/components/IssueComposer.vue：新增提案表單對話框展示層，表單驗證、圖片上傳與送出流程委派給 `useIssueComposerForm`，內容輸入與圖片預覽使用共用 MarkdownImageEditor。
 
@@ -235,10 +236,10 @@
 - src/composables/usePushNotifications.ts：Web Push 推播偏好管理，負責瀏覽器支援與權限狀態、目前裝置 service worker token 註冊 / 關閉、通知分類偏好、跨裝置狀態校正與前景訊息 toast。
 - src/composables/useAnnouncements.ts：公告列表依排序快取分段讀取、依螢幕高度決定讀取批量、手動重新整理、底部自動載入更多與載入 / 錯誤狀態管理。
 - src/composables/useAnnouncementManagement.ts：公告頁管理流程，整合公告列表讀取、id 路由選取、單筆讀取、分享、編輯、新增、背景刪除與明確讚狀態。
-- src/composables/useAnnouncementComments.ts：公告留言分頁讀取、載入更多、重新整理、新增、局部刪除與權限判斷狀態管理，使用留言區自己的請求 scope 避免路由切換誤判空狀態。
+- src/composables/useAnnouncementComments.ts：公告留言分頁讀取、載入更多、重新整理、新增主留言 / 回覆、局部刪除與權限判斷狀態管理，使用留言區自己的請求 scope 避免路由切換誤判空狀態。
 - src/composables/useImageUpload.ts：圖片處理 composable，協調本機選圖預覽與上傳狀態，並將前端 WebP 輸出尺寸送入上傳 session。
 - src/composables/useMarkdownImageUpload.ts：Markdown 編輯器圖片流程，選圖時立即完成壓縮與 preview URL 建立，送出時並行上傳已處理圖片，並負責失敗清理與 `![alt|寬x高]()` 語法組合。
-- src/composables/useIssueComments.ts：提案留言分頁讀取、載入更多、重新整理、送出、局部刪除、權限判斷與錯誤狀態，使用留言區自己的請求 scope 避免路由切換誤判空狀態。
+- src/composables/useIssueComments.ts：提案留言分頁讀取、載入更多、重新整理、送出主留言 / 回覆、局部刪除、權限判斷與錯誤狀態，使用留言區自己的請求 scope 避免路由切換誤判空狀態。
 - src/composables/usePlatformDashboard.ts：管理員 Dashboard 資料載入狀態與錯誤管理，保留 stats 與 operations computed 給畫面使用。
 - src/composables/useDashboardMetrics.ts：管理員 Dashboard 資料轉換 helper，計算成果摘要、維運狀態卡、維運清單、最近異常與分類提案/留言對照。
 
@@ -268,7 +269,7 @@
 - src/lib/markdown-tables.ts：純函式 Markdown 表格解析工具，統一編輯器的表格 block 偵測、游標限制與視覺化表格編輯邊界。
 - src/lib/image-processing.ts：瀏覽器圖片處理純函式，驗證來源大小與像素，優先使用原生 canvas 以 0.85 品質輸出 WebP，Safari 等無原生 WebP encoder 的瀏覽器動態載入 WASM fallback；最長邊限制 2000px，並逐步縮小尺寸直到低於 800 KB。
 - src/lib/search.ts：搜尋文字正規化工具，供搜尋 composable 與高亮 UI 共用。
-- src/types/index.ts：專案核心型別定義，包含提案、Dashboard stats / operations、路由分類、留言、公告、公告留言、新通知模型、ChangelogEntry / ChangelogBullet 與 Markdown 圖片資料型別。
+- src/types/index.ts：專案核心型別定義，包含提案、提案結果、Dashboard stats / operations、路由分類、主留言 / 回覆、公告、公告留言、新通知模型、ChangelogEntry / ChangelogBullet 與 Markdown 圖片資料型別。
 - src/types/pwa.d.ts：補充 BeforeInstallPromptEvent 型別，供 PWA 安裝提示 composable 使用。
 
 ---
@@ -290,7 +291,7 @@
 - src/services/issues-read-private-author.ts：公共議題私有作者 metadata 讀取。
 - src/services/issues-read-comments.ts：提案留言讀取、日期與 cursor 正規化。
 - src/services/issues-read-shared.ts：提案 read service 共用 response 型別。
-- src/services/issues-write.ts：所有寫入、附議、留言與審核異動，統一呼叫 Supabase 後端安全端點。
+- src/services/issues-write.ts：所有寫入、附議、主留言 / 回覆、提案結果與審核異動，統一呼叫 Supabase 後端安全端點。
 - src/services/notifications.ts：App 內通知來源訂閱、閱讀狀態、單裝置 Web Push token 與通知分類偏好服務；realtime channel 依 broadcast/admin/user 來源或 recipient 過濾 INSERT，並正規化通知與分頁 cursor。
 - src/services/announcements.ts：公告排序分頁、單筆讀取、讚與留言異動服務，並在服務邊界正規化公告與留言分頁 cursor。
 - src/services/dashboard.ts：平台 Dashboard 與登入使用紀錄服務，將後端 stats / operations response 正規化為前端 Date 型別。

@@ -48,6 +48,15 @@
         <p class="font-semibold">審核未通過原因</p>
         <p class="mt-1 leading-6">{{ issue.review_rejection_reason }}</p>
       </div>
+      <div
+        v-else-if="issue.result_content"
+        class="mb-4 rounded-xl border border-primary/25 bg-primary-container/50 px-4 py-3 text-sm text-on-primary-container"
+      >
+        <p class="font-semibold">提案結果</p>
+        <div class="mt-1 leading-6">
+          <MarkdownMediaContent :content="issue.result_content" :fallback-alt="`${issue.title} 的提案結果圖片`" />
+        </div>
+      </div>
       <MarkdownMediaContent :content="issue.content" :fallback-alt="issue.title" />
     </div>
   </div>

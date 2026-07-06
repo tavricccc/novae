@@ -34,3 +34,24 @@ export async function moderateIssueStatus(payload: JsonRecord, auth: AuthContext
   if (error) throw error;
   return { issue: issueToReadableResponse(data as JsonRecord, auth) };
 }
+
+export async function updateIssueResult(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
+  requireAdmin(auth);
+  const issueId = asString(payload.issueId);
+  await selectIssue(supabase, issueId);
+  const resultContent = optionalText(payload.resultContent, "issue-result", INPUT_LIMITS.issueResult).trim();
+  const updateFields: JsonRecord = {
+    last_actor_uid: auth.uid,
+    result_content: resultContent || null,
+    result_updated_at: resultContent ? new Date().toISOString() : null,
+  };
+  const { data, error } = await supabase
+    .schema("app_private")
+    .from("issues")
+    .update(updateFields)
+    .eq("id", issueId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return { issue: issueToReadableResponse(data as JsonRecord, auth) };
+}

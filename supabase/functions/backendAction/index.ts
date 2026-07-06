@@ -27,6 +27,7 @@ const idempotentActions = new Set([
   "deleteUploadedImage",
   "createIssue",
   "moderateIssueStatus",
+  "updateIssueResult",
   "toggleSupport",
   "deleteIssue",
   "createComment",

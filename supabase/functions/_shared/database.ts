@@ -22,6 +22,8 @@ interface IssueRow {
   created_at: string;
   deleting: boolean;
   response_deadline_at: string | null;
+  result_content: string | null;
+  result_updated_at: string | null;
   review_rejection_reason: string | null;
   status: string;
   support_count: number;
@@ -37,6 +39,7 @@ interface IssueRow {
 interface CommentRow {
   id: string;
   issue_id: string;
+  parent_comment_id: string | null;
   author_uid: string;
   author_name: string;
   author_photo_url: string | null;
@@ -63,6 +66,7 @@ interface AnnouncementRow {
 interface AnnouncementCommentRow {
   id: string;
   announcement_id: string;
+  parent_comment_id: string | null;
   author_uid: string;
   author_name: string;
   author_photo_url: string | null;
