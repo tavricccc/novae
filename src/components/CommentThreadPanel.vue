@@ -48,7 +48,7 @@
       </button>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto py-4 pr-1">
+    <div class="min-h-0 flex-1 overflow-y-auto py-2 pr-1">
       <SkeletonCommentList v-if="visibleLoading" />
 
       <EmptyStatePanel
@@ -68,7 +68,7 @@
         icon="comment"
       />
 
-      <div v-else>
+      <div v-else class="space-y-0.5">
         <CommentItem
           v-for="comment in comments"
           :key="comment.id"

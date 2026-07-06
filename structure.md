@@ -159,7 +159,7 @@
 - src/components/MarkdownRenderer.vue：將 Markdown 渲染為經 DOMPurify 過濾的安全 HTML，圖片支援尺寸屬性、lazy loading 與預留顯示空間以降低 layout shift。
 - src/components/NotificationBell.vue：頁首右上角 App 內通知中心，使用手機全螢幕面板／桌機右側 popover 呈現未讀數、通知類型圖示、載入與空狀態、分段載入及打開即已讀行為，並依通知目標路由至提案或公告詳情；推播設定統一由頭像設定面板管理。
 - src/components/MarkdownMediaContent.vue：Markdown 圖文分離共用內容元件，圖片置頂以兩欄寬度水平捲動、文字置於下方，支援點圖全螢幕預覽。
-- src/components/CommentThreadPanel.vue：提案與公告共用留言面板，統一主留言與一層回覆列表、載入 / 錯誤 / 空狀態、重新整理、底部自動載入更多、浮動輸入面板與刪除確認。
+- src/components/CommentThreadPanel.vue：提案與公告共用留言面板，統一緊湊主留言與一層回覆列表、載入 / 錯誤 / 空狀態、重新整理、底部自動載入更多、浮動輸入面板與刪除確認。
 - src/components/CompactActionMenu.vue：可設定文字與項目的精簡三點操作選單，供公告列表與留言刪除等管理入口共用。
 - src/components/AnnouncementControls.vue：公告列表頂部控制列，對齊提案看板的工具按鈕樣式，提供排序選單、手動重新整理與管理員新增公告操作。
 - src/components/AnnouncementTable.vue：公告表格列表容器，比照提案看板設計表格結構，負責渲染公告列表行並轉發開啟詳情、編輯與刪除事件。
@@ -169,7 +169,7 @@
 - src/components/AnnouncementDetailActions.vue：公告詳情操作列，使用共用 DetailActionButton 以文字按鈕呈現讚、分享、編輯與刪除。
 - src/components/AnnouncementEditorDialog.vue：管理員公告新增/編輯對話框，沿用 Markdown 圖片延遲上傳流程，內容輸入與圖片預覽使用共用 MarkdownImageEditor。
 - src/components/AnnouncementComments.vue：公告留言區資料 wrapper，串接公告留言 composable 與共用 CommentThreadPanel。
-- src/components/CommentItem.vue：單則留言呈現元件，負責作者、回覆入口、子回覆、三點刪除選單與 Markdown 內容顯示。
+- src/components/CommentItem.vue：單則留言呈現元件，負責緊湊留言排版、作者、回覆入口、可收合一層子回覆、三點刪除選單與 Markdown 內容顯示。
 - src/components/CommentComposer.vue：留言浮動輸入面板，負責主留言 / 回覆撰寫、預覽、圖片本機壓縮預覽與送出時上傳事件。
 - src/components/IssueDetailContent.vue：提案詳情內容區共用元件，統一桌機與手機的標題、作者、提案結果、審核未通過原因與 Markdown 圖文分離內容呈現。
 - src/components/IssueDetailSupportFooter.vue：提案詳情附議進度與日期資訊 footer，統一桌機與手機的分享、附議、管理員刪除按鈕、進度條與期限資訊。

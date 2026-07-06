@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善留言閱讀體驗",
+    version: "v2.0.61",
+    date: "2026-07-07",
+    time: "01:12",
+    items: [
+      {
+        title: "新增留言回覆收合功能，方便快速瀏覽討論串。",
+      },
+      {
+        title: "調整留言列表排版，提升討論內容的資訊密度。",
+      },
+    ],
+  },
+  {
     title: "修正待審核提案瀏覽問題",
     version: "v2.0.60",
     date: "2026-07-07",
