@@ -2,6 +2,17 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "優化手機版詳情頁滾動配置",
+    version: "v2.0.89",
+    date: "2026-07-07",
+    time: "17:22",
+    items: [
+      {
+        title: "將手機版詳情頁的內容區調整為獨立滾動，使底部操作按鈕能固定置底且不隨正文滾動，提供更穩定的手持操作體驗。"
+      }
+    ]
+  },
+  {
     title: "優化桌面版詳情頁正文滾動配置",
     version: "v2.0.88",
     date: "2026-07-07",

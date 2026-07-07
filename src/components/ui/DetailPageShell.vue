@@ -51,13 +51,11 @@
       </div>
 
       <div class="min-h-0 px-1">
-        <div v-show="activeTab === 'details'" class="flex min-h-[calc(100dvh-var(--app-header-height)-env(safe-area-inset-top)-4.5rem)] flex-col">
-          <div class="min-h-0 flex-1 px-1 pb-3 pr-2">
+        <div v-show="activeTab === 'details'" class="flex h-[calc(100dvh-var(--app-header-height)-var(--app-bottom-nav-height)-env(safe-area-inset-top)-6.5rem)] flex-col pb-3">
+          <div class="min-h-0 flex-1 overflow-y-auto px-1 pb-3 pr-2">
             <slot name="details" :compact="true" :scroll-content="false" />
           </div>
-          <div class="pb-[calc(var(--app-bottom-nav-height)+0.75rem)]">
-            <slot name="actions" :compact="true" />
-          </div>
+          <slot name="actions" :compact="true" />
         </div>
 
         <div v-show="activeTab === 'comments'" class="h-[calc(100dvh-var(--app-header-height)-var(--app-bottom-nav-height)-env(safe-area-inset-top)-6.5rem)] min-h-[24rem] pb-3">
