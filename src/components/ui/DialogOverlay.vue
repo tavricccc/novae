@@ -6,7 +6,7 @@
         class="dialog-overlay fixed inset-0 flex items-center justify-center bg-ink-900/50 backdrop-blur-sm"
         :class="zIndexClass"
         :data-padding="paddingMode"
-        @click.self="emit('close')"
+        @click.self="handleOverlayClick"
       >
         <slot />
       </div>
@@ -24,16 +24,25 @@ const props = withDefaults(defineProps<{
   padded?: boolean;
   transitionName?: string;
   zIndexClass?: string;
+  persistent?: boolean;
 }>(), {
   noPadding: false,
   padded: false,
   transitionName: 'dialog',
   zIndexClass: 'z-50',
+  persistent: false,
 });
+
 
 const emit = defineEmits<{
   close: [];
 }>();
+
+function handleOverlayClick() {
+  if (!props.persistent) {
+    emit('close');
+  }
+}
 
 const isMobileViewport = ref(false);
 let mobileMediaQuery: MediaQueryList | null = null;

@@ -12,6 +12,7 @@ const focusableSelector = [
 interface DialogFocusOptions {
   onClose: () => void;
   initialFocus?: string;
+  persistent?: Ref<boolean> | boolean;
 }
 
 function getFocusableElements(root: HTMLElement) {
@@ -52,9 +53,16 @@ export function useDialogFocus(open: Ref<boolean>, options: DialogFocusOptions) 
 
     if (event.key === 'Escape') {
       event.preventDefault();
-      options.onClose();
+      const isPersistent = typeof options.persistent === 'object' && 'value' in options.persistent
+        ? options.persistent.value
+        : Boolean(options.persistent);
+
+      if (!isPersistent) {
+        options.onClose();
+      }
       return;
     }
+
 
     if (event.key !== 'Tab') {
       return;

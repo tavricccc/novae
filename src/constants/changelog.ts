@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善內建瀏覽器開啟體驗",
+    version: "v2.0.95",
+    date: "2026-07-07",
+    time: "22:26",
+    items: [
+      {
+        title: "最佳化 App 內建瀏覽器開啟流程，支援自動切換至外部預設瀏覽器（如 Safari 或 Chrome）。"
+      },
+      {
+        title: "強化內建瀏覽器引導提示，確保在不支援自動切換的 App 中，提供完整的系統瀏覽器引導與不可略過設定。"
+      }
+    ]
+  },
+  {
     title: "優化提案審核與狀態變更流程",
     version: "v2.0.94",
     date: "2026-07-07",

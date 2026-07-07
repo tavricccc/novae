@@ -5,8 +5,15 @@ import './style.css';
 import { initializeAppUpdate } from './composables/useAppUpdate';
 import { initializeSession } from './composables/useSession';
 import { initializeAppResume } from './composables/useAppResume';
+import { tryRedirectToExternalBrowser } from './lib/in-app-browser';
 
 async function bootstrap() {
+  if (typeof window !== 'undefined') {
+    if (tryRedirectToExternalBrowser(navigator.userAgent)) {
+      return;
+    }
+  }
+
   initializeAppResume();
   void initializeAppUpdate();
   initializeSession();
@@ -15,3 +22,4 @@ async function bootstrap() {
 }
 
 void bootstrap();
+

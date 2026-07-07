@@ -1,5 +1,5 @@
 <template>
-  <DialogOverlay :open="open" padded z-index-class="z-[80]">
+  <DialogOverlay :open="open" padded z-index-class="z-[80]" :persistent="preventDismiss">
     <section
       ref="dialogRef"
       class="panel dialog-card flex flex-col !overflow-hidden md:max-w-2xl md:max-h-[min(85dvh,780px)]"
@@ -84,8 +84,12 @@
         </div>
       </div>
 
-      <div class="dialog-actions border-t border-ink-100 bg-white/95 px-5 pb-6 pt-4 backdrop-blur dark:border-ink-800 dark:bg-ink-950/95 md:px-8 md:pb-8 md:pt-4">
+      <div
+        v-if="!preventDismiss || content.primaryLabel"
+        class="dialog-actions border-t border-ink-100 bg-white/95 px-5 pb-6 pt-4 backdrop-blur dark:border-ink-800 dark:bg-ink-950/95 md:px-8 md:pb-8 md:pt-4"
+      >
         <button
+          v-if="!preventDismiss"
           type="button"
           class="button-secondary"
           @click="handleSecondaryAction"
@@ -281,10 +285,15 @@ const primaryIconProps = computed(() => {
 });
 const isSkipConfirmOpen = ref(false);
 
+const preventDismiss = computed(() => {
+  return props.mode === 'in-app-browser' || props.mode === 'ios-open-safari';
+});
+
 useBodyScrollLock(toRef(props, 'open'));
 
 const { dialogRef } = useDialogFocus(toRef(props, 'open'), {
   onClose: () => emit('close'),
+  persistent: preventDismiss,
 });
 
 function handlePrimaryAction() {
