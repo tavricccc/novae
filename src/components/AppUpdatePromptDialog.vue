@@ -22,7 +22,10 @@
         </div>
       </div>
       <div class="dialog-actions">
-        <button type="button" class="button-primary" data-autofocus @click="emit('reload')">重新載入</button>
+        <button type="button" class="button-primary" :disabled="busy" data-autofocus @click="emit('reload')">
+          <LoadingSpinner v-if="busy" :size="4" />
+          <span>{{ busy ? '重新載入中' : '重新載入' }}</span>
+        </button>
       </div>
     </section>
   </DialogOverlay>
@@ -31,10 +34,12 @@
 <script setup lang="ts">
 import { toRef } from 'vue';
 import DialogOverlay from '@/components/ui/DialogOverlay.vue';
+import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 import { useDialogFocus } from '@/composables/useDialogFocus';
 
 const props = defineProps<{
+  busy?: boolean;
   open: boolean;
 }>();
 

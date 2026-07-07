@@ -34,8 +34,25 @@
   </AppShell>
   <AppUpdatePromptDialog
     :open="updateAvailable"
+    :busy="reloading"
     @reload="reloadApp"
   />
+  <Teleport to="body">
+    <Transition name="dialog" appear>
+      <div
+        v-if="reloading"
+        class="fixed inset-0 z-[70] flex items-center justify-center bg-ink-900/50 text-white backdrop-blur-sm"
+        role="status"
+        aria-live="assertive"
+        aria-label="正在重新載入應用程式"
+      >
+        <div class="flex flex-col items-center gap-3">
+          <LoadingSpinner :size="8" />
+          <p class="text-sm font-semibold">正在重新載入</p>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -66,7 +83,7 @@ if (typeof document !== 'undefined') {
   document.documentElement.dataset.appRelease = APP_RELEASE_MARKER;
 }
 
-const { canAutoReloadCurrentVersion, reloadApp, updateAvailable } = useAppUpdate();
+const { canAutoReloadCurrentVersion, reloadApp, reloading, updateAvailable } = useAppUpdate();
 const { open: startupGateOpen } = useAppStartupGate();
 const route = useRoute();
 const router = useRouter();

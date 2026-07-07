@@ -2,6 +2,17 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善重新載入提示",
+    version: "v2.0.99",
+    date: "2026-07-08",
+    time: "04:43",
+    items: [
+      {
+        title: "新增應用程式重新載入中的全螢幕提示，讓更新等待狀態更清楚。"
+      }
+    ]
+  },
+  {
     title: "修正附議顯示狀態",
     version: "v2.0.98",
     date: "2026-07-08",
