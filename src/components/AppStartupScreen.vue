@@ -5,7 +5,7 @@
         <BrandMark custom-class="startup-screen__mark" />
       </div>
 
-      <LoadingSpinner :size="8" class="startup-screen__loader" />
+      <LoadingSpinner :size="7" class="startup-screen__loader" />
     </div>
   </section>
 </template>
@@ -83,8 +83,8 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
 .startup-screen__loader {
   color: rgb(var(--color-on-surface));
-  height: 2.25rem !important;
-  width: 2.25rem !important;
+  height: 1.75rem !important;
+  width: 1.75rem !important;
 }
 
 @media (prefers-color-scheme: dark) {
