@@ -67,19 +67,36 @@
         </article>
       </li>
     </ol>
+
+    <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import EmptyStatePanel from '@/components/ui/EmptyStatePanel.vue';
 import { CHANGELOG_ENTRIES } from '@/constants/changelog';
 import { useSession } from '@/composables/useSession';
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll';
 import type { ChangelogEntry } from '@/types';
 
-const entries = computed(() => [...CHANGELOG_ENTRIES].sort(compareChangelogEntries));
+const sortedEntries = computed(() => [...CHANGELOG_ENTRIES].sort(compareChangelogEntries));
+const displayLimit = ref(10);
+const entries = computed(() => sortedEntries.value.slice(0, displayLimit.value));
 const totalUpdates = computed(() => CHANGELOG_ENTRIES.length);
 const { isAllowedUser } = useSession();
+
+const hasMore = computed(() => displayLimit.value < sortedEntries.value.length);
+const infiniteScrollDisabled = computed(() => !hasMore.value || !isAllowedUser.value);
+
+function loadMore() {
+  displayLimit.value += 15;
+}
+
+const { sentinel: loadMoreSentinel } = useInfiniteScroll({
+  disabled: infiniteScrollDisabled,
+  onLoadMore: loadMore,
+});
 
 function compareChangelogEntries(a: ChangelogEntry, b: ChangelogEntry) {
   const timeDifference = getEntryTime(b) - getEntryTime(a);
@@ -88,6 +105,7 @@ function compareChangelogEntries(a: ChangelogEntry, b: ChangelogEntry) {
   return getVersionNumber(b.version) - getVersionNumber(a.version);
 }
 
+// Keep other functions unchanged
 function getEntryTime(entry: ChangelogEntry) {
   return Date.parse(`${entry.date}T${entry.time}:00`);
 }

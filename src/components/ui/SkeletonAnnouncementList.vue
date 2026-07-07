@@ -1,5 +1,19 @@
 <template>
-  <div class="divide-y divide-ink-100 dark:divide-ink-800/60" aria-label="公告載入中" aria-busy="true">
+  <div class="issue-table overflow-visible" aria-label="公告載入中" aria-busy="true">
+    <!-- Sticky column header row (hidden on mobile) -->
+    <div
+      class="issue-table-header hidden md:grid"
+      :style="{ 'grid-template-columns': tableCols }"
+      role="row"
+    >
+      <span role="columnheader">狀態</span>
+      <span role="columnheader">作者</span>
+      <span role="columnheader">標題</span>
+      <span role="columnheader">發布日期</span>
+      <span role="columnheader">互動</span>
+      <span v-if="canManage" role="columnheader">管理</span>
+    </div>
+
     <!-- Mobile view (condensed card/row format, hidden on md) -->
     <div
       v-for="i in count"
