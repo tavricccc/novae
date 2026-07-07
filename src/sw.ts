@@ -45,7 +45,8 @@ function withAppVersion(path: string) {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const link = normalizeNotificationLink(event.notification.data?.link);
+  const rawLink = event.notification.data?.link || event.notification.data?.FCM_MSG?.data?.link;
+  const link = normalizeNotificationLink(rawLink);
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const matchingWindow = windows.find((client) => client.url === link);

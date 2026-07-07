@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "最佳化推播通知可靠性與點擊導向",
+    version: "v2.0.102",
+    date: "2026-07-08",
+    time: "05:35",
+    items: [
+      {
+        title: "修正特定裝置與瀏覽器下可能收到重複推播通知的問題，提升通知相關穩定度。"
+      },
+      {
+        title: "修正點擊部分背景通知時無法正確導向目標頁面、改為回到首頁的問題。"
+      }
+    ]
+  },
+  {
     title: "優化啟動階段版本檢查體驗",
     version: "v2.0.101",
     date: "2026-07-08",
