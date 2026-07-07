@@ -90,7 +90,7 @@ const { isAdmin } = useSession();
 const tableCols = computed(() => {
   const cols = ['6rem'];
   if (props.showAuthor) cols.push('8rem');
-  cols.push('1fr', '9rem', '9rem', '7rem');
+  cols.push('1fr', '8rem', '9rem', '7rem');
   if (isAdmin.value) cols.push('2.5rem');
   return cols.join(' ');
 });

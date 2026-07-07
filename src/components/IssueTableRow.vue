@@ -22,7 +22,7 @@
       <div class="mt-1.5 flex w-full items-center gap-2">
         <div class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-xs text-ink-500 dark:text-ink-400">
           <span class="min-w-0 truncate font-normal text-ink-400 dark:text-ink-500">
-            {{ primaryTimeShortLabel }}：{{ primaryTimeValueLabel }}
+            {{ primaryTimeValueLabel }}
           </span>
           <template v-if="issue.support_enabled">
             <span class="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-ink-100/70 text-ink-700 font-medium dark:bg-ink-900/60 dark:text-ink-300">
@@ -107,9 +107,8 @@
         </button>
       </div>
 
-      <div class="flex flex-col justify-center w-36 shrink-0 text-xs text-ink-400/90 dark:text-ink-500/90">
-        <span class="font-medium text-ink-500 dark:text-ink-400">{{ primaryTimeShortLabel }}</span>
-        <span class="whitespace-nowrap">{{ primaryTimeValueLabel }}</span>
+      <div class="flex items-center w-36 shrink-0 text-xs text-ink-400/90 dark:text-ink-500/90 whitespace-nowrap">
+        {{ primaryTimeValueLabel }}
       </div>
 
       <div class="flex items-center w-36 shrink-0 pr-2">
@@ -208,7 +207,6 @@ const {
   displayAuthorName,
   displayPhotoUrl,
   statusLabel,
-  primaryTimeShortLabel,
   primaryTimeValueLabel,
   isOwnIssue,
   isAdmin,
@@ -239,7 +237,7 @@ const showAuthorCol = computed(() => !issueStoresAuthorPrivately(props.issue.cat
 const tableCols = computed(() => {
   const cols = ['6rem'];
   if (showAuthorCol.value) cols.push('8rem');
-  cols.push('1fr', '9rem', '9rem', '7rem');
+  cols.push('1fr', '8rem', '9rem', '7rem');
   if (isAdmin.value) cols.push('2.5rem');
   return cols.join(' ');
 });
