@@ -2,6 +2,17 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "優化桌面版雙側獨立滾動配置",
+    version: "v2.0.85",
+    date: "2026-07-07",
+    time: "17:05",
+    items: [
+      {
+        title: "將桌面版詳情頁的左側內容區調整為固定高度獨立滾動，實現左側詳情與右側留言兩側完全對齊、各自獨立捲動的排版體驗。"
+      }
+    ]
+  },
+  {
     title: "優化桌面版配置與公告列表對齊",
     version: "v2.0.84",
     date: "2026-07-07",

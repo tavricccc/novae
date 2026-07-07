@@ -16,7 +16,7 @@
     </header>
 
     <div v-if="isDesktopViewport" class="hidden min-h-0 items-stretch gap-6 md:grid md:grid-cols-[minmax(0,1fr)_minmax(22rem,30rem)] xl:grid-cols-[minmax(0,1fr)_32rem]">
-      <div class="flex min-w-0 flex-col pb-[3px]">
+      <div class="flex h-[calc(100dvh-var(--app-header-height)-env(safe-area-inset-top)-2.5rem)] min-w-0 flex-col overflow-y-auto pb-[3px] pr-2">
         <header class="hidden md:flex shrink-0 items-start gap-3 pb-3">
           <button
             type="button"
@@ -34,7 +34,7 @@
         <slot name="details" :compact="false" :scroll-content="false" />
         <slot name="actions" :compact="false" />
       </div>
-      <div class="sticky top-[calc(var(--app-header-height)+env(safe-area-inset-top)+1.25rem)] flex h-[calc(100dvh-var(--app-header-height)-env(safe-area-inset-top)-2.5rem)] min-w-0 flex-col self-start border-l border-ink-100 pb-[3px] pl-6 pr-1 dark:border-ink-800">
+      <div class="flex h-[calc(100dvh-var(--app-header-height)-env(safe-area-inset-top)-2.5rem)] min-w-0 flex-col border-l border-ink-100 pb-[3px] pl-6 pr-1 dark:border-ink-800">
         <slot name="comments" :compact-header="false" />
       </div>
     </div>
