@@ -38,6 +38,13 @@ export function useIssueRouteDetail(
     };
   }
 
+  function issueWithSupportState(issue: IssueRecord) {
+    return {
+      ...issue,
+      currentUserSupported: issue.currentUserSupported || supportedIssueIds.value.has(issue.id),
+    };
+  }
+
   function closeRouteIssue() {
     requestId += 1;
     routeIssue.value = null;
@@ -47,15 +54,20 @@ export function useIssueRouteDetail(
 
   function prefillRouteIssue(issue: IssueRecord) {
     requestId += 1;
-    routeIssue.value = {
-      ...issue,
-      currentUserSupported: supportedIssueIds.value.has(issue.id),
-    };
+    routeIssue.value = issueWithSupportState(issue);
     routeIssueLoading.value = false;
   }
 
   function updateRouteIssueSupport(supported: boolean, supportCount?: number) {
     if (!routeIssue.value) return;
+    const nextIds = new Set(supportedIssueIds.value);
+    if (supported) {
+      nextIds.add(routeIssue.value.id);
+    } else {
+      nextIds.delete(routeIssue.value.id);
+    }
+    supportedIssueIds.value = nextIds;
+
     const offset = supported ? 1 : -1;
     routeIssue.value = {
       ...routeIssue.value,
@@ -68,10 +80,7 @@ export function useIssueRouteDetail(
 
   function patchRouteIssue(issue: IssueRecord) {
     if (routeIssue.value?.id !== issue.id) return;
-    routeIssue.value = {
-      ...issue,
-      currentUserSupported: supportedIssueIds.value.has(issue.id),
-    };
+    routeIssue.value = issueWithSupportState(issue);
   }
 
   async function handleRouteIssueError(currentRequestId: number) {
@@ -101,10 +110,7 @@ export function useIssueRouteDetail(
       if (issues && issues.value) {
         const listedIssue = issues.value.find((i) => i.id === issueId);
         if (listedIssue) {
-          routeIssue.value = {
-            ...listedIssue,
-            currentUserSupported: supportedIssueIds.value.has(listedIssue.id),
-          };
+          routeIssue.value = issueWithSupportState(listedIssue);
         }
       }
 
@@ -113,10 +119,7 @@ export function useIssueRouteDetail(
       try {
         const issue = await fetchIssueRecordById(issueId);
         if (currentRequestId !== requestId) return;
-        routeIssue.value = {
-          ...issue,
-          currentUserSupported: supportedIssueIds.value.has(issue.id),
-        };
+        routeIssue.value = issueWithSupportState(issue);
       } catch (error) {
         if (isAbortFailure(error)) return;
         await handleRouteIssueError(currentRequestId);
@@ -137,10 +140,7 @@ export function useIssueRouteDetail(
     try {
       const issue = await fetchIssueRecordById(issueId);
       if (currentRequestId !== requestId) return;
-      routeIssue.value = {
-        ...issue,
-        currentUserSupported: supportedIssueIds.value.has(issue.id),
-      };
+      routeIssue.value = issueWithSupportState(issue);
     } catch (error) {
       if (isAbortFailure(error)) return;
       await handleRouteIssueError(currentRequestId);
@@ -176,7 +176,7 @@ export function useIssueRouteDetail(
     if (!routeIssue.value) return;
     routeIssue.value = {
       ...routeIssue.value,
-      currentUserSupported: ids.has(routeIssue.value.id),
+      currentUserSupported: routeIssue.value.currentUserSupported || ids.has(routeIssue.value.id),
     };
   });
 

@@ -91,7 +91,7 @@ export function useIssueSearch(options: {
     }
     const nextIssue = {
       ...issue,
-      currentUserSupported: options.supportedIssueIds.value.has(issue.id),
+      currentUserSupported: issue.currentUserSupported || options.supportedIssueIds.value.has(issue.id),
     };
     const issueMap = new Map(searchPool.map((entry) => [entry.id, entry]));
     issueMap.set(nextIssue.id, nextIssue);
@@ -107,11 +107,11 @@ export function useIssueSearch(options: {
   function refreshSearchSupportState() {
     searchPool = searchPool.map((issue) => ({
       ...issue,
-      currentUserSupported: options.supportedIssueIds.value.has(issue.id),
+      currentUserSupported: issue.currentUserSupported || options.supportedIssueIds.value.has(issue.id),
     }));
     searchState.issues = searchState.issues.map((issue) => ({
       ...issue,
-      currentUserSupported: options.supportedIssueIds.value.has(issue.id),
+      currentUserSupported: issue.currentUserSupported || options.supportedIssueIds.value.has(issue.id),
     }));
   }
 

@@ -198,7 +198,7 @@ export function useIssueBuckets(deps: BucketDeps) {
     bucketCache.forEach((bucket) => {
       bucket.issues = bucket.issues.map((issue) => ({
         ...issue,
-        currentUserSupported: ids.has(issue.id),
+        currentUserSupported: issue.currentUserSupported || ids.has(issue.id),
       }));
     });
   });

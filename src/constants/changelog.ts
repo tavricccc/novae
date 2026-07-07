@@ -2,6 +2,17 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "修正附議顯示狀態",
+    version: "v2.0.98",
+    date: "2026-07-08",
+    time: "04:38",
+    items: [
+      {
+        title: "修正附議其他提案後，原本已附議提案按鈕狀態可能未正確維持的問題。"
+      }
+    ]
+  },
+  {
     title: "改善提案列表切換體驗",
     version: "v2.0.97",
     date: "2026-07-08",
