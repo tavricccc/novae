@@ -5,10 +5,6 @@
         <BrandMark custom-class="startup-screen__mark" />
       </div>
 
-      <div class="startup-screen__copy">
-        <h1 class="startup-screen__title">{{ appTitle }}</h1>
-      </div>
-
       <LoadingSpinner :size="6" class="startup-screen__loader" />
     </div>
   </section>
@@ -17,8 +13,6 @@
 <script setup lang="ts">
 import BrandMark from '@/components/ui/BrandMark.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
-
-const appTitle = import.meta.env.VITE_APP_TITLE ?? 'SRP';
 </script>
 
 <style scoped>
@@ -85,20 +79,6 @@ const appTitle = import.meta.env.VITE_APP_TITLE ?? 'SRP';
 
 .startup-screen__mark {
   font-size: 4.6rem;
-}
-
-.startup-screen__copy {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.startup-screen__title {
-  margin: 0;
-  color: rgb(var(--color-on-surface));
-  font-size: clamp(2rem, 8vw, 3rem);
-  font-weight: 800;
-  letter-spacing: 0;
-  line-height: 1.05;
 }
 
 .startup-screen__loader {
