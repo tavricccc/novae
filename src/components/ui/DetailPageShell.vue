@@ -20,7 +20,7 @@
         <slot name="details" :compact="false" :scroll-content="false" />
         <slot name="actions" :compact="false" />
       </div>
-      <div class="sticky top-[calc(var(--app-header-height)+env(safe-area-inset-top)+1.25rem)] flex h-[calc(100dvh-var(--app-header-height)-env(safe-area-inset-top)-2.5rem)] min-w-0 flex-col border-l border-ink-100 pb-[3px] pl-6 pr-1 dark:border-ink-800">
+      <div class="sticky top-[calc(var(--app-header-height)+env(safe-area-inset-top)+1.25rem)] flex h-[calc(100dvh-var(--app-header-height)-env(safe-area-inset-top)-2.5rem)] min-w-0 flex-col self-start border-l border-ink-100 pb-[3px] pl-6 pr-1 dark:border-ink-800">
         <slot name="comments" :compact-header="false" />
       </div>
     </div>

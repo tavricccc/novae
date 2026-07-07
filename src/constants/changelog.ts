@@ -2,6 +2,17 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "修正桌面版詳情頁留言按鈕顯示問題",
+    version: "v2.0.82",
+    date: "2026-07-07",
+    time: "16:56",
+    items: [
+      {
+        title: "修正桌面版詳情頁中，右側留言區因排版拉伸導致留言按鈕被擠出螢幕外的問題。"
+      }
+    ]
+  },
+  {
     title: "優化桌面版詳情頁留言區排版",
     version: "v2.0.81",
     date: "2026-07-07",
