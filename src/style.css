@@ -679,25 +679,13 @@
 
   .issue-table-row:active,
   .issue-row-mobile:active,
-  .issue-row-mobile:has(.list-row-title-trigger:active),
-  .issue-table-row:has(.list-row-title-trigger:active) {
+  .issue-row-mobile:has(.list-row-overlay-trigger:active),
+  .issue-table-row:has(.list-row-overlay-trigger:active) {
     background-color: rgb(241 245 249 / 0.92);
     box-shadow: inset 0 2px 8px rgb(var(--color-shadow) / 0.08);
     opacity: 0.92;
     transform: translateY(1px) scale(0.992) !important;
     transition-duration: 60ms;
-  }
-
-  .list-row-title-trigger {
-    @apply cursor-pointer rounded-md outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary/70;
-  }
-
-  .list-row-title-trigger:active:not(:disabled):not([aria-disabled='true']) {
-    filter: none !important;
-    opacity: 1 !important;
-    scale: 1 !important;
-    transform: none !important;
-    translate: 0 0 !important;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -717,8 +705,8 @@
 
     .issue-table-row:active,
     .issue-row-mobile:active,
-    .issue-row-mobile:has(.list-row-title-trigger:active),
-    .issue-table-row:has(.list-row-title-trigger:active) {
+    .issue-row-mobile:has(.list-row-overlay-trigger:active),
+    .issue-table-row:has(.list-row-overlay-trigger:active) {
       background-color: rgb(30 41 59 / 0.9);
     }
   }

@@ -4,27 +4,31 @@
     :class="{ 'z-50': isDropdownOpen }"
   >
     <!-- Mobile view (condensed card/row format, hidden on md) -->
-    <div class="issue-row-mobile list-row-trigger md:hidden">
-      <div class="flex min-w-0 items-center gap-2 w-full">
-        <span class="tag shrink-0 px-2 py-0.5 text-xs border-ink-200 bg-ink-100/50 text-ink-700 dark:border-ink-800 dark:bg-ink-950/50">
+    <div class="issue-row-mobile list-row-trigger md:hidden relative overflow-hidden">
+      <!-- 覆蓋整條列表的底層透明大按鈕 -->
+      <button
+        class="list-row-overlay-trigger absolute inset-0 z-0 h-full w-full bg-transparent outline-none cursor-pointer"
+        type="button"
+        aria-label="查看公告詳情"
+        @click="emit('open', announcement)"
+      ></button>
+
+      <div class="flex min-w-0 items-center gap-2 w-full relative z-10 pointer-events-none">
+        <span class="tag shrink-0 px-2 py-0.5 text-xs border-ink-200 bg-ink-100/50 text-ink-700 dark:border-ink-800 dark:bg-ink-950/50 pointer-events-auto">
           公告
         </span>
-        <AuthorAvatar :author-uid="announcement.author_uid" :photo-url="announcement.author_photo_url" :name="announcement.author_name" size="sm" :alt-text="`${announcement.author_name} 的頭像`" class="shrink-0" />
-        <button
-          class="list-row-title-trigger -my-1 flex min-h-10 flex-1 items-center text-left"
-          type="button"
-          @click.stop="emit('open', announcement)"
-        >
+        <AuthorAvatar :author-uid="announcement.author_uid" :photo-url="announcement.author_photo_url" :name="announcement.author_name" size="sm" :alt-text="`${announcement.author_name} 的頭像`" class="shrink-0 pointer-events-auto" />
+        <div class="flex-1 py-1 text-left">
           <span class="line-clamp-1 font-semibold text-sm tracking-normal text-ink-950 dark:text-ink-50 hover:underline">
             {{ announcement.title }}
           </span>
-        </button>
+        </div>
       </div>
-      <div class="mt-1.5 flex w-full items-center gap-2">
+      <div class="mt-1.5 flex w-full items-center gap-2 relative z-10 pointer-events-none">
         <div class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-xs text-ink-500 dark:text-ink-400">
           <span class="min-w-0 truncate font-normal text-ink-400 dark:text-ink-500">{{ dateLabel }}</span>
         </div>
-        <div class="flex shrink-0 items-center justify-end gap-1.5">
+        <div class="flex shrink-0 items-center justify-end gap-1.5 pointer-events-auto">
           <!-- Likes button -->
           <button
             type="button"
@@ -67,18 +71,26 @@
 
     <!-- Desktop view (md:grid, hidden on mobile) -->
     <div
-      class="issue-table-row hidden md:grid"
+      class="issue-table-row hidden md:grid relative overflow-hidden"
       data-list-row-trigger
       :style="{ 'grid-template-columns': tableCols }"
       role="row"
     >
-      <div class="flex items-center w-24 shrink-0">
+      <!-- 覆蓋整條列表的底層透明大按鈕 -->
+      <button
+        class="list-row-overlay-trigger absolute inset-0 z-0 h-full w-full bg-transparent outline-none cursor-pointer"
+        type="button"
+        aria-label="查看公告詳情"
+        @click="emit('open', announcement)"
+      ></button>
+
+      <div class="flex items-center w-24 shrink-0 relative z-10 pointer-events-none">
         <span class="tag border-ink-200 bg-ink-100/50 dark:border-ink-800 dark:bg-ink-950/50">
           公告
         </span>
       </div>
 
-      <div class="flex items-center gap-2 w-32 shrink-0 pr-2">
+      <div class="flex items-center gap-2 w-32 shrink-0 pr-2 relative z-10 pointer-events-none">
         <AuthorAvatar
           :author-uid="announcement.author_uid"
           :photo-url="announcement.author_photo_url"
@@ -92,22 +104,17 @@
         </span>
       </div>
 
-      <div class="flex items-center gap-2 flex-1 min-w-0 pr-3">
-        <button
-          type="button"
-          class="list-row-title-trigger w-full py-1 text-left text-sm font-semibold tracking-tight text-ink-900 hover:text-ink-950 hover:underline dark:text-ink-100 dark:hover:text-white sm:text-base truncate"
-          :title="announcement.title"
-          @click="emit('open', announcement)"
-        >
+      <div class="flex items-center gap-2 flex-1 min-w-0 pr-3 relative z-10 pointer-events-none">
+        <div class="w-full py-1 text-left text-sm font-semibold tracking-tight text-ink-900 hover:text-ink-950 hover:underline dark:text-ink-100 dark:hover:text-white sm:text-base truncate" :title="announcement.title">
           {{ announcement.title }}
-        </button>
+        </div>
       </div>
 
-      <div class="flex items-center w-32 shrink-0 text-xs text-ink-400/90 dark:text-ink-500/90 whitespace-nowrap">
+      <div class="flex items-center w-32 shrink-0 text-xs text-ink-400/90 dark:text-ink-500/90 whitespace-nowrap relative z-10 pointer-events-none">
         {{ dateLabel }}
       </div>
 
-      <div class="flex items-center gap-1 w-36 shrink-0 pr-2">
+      <div class="flex items-center gap-1 w-36 shrink-0 pr-2 relative z-10 pointer-events-auto">
         <!-- Likes button -->
         <button
           type="button"
@@ -137,7 +144,7 @@
         </button>
       </div>
 
-      <div v-if="canManage" class="flex items-center w-10 shrink-0">
+      <div v-if="canManage" class="flex items-center w-10 shrink-0 relative z-10 pointer-events-auto">
         <CompactActionMenu
           title="管理公告"
           @dropdown-open="(open) => isDropdownOpen = open"
