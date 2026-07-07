@@ -61,13 +61,20 @@
 
     <nav
       v-if="isAllowedUser"
-      class="app-bottom-nav fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-4 right-4 z-40 mx-auto max-w-md border border-ink-200/80 bg-white/95 px-3 py-1.5 backdrop-blur-xl dark:border-ink-800/80 dark:bg-ink-950/95 shadow-lg rounded-full md:hidden"
+      class="app-bottom-nav fixed bottom-3 left-4 right-4 z-40 mx-auto max-w-md border border-ink-200/80 bg-white/95 px-3 py-1.5 backdrop-blur-xl dark:border-ink-800/80 dark:bg-ink-950/95 shadow-lg rounded-full md:hidden"
       aria-label="手機主要導覽"
     >
-      <div class="app-bottom-nav__inner mx-auto grid grid-cols-5 gap-1">
+      <div ref="mobileNavRef" class="app-bottom-nav__inner mx-auto grid grid-cols-5 gap-1 relative">
+        <!-- 行動版滑動背景膠囊 -->
+        <div
+          class="absolute rounded-full bg-ink-100 dark:bg-ink-800/70 pointer-events-none"
+          :style="[mobileIndicatorStyle, { transition: 'all 280ms cubic-bezier(0.16, 1, 0.3, 1)' }]"
+        ></div>
+
         <RouterLink
           v-for="item in mobileRouteNavItems"
           :key="item.key"
+          :ref="el => setMobileNavElement(item.key, el)"
           :to="item.to"
           class="app-bottom-nav__item"
           :class="{ 'app-bottom-nav__item--active': item.isActive }"
@@ -78,6 +85,7 @@
           <span class="app-bottom-nav__label">{{ item.label }}</span>
         </RouterLink>
         <RouterLink
+          :ref="el => setMobileNavElement('notifications', el)"
           to="/notifications"
           class="app-bottom-nav__item"
           :class="{ 'app-bottom-nav__item--active': route.name === 'notifications' }"
@@ -93,6 +101,7 @@
           <span class="app-bottom-nav__label">通知</span>
         </RouterLink>
         <RouterLink
+          :ref="el => setMobileNavElement('settings', el)"
           to="/settings"
           class="app-bottom-nav__item overflow-visible"
           :class="{ 'app-bottom-nav__item--active': ['settings', 'changelog', 'dashboard'].includes(route.name as string) }"
@@ -187,11 +196,20 @@ const mobileHeaderTitle = computed(() => {
 
 const navRef = ref<HTMLDivElement | null>(null);
 const navElementRefs = ref<Record<string, HTMLElement | null>>({});
+const mobileNavRef = ref<HTMLDivElement | null>(null);
+const mobileNavElementRefs = ref<Record<string, HTMLElement | null>>({});
 const mainContentRef = ref<HTMLDivElement | null>(null);
 
 const underlineStyle = ref({
   left: '0px',
   width: '0px',
+});
+
+const mobileIndicatorStyle = ref({
+  left: '0px',
+  width: '0px',
+  height: '0px',
+  top: '0px',
 });
 
 function resolveElement(element: Element | { $el?: Element } | null) {
@@ -203,10 +221,23 @@ function setNavElement(key: string, element: Element | { $el?: Element } | null)
   navElementRefs.value[key] = resolveElement(element) as HTMLElement | null;
 }
 
+function setMobileNavElement(key: string, element: Element | { $el?: Element } | null) {
+  mobileNavElementRefs.value[key] = resolveElement(element) as HTMLElement | null;
+}
+
 function activeNavKey() {
   if (isAnnouncementRouteActive.value) return 'announcements';
   if (isMyProposalsRouteActive.value) return 'my-proposals';
   if (route.name === 'dashboard') return 'dashboard';
+  if (isIssueRouteActive.value) return 'issues';
+  return '';
+}
+
+function activeMobileNavKey() {
+  if (isAnnouncementRouteActive.value) return 'announcements';
+  if (isMyProposalsRouteActive.value) return 'my-proposals';
+  if (route.name === 'notifications') return 'notifications';
+  if (['settings', 'changelog', 'dashboard'].includes(route.name as string)) return 'settings';
   if (isIssueRouteActive.value) return 'issues';
   return '';
 }
@@ -231,10 +262,35 @@ function updateUnderline() {
   });
 }
 
+function updateMobileIndicator() {
+  nextTick(() => {
+    if (!isAllowedUser.value) return;
+    const activeEl = mobileNavElementRefs.value[activeMobileNavKey()];
+    if (!activeEl || !mobileNavRef.value) {
+      mobileIndicatorStyle.value = {
+        left: '0px',
+        width: '0px',
+        height: '0px',
+        top: '0px',
+      };
+      return;
+    }
+    const navRect = mobileNavRef.value.getBoundingClientRect();
+    const btnRect = activeEl.getBoundingClientRect();
+    mobileIndicatorStyle.value = {
+      left: `${btnRect.left - navRect.left}px`,
+      width: `${btnRect.width}px`,
+      height: `${btnRect.height}px`,
+      top: `${btnRect.top - navRect.top}px`,
+    };
+  });
+}
+
 watch(
   [activeFilter, isAllowedUser, () => route.name],
   () => {
     updateUnderline();
+    updateMobileIndicator();
   },
   { immediate: true }
 );
@@ -250,12 +306,15 @@ watch(
 
 onMounted(() => {
   window.addEventListener('resize', updateUnderline);
+  window.addEventListener('resize', updateMobileIndicator);
   // Initial call with a tiny delay to ensure proper calculation
   setTimeout(updateUnderline, 100);
+  setTimeout(updateMobileIndicator, 100);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', updateUnderline);
+  window.removeEventListener('resize', updateMobileIndicator);
 });
 
 </script>

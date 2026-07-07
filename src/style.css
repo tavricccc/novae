@@ -545,12 +545,11 @@
   }
 
   .app-bottom-nav__item--active {
-    @apply bg-ink-100 text-ink-900 dark:bg-ink-800/70 dark:text-ink-100 rounded-full;
+    @apply text-ink-900 dark:text-ink-100;
   }
 
   .app-bottom-nav__item--active:active:not([aria-disabled='true']) {
     border-radius: 9999px;
-    background-color: rgb(203 213 225 / 0.92);
   }
 
   .app-bottom-nav__icon {
@@ -710,9 +709,6 @@
       color: rgb(248 250 252);
     }
 
-    .app-bottom-nav__item--active:active:not([aria-disabled='true']) {
-      background-color: rgb(71 85 105 / 0.95);
-    }
 
     .issue-table-row:active,
     .issue-row-mobile:active {
