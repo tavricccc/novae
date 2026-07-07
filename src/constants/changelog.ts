@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善提案時間顯示",
+    version: "v2.0.90",
+    date: "2026-07-07",
+    time: "18:48",
+    items: [
+      {
+        title: "需審核的提案在審核通過後改為顯示審核通過時間，讓附議期限與畫面時間資訊一致。"
+      },
+      {
+        title: "不需審核且開放附議的提案會在送出後同步建立附議期限，提升期限顯示一致性。"
+      }
+    ]
+  },
+  {
     title: "優化手機版詳情頁滾動配置",
     version: "v2.0.89",
     date: "2026-07-07",

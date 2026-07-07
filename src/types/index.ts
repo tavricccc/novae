@@ -40,6 +40,7 @@ export interface IssueRecord {
   support_goal: number | null;
   support_deadline_at: Date | null;
   response_deadline_at: Date | null;
+  review_approved_at: Date | null;
   result_content?: string;
   result_updated_at?: Date | null;
   support_met_at: Date | null;

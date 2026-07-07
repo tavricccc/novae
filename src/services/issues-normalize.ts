@@ -101,6 +101,7 @@ export function normalizeIssueRecord(id: string, data: Record<string, unknown>):
     response_deadline_at: normalizeDate(
       data.response_deadline_at
     ) ?? defaults.response_deadline_at,
+    review_approved_at: normalizeDate(data.review_approved_at),
     result_content: typeof data.result_content === 'string'
       ? data.result_content
       : undefined,

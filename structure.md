@@ -51,6 +51,7 @@
 - supabase/migrations/202607060001_dashboard_failure_diagnostics.sql：擴充管理員 Dashboard 最近異常診斷欄位，並統一背景異常與維護紀錄的近期保留策略。
 - supabase/migrations/202607060002_cleanup_removed_issue_categories.sql：讓維護清理可依目前有效提案分類刪除已移除分類的資料庫提案與留言，排程清理相關 Cloudinary 圖片，並保留 Notion 備份頁面且標記為已刪除。
 - supabase/migrations/202607070001_nested_comments_and_issue_results.sql：新增提案結果欄位、提案與公告一層留言回覆關聯、父留言驗證與回覆查詢索引，並將既有管理員留言遷移為提案結果。
+- supabase/migrations/202607070002_issue_review_approved_at.sql：新增需審核提案的審核通過時間欄位，供附議期限與前端時間顯示使用。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/types.ts：受控 action 共用 Supabase client、身份與 JSON record 型別。
 - supabase/functions/backendAction/utils.ts：受控 action 共用 cursor、時間、數值、布林與台北日界限工具。

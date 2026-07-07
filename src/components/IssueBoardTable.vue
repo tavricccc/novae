@@ -13,7 +13,7 @@
       <span role="columnheader">狀態</span>
       <span v-if="showAuthor" role="columnheader">作者</span>
       <span role="columnheader">標題</span>
-      <span role="columnheader">提交日期</span>
+      <span role="columnheader">時間</span>
       <span role="columnheader">進度</span>
       <span role="columnheader">操作</span>
       <span v-if="isAdmin" role="columnheader">管理</span>
@@ -90,7 +90,7 @@ const { isAdmin } = useSession();
 const tableCols = computed(() => {
   const cols = ['6rem'];
   if (props.showAuthor) cols.push('8rem');
-  cols.push('1fr', '8rem', '9rem', '7rem');
+  cols.push('1fr', '9rem', '9rem', '7rem');
   if (isAdmin.value) cols.push('2.5rem');
   return cols.join(' ');
 });

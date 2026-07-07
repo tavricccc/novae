@@ -14,6 +14,7 @@ export function issueToResponse(issue: JsonRecord): JsonRecord {
     updated_at_ms: toMs(issue.updated_at),
     support_deadline_at_ms: toMs(issue.support_deadline_at),
     response_deadline_at_ms: toMs(issue.response_deadline_at),
+    review_approved_at_ms: toMs(issue.review_approved_at),
     result_updated_at_ms: toMs(issue.result_updated_at),
     support_met_at_ms: toMs(issue.support_met_at),
   };

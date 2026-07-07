@@ -24,6 +24,7 @@ interface IssueRow {
   response_deadline_at: string | null;
   result_content: string | null;
   result_updated_at: string | null;
+  review_approved_at: string | null;
   review_rejection_reason: string | null;
   status: string;
   support_count: number;

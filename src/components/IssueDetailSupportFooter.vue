@@ -103,8 +103,8 @@
       ]"
     >
       <div class="flex items-center gap-1" :class="{ 'shrink-0': compact }">
-        <span class="font-semibold text-ink-400">{{ compact ? '提案：' : '提案日期：' }}</span>
-        <span class="font-medium text-ink-700 dark:text-ink-300">{{ createdLabel || (compact ? '未定' : '未設定') }}</span>
+        <span class="font-semibold text-ink-400">{{ compact ? `${primaryTimeShortLabel}：` : `${primaryTimeLabel}：` }}</span>
+        <span class="font-medium text-ink-700 dark:text-ink-300">{{ primaryTimeValueLabel || (compact ? '未定' : '未設定') }}</span>
       </div>
       <div v-if="issue.support_enabled && issue.support_deadline_at" class="flex items-center gap-1" :class="{ 'shrink-0': compact, 'sm:justify-end': !compact }">
         <span class="font-semibold text-ink-400">{{ compact ? '截止：' : '附議截止：' }}</span>
@@ -135,9 +135,11 @@ defineProps<{
   canManage?: boolean;
   isAdmin?: boolean;
   compact?: boolean;
-  createdLabel: string;
   currentUserSupported: boolean;
   issue: IssueRecord;
+  primaryTimeLabel: string;
+  primaryTimeShortLabel: string;
+  primaryTimeValueLabel: string;
   responseDeadlineLabel: string;
   statusLabel: string;
   supportClosed: boolean;

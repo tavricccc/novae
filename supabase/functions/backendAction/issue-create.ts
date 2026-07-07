@@ -22,7 +22,10 @@ export async function createIssue(payload: JsonRecord, auth: AuthContext, supaba
 
   const categoryConfig = getIssueCategoryConfigOrDefault(category);
   const now = new Date();
-  const supportDeadlineAt = null;
+  const requiresReview = issueRequiresReview(category);
+  const supportDeadlineAt = !requiresReview && categoryConfig.support.deadlineDays !== null
+    ? new Date(now.getTime() + categoryConfig.support.deadlineDays * 24 * 60 * 60 * 1000).toISOString()
+    : null;
   const responseDeadlineAt = categoryConfig.responseDeadline.start === "created" && categoryConfig.responseDeadline.days !== null
     ? new Date(now.getTime() + categoryConfig.responseDeadline.days * 24 * 60 * 60 * 1000).toISOString()
     : null;
@@ -33,7 +36,8 @@ export async function createIssue(payload: JsonRecord, auth: AuthContext, supaba
     category,
     content,
     response_deadline_at: responseDeadlineAt,
-    status: issueRequiresReview(category) ? "under-review" : "pending",
+    review_approved_at: null,
+    status: requiresReview ? "under-review" : "pending",
     support_deadline_at: supportDeadlineAt,
     support_enabled: categoryConfig.support.enabled,
     support_goal: categoryConfig.support.goal,

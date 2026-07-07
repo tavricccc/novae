@@ -24,10 +24,11 @@
     <template #details="{ compact, scrollContent }">
       <IssueDetailContent
         :compact="compact"
-        :created-label="createdLabel"
         :display-author-name="displayAuthorName"
         :display-photo-url="displayPhotoUrl"
         :issue="issue"
+        :primary-time-label="primaryTimeLabel"
+        :primary-time-value-label="primaryTimeValueLabel"
         :scroll-content="scrollContent"
         :show-author="showAuthor"
       />
@@ -38,9 +39,11 @@
         :can-manage="isAdmin || isOwnIssue"
         :is-admin="isAdmin"
         :compact="compact"
-        :created-label="createdLabel"
         :current-user-supported="currentUserSupported"
         :issue="issue"
+        :primary-time-label="primaryTimeLabel"
+        :primary-time-short-label="primaryTimeShortLabel"
+        :primary-time-value-label="primaryTimeValueLabel"
         :response-deadline-label="responseDeadlineLabel"
         :status-label="statusLabel"
         :support-closed="supportClosed"
@@ -184,7 +187,9 @@ const {
   derivedStatus,
   categoryLabel,
   statusLabel,
-  createdLabel,
+  primaryTimeLabel,
+  primaryTimeShortLabel,
+  primaryTimeValueLabel,
   supportDeadlineLabel,
   responseDeadlineLabel,
   supportMetLabel,

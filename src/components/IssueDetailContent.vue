@@ -25,14 +25,18 @@
             {{ displayAuthorName }}
           </p>
           <span class="text-ink-300 dark:text-ink-700">&middot;</span>
-          <p class="text-xs font-normal text-ink-500/80 dark:text-ink-400/80">{{ createdLabel }}</p>
+          <p class="text-xs font-normal text-ink-500/80 dark:text-ink-400/80">
+            {{ primaryTimeShortText }}
+          </p>
         </template>
 
         <div v-else class="min-w-0">
           <p class="text-sm font-semibold text-ink-900 dark:text-ink-100">
             {{ displayAuthorName }}
           </p>
-          <p class="text-xs font-normal text-ink-500/80 dark:text-ink-400/80">建立於 {{ createdLabel }}</p>
+          <p class="text-xs font-normal text-ink-500/80 dark:text-ink-400/80">
+            {{ primaryTimeLabel }} {{ primaryTimeValueLabel }}
+          </p>
         </div>
       </div>
     </div>
@@ -63,17 +67,21 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import MarkdownMediaContent from '@/components/MarkdownMediaContent.vue';
 import UserAvatar from '@/components/ui/UserAvatar.vue';
 import type { IssueRecord } from '@/types';
 
 const props = defineProps<{
   compact?: boolean;
-  createdLabel: string;
   displayAuthorName: string;
   displayPhotoUrl: string | null;
   issue: IssueRecord;
+  primaryTimeLabel: string;
+  primaryTimeValueLabel: string;
   scrollContent?: boolean;
   showAuthor: boolean;
 }>();
+
+const primaryTimeShortText = computed(() => `${props.primaryTimeLabel} ${props.primaryTimeValueLabel}`);
 </script>
