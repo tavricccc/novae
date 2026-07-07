@@ -2,6 +2,17 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "修正桌面版詳情頁文字重疊問題",
+    version: "v2.0.86",
+    date: "2026-07-07",
+    time: "17:08",
+    items: [
+      {
+        title: "修正桌面版提案與公告詳情頁中，當正文內容過長時，文字會溢出並與底部操作按鈕重疊的排版問題。"
+      }
+    ]
+  },
+  {
     title: "優化桌面版雙側獨立滾動配置",
     version: "v2.0.85",
     date: "2026-07-07",
