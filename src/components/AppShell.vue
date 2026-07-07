@@ -62,14 +62,14 @@
 
     <nav
       v-if="isAllowedUser"
-      class="app-bottom-nav fixed left-4 right-4 z-40 mx-auto max-w-md border border-ink-200/80 bg-white/95 px-3 py-1.5 backdrop-blur-xl dark:border-ink-800/80 dark:bg-ink-950/95 shadow-lg rounded-full md:hidden"
+      class="app-bottom-nav fixed left-4 right-4 z-40 mx-auto max-w-md border border-ink-200/80 bg-white/95 px-3 py-1.5 backdrop-blur-xl dark:border-ink-800/80 dark:bg-ink-950/95 shadow-lg md:hidden"
       :style="{ bottom: `${bottomGap}px` }"
       aria-label="手機主要導覽"
     >
       <div ref="mobileNavRef" class="app-bottom-nav__inner mx-auto grid grid-cols-5 gap-1 relative">
         <!-- 行動版滑動背景膠囊 -->
         <div
-          class="absolute rounded-full bg-ink-100 dark:bg-ink-800/70 pointer-events-none"
+          class="app-bottom-nav__indicator absolute bg-ink-100 dark:bg-ink-800/70 pointer-events-none"
           :style="[mobileIndicatorStyle, { transition: 'all 280ms cubic-bezier(0.16, 1, 0.3, 1)' }]"
         ></div>
 
@@ -210,8 +210,8 @@ const navBarHeight = 60; // 48px + 12px padding
 const rootStyle = computed(() => {
   if (!isAllowedUser.value) return {};
   // 導覽列頂部距離螢幕底部的距離是 bottomGap + navBarHeight
-  // 我們讓主要內容的 padding-bottom (即 --app-bottom-nav-height) 等於這個高度再多加 12px 的安全舒適邊距
-  const height = bottomGap.value + navBarHeight + 12;
+  // 我們讓主要內容的 padding-bottom (即 --app-bottom-nav-height) 等於這個高度再多加 6px 的安全舒適邊距
+  const height = bottomGap.value + navBarHeight + 6;
   return {
     '--app-bottom-nav-height': `${height}px`,
   };
