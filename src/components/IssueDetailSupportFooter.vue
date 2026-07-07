@@ -40,12 +40,12 @@
           <ShareIcon :size="4" />
         </DetailActionButton>
         <DetailActionButton
-          v-if="isAdmin"
-          :label="issue.result_content ? '編輯提案結果' : '新增提案結果'"
+          v-if="isAdmin && !isClosed"
+          :label="isUnderReview ? '審核提案' : '變更提案狀態/結果'"
           :compact="compact"
-          title="編輯提案結果"
-          aria-label="編輯提案結果"
-          @click="emit('edit-result')"
+          :title="isUnderReview ? '審核提案' : '變更提案狀態/結果'"
+          :aria-label="isUnderReview ? '審核提案' : '變更提案狀態/結果'"
+          @click="isUnderReview ? emit('moderate') : emit('edit-result')"
         >
           <AppIcon name="edit" />
         </DetailActionButton>
@@ -73,12 +73,12 @@
         <ShareIcon :size="4" />
       </DetailActionButton>
       <DetailActionButton
-        v-if="isAdmin"
-        :label="issue.result_content ? '編輯提案結果' : '新增提案結果'"
+        v-if="isAdmin && !isClosed"
+        :label="isUnderReview ? '審核提案' : '變更提案狀態/結果'"
         :compact="compact"
-        title="編輯提案結果"
-        aria-label="編輯提案結果"
-        @click="emit('edit-result')"
+        :title="isUnderReview ? '審核提案' : '變更提案狀態/結果'"
+        :aria-label="isUnderReview ? '審核提案' : '變更提案狀態/結果'"
+        @click="isUnderReview ? emit('moderate') : emit('edit-result')"
       >
         <AppIcon name="edit" />
       </DetailActionButton>
@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CSSProperties } from 'vue';
+import { computed, type CSSProperties } from 'vue';
 import DetailActionButton from '@/components/ui/DetailActionButton.vue';
 import ShareIcon from '@/components/ui/ShareIcon.vue';
 import TrashIcon from '@/components/ui/TrashIcon.vue';
@@ -131,7 +131,7 @@ import AppIcon from '@/components/ui/AppIcon.vue';
 import VoteButtons from '@/components/VoteButtons.vue';
 import type { IssueRecord } from '@/types';
 
-defineProps<{
+const props = defineProps<{
   canManage?: boolean;
   isAdmin?: boolean;
   compact?: boolean;
@@ -156,5 +156,14 @@ const emit = defineEmits<{
   share: [];
   supported: [payload: { supported: boolean; supportCount: number }];
   'edit-result': [];
+  moderate: [];
 }>();
+
+const isUnderReview = computed(() => props.issue.status === 'under-review');
+const isClosed = computed(() =>
+  props.issue.status === 'completed' ||
+  props.issue.status === 'infeasible' ||
+  props.issue.status === 'review-rejected' ||
+  props.issue.status === 'auto-rejected'
+);
 </script>

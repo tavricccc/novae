@@ -56,7 +56,8 @@
         @delete="emit('delete')"
         @share="emit('share')"
         @supported="emit('supported', $event)"
-        @edit-result="openResultDialog"
+        @moderate="handleModerate"
+        @edit-result="handleEditResult"
       />
     </template>
 
@@ -92,47 +93,23 @@
     </template>
   </DetailPageShell>
 
-  <DialogOverlay :open="isResultDialogOpen" padded z-index-class="z-[110]" @close="closeResultDialog">
-    <section
-      class="panel panel-pad w-full max-w-lg"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="issue-result-title"
-      tabindex="-1"
-    >
-      <p class="dialog-eyebrow">提案回覆</p>
-      <h3 id="issue-result-title" class="dialog-title">編輯提案結果</h3>
-      <p class="dialog-description">
-        提案結果會顯示在提案內容上方，供使用者查看目前處理結論。
-      </p>
-      <div class="mt-5 space-y-2">
-        <label class="field-label" for="issue-result-content">提案結果</label>
-        <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm transition-colors focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 dark:border-ink-800 dark:bg-ink-900">
-          <textarea
-            id="issue-result-content"
-            v-model="resultContent"
-            class="block min-h-44 w-full resize-none bg-transparent px-4 py-3 text-base leading-6 text-ink-800 outline-none placeholder:text-ink-400 disabled:cursor-not-allowed disabled:text-ink-500 dark:text-ink-100 dark:placeholder:text-ink-500 md:text-sm"
-            maxlength="2000"
-            placeholder="輸入提案結果"
-            data-autofocus
-            :disabled="isSavingResult"
-          ></textarea>
-          <div class="flex items-center justify-end border-t border-ink-100 bg-ink-50/50 px-4 py-2 text-xs font-medium text-ink-500 dark:border-ink-800 dark:bg-ink-950/30 dark:text-ink-400">
-            <span :class="{ 'text-error': resultContent.length > 1800 }">{{ resultContent.length }} / 2000</span>
-          </div>
-        </div>
-      </div>
-      <p v-if="resultError" class="mt-2 text-xs font-semibold text-error">{{ resultError }}</p>
-      <div class="dialog-actions">
-        <button type="button" class="button-secondary" :disabled="isSavingResult" @click="closeResultDialog">
-          取消
-        </button>
-        <button type="button" class="button-primary" :disabled="isSavingResult" @click="submitResult">
-          {{ isSavingResult ? '儲存中...' : '儲存結果' }}
-        </button>
-      </div>
-    </section>
-  </DialogOverlay>
+  <!-- Moderation Dialogs -->
+  <IssueReviewDialog
+    v-if="isReviewDialogOpen"
+    :open="isReviewDialogOpen"
+    :issue="issue"
+    @success="handleStatusChanged"
+    @close="isReviewDialogOpen = false"
+  />
+
+  <IssueStatusDialog
+    v-if="isStatusDialogOpen"
+    :open="isStatusDialogOpen"
+    :issue="issue"
+    :initial-action="statusDialogInitialAction"
+    @success="handleStatusChanged"
+    @close="isStatusDialogOpen = false"
+  />
 </template>
 
 <script setup lang="ts">
@@ -144,14 +121,16 @@ import type { IssueRecord } from '@/types';
 
 import DetailPageShell from '@/components/ui/DetailPageShell.vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
-import DialogOverlay from '@/components/ui/DialogOverlay.vue';
 import EmptyStatePanel from '@/components/ui/EmptyStatePanel.vue';
 import IssueDetailContent from '@/components/IssueDetailContent.vue';
 import IssueDetailSupportFooter from '@/components/IssueDetailSupportFooter.vue';
 import IssueComments from '@/components/IssueComments.vue';
 import { useSession } from '@/composables/useSession';
 import { issueAllowsCommentsForStatus, issueStoresAuthorPrivately } from '@/constants/categories';
-import { updateIssueResult } from '@/services/issues';
+
+// Shared Moderation Dialogs
+import IssueReviewDialog from '@/components/IssueReviewDialog.vue';
+import IssueStatusDialog from '@/components/IssueStatusDialog.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -176,10 +155,10 @@ const emit = defineEmits<{
 }>();
 
 const { isAdmin } = useSession();
-const isResultDialogOpen = ref(false);
-const isSavingResult = ref(false);
-const resultContent = ref('');
-const resultError = ref('');
+
+const isReviewDialogOpen = ref(false);
+const isStatusDialogOpen = ref(false);
+const statusDialogInitialAction = ref<'processing' | 'closed'>('processing');
 
 const {
   displayAuthorName,
@@ -209,29 +188,16 @@ const showAuthor = computed(() => !issueStoresAuthorPrivately(props.issue.catego
 const supportRemainingLabel = computed(() => getSupportRemainingLabel(remainingDays.value));
 const commentsEnabled = computed(() => issueAllowsCommentsForStatus(props.issue.category, props.issue.status));
 
-function openResultDialog() {
-  resultContent.value = props.issue.result_content ?? '';
-  resultError.value = '';
-  isResultDialogOpen.value = true;
+function handleModerate() {
+  isReviewDialogOpen.value = true;
 }
 
-function closeResultDialog() {
-  if (isSavingResult.value) return;
-  isResultDialogOpen.value = false;
-  resultError.value = '';
+function handleEditResult() {
+  statusDialogInitialAction.value = props.issue.status === 'completed' || props.issue.status === 'infeasible' ? 'closed' : 'processing';
+  isStatusDialogOpen.value = true;
 }
 
-async function submitResult() {
-  isSavingResult.value = true;
-  resultError.value = '';
-  try {
-    const issue = await updateIssueResult(props.issue.id, resultContent.value);
-    emit('issue-updated', issue);
-    isResultDialogOpen.value = false;
-  } catch (caught) {
-    resultError.value = caught instanceof Error ? caught.message : '提案結果儲存失敗，請稍後再試。';
-  } finally {
-    isSavingResult.value = false;
-  }
+function handleStatusChanged(updatedIssue: IssueRecord) {
+  emit('issue-updated', updatedIssue);
 }
 </script>

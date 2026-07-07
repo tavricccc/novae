@@ -176,12 +176,14 @@
 - src/components/CommentComposer.vue：留言浮動輸入面板，負責主留言 / 回覆撰寫、預覽、圖片本機壓縮預覽與送出時上傳事件。
 - src/components/IssueDetailContent.vue：提案詳情內容區共用元件，統一桌機與手機的標題、作者、提案結果、審核未通過原因與 Markdown 圖文分離內容呈現。
 - src/components/IssueDetailSupportFooter.vue：提案詳情附議進度與日期資訊 footer，統一桌機與手機的分享、附議、管理員刪除按鈕、進度條與期限資訊。
+- src/components/IssueReviewDialog.vue：管理員審核對話框，提供「審核通過」與「審核不通過」（輸入原因）之審核選項與 API 變更流程。
+- src/components/IssueStatusDialog.vue：管理員狀態與結果對話框，提供變更為「處理中」或「結案（已完成 / 無法實行）」之狀態選項與結果說明編輯。
 
 ### 看板與列表元件
 
 - src/components/IssueBoard.vue：提案看板主體。調用 `useIssueBoardData`，以固定控制列與隱藏捲軸的獨立捲動列表組合看板狀態，支援排序、手動重新整理與底部自動載入更多，並在開啟提案時導向提案詳情子頁。
 - src/components/BoardControls.vue：提案看板頂部控制列，包含頁內提案分類 segmented control、搜尋工具面板、整合狀態與排序之篩選工具選單、低層級重新整理按鈕與新增提案按鈕。
-- src/components/IssueAdminMenu.vue：管理員狀態調整下拉選單展示層，供列表列與詳情操作使用；狀態更新流程委派給 `useIssueAdminStatus`。
+- src/components/IssueAdminMenu.vue：管理員狀態調整下拉選單展示層，用於列表視圖與動作選單。
 - src/components/IssueTableRow.vue：列表視圖單筆提案列展示層，桌面動態 grid、手機收折為單行精簡列；共用 `useIssueItemController` 處理提案互動狀態與開啟詳情事件。
 - src/components/IssueBoardTable.vue：列表視圖容器，含欄位標題列與提案列渲染；載入與分頁切換期間顯示 SkeletonTable。
 - src/components/IssueDetailPagePanel.vue：提案詳情子頁內容面板。採用 `useIssueDisplay` 呈現附議進度與期限，公共議題對一般人隱藏作者，自己提案則顯示作者，管理員可編輯提案結果，作者或管理員可從詳情 footer 刪除提案。
@@ -214,7 +216,6 @@
 - src/composables/useIssueItemController.ts：列表列共用的提案項目控制器，組合顯示、附議、刪除、開啟詳情事件與管理員狀態 toast。
 - src/composables/useIssueComposerForm.ts：新增提案表單流程，負責驗證、Markdown 圖片上傳、送出後端 action、失敗清理與表單重置。
 - src/composables/useVoteSupport.ts：附議按鈕流程，負責登入檢查、optimistic UI、附議/取消附議 action 與錯誤回復。
-- src/composables/useIssueAdminStatus.ts：管理員提案狀態更新流程，負責下拉開關、狀態限制、審核 action 與結果事件。
 - src/composables/useStatusStyling.ts：提案狀態對應 Tailwind class（支援 table-row / dialog / dot / button-text 四種變體）。
 - src/composables/useDeleteIssue.ts：刪除提案的確認對話框流程（isDeleteDialogOpen / confirmDelete / performDelete）。
 - src/composables/useBodyScrollLock.ts：對話框開啟時鎖定 body 捲動，並避開 iOS PWA 固定定位偏移造成的全螢幕 Dialog 截斷。

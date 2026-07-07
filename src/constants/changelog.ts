@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "優化提案審核與狀態變更流程",
+    version: "v2.0.94",
+    date: "2026-07-07",
+    time: "21:58",
+    items: [
+      {
+        title: "改善管理端審核與回覆流程，提供更明確的審核操作與結案結果說明介面。"
+      },
+      {
+        title: "新增已結案、未通過與已駁回提案的防修改鎖定機制，避免錯誤調整提案狀態。"
+      }
+    ]
+  },
+  {
     title: "提升推播通知可靠性與背景處理穩定性",
     version: "v2.0.93",
     date: "2026-07-07",

@@ -19,6 +19,7 @@
             : 'border-ink-200/80 bg-ink-50/50 hover:bg-ink-100/50 dark:border-ink-700/80 dark:bg-ink-900/30 dark:hover:bg-ink-800/30',
           getDropdownButtonTextClass(adminStatus)
         ]"
+        :disabled="isClosed"
         @click.stop="isDropdownOpen = !isDropdownOpen"
       >
         <span class="flex items-center gap-2">
@@ -70,37 +71,58 @@
           @click.stop
           @pointerdown.stop
         >
+          <!-- Under-review state: Show "審核提案" -->
           <button
-            v-for="option in visibleStatusOptions"
-            :key="option.value"
+            v-if="isUnderReview"
             type="button"
-            class="menu-item justify-between"
-            :class="[
-              adminStatus === option.value
-                ? 'text-ink-950 dark:text-ink-50 font-semibold bg-ink-50/50 dark:bg-ink-800/40'
-                : 'text-ink-600 dark:text-ink-300'
-            ]"
-            @click.stop="selectStatus(option.value)"
+            class="menu-item justify-between text-ink-600 dark:text-ink-300"
+            @click.stop="openReviewDialog"
           >
             <span class="flex items-center gap-2">
-              <span class="h-2 w-2 rounded-full" :class="getStatusDotClass(option.value)"></span>
-              {{ option.label }}
+              <span class="h-2 w-2 rounded-full bg-warning"></span>
+              審核提案
             </span>
-            <svg
-              v-if="adminStatus === option.value"
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4 text-ink-900 dark:text-ink-100"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path d="M5 12l5 5l10 -10" />
-            </svg>
           </button>
+
+          <!-- Approved state (pending / processing): Show "處理中" and "提案結果" -->
+          <template v-if="isProcessingOrPending">
+            <button
+              type="button"
+              class="menu-item justify-between"
+              :class="adminStatus === 'processing' ? 'text-ink-950 dark:text-ink-50 font-semibold bg-ink-50/50 dark:bg-ink-800/40' : 'text-ink-600 dark:text-ink-300'"
+              @click.stop="directlySetProcessing"
+            >
+              <span class="flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full" :class="getStatusDotClass('processing')"></span>
+                處理中
+              </span>
+              <svg
+                v-if="adminStatus === 'processing'"
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-4 w-4 text-ink-900 dark:text-ink-100"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M5 12l5 5l10 -10" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              class="menu-item justify-between text-ink-600 dark:text-ink-300"
+              @click.stop="openStatusDialogWithClosed"
+            >
+              <span class="flex items-center gap-2">
+                <span class="h-2 w-2 rounded-full bg-success"></span>
+                提案結果
+              </span>
+            </button>
+          </template>
 
           <!-- Danger zone: Delete (compact only) -->
           <div v-if="compact" class="mt-1 border-t border-error/20 pt-1">
@@ -116,68 +138,41 @@
         </div>
       </transition>
     </div>
-    <p
-      v-if="!compact && derivedStatus === 'auto-rejected'"
-      class="text-xs text-ink-500 dark:text-ink-400"
-    >
-      這筆提案目前是系統自動判定為未通過，管理員可改成其他狀態，但不能手動指定未通過。
-    </p>
   </div>
 
-  <DialogOverlay :open="isRejectionDialogOpen" padded z-index-class="z-[110]" @close="closeRejectionDialog">
-    <section
-      class="panel panel-pad w-full max-w-lg"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="review-rejection-title"
-      tabindex="-1"
-    >
-      <p class="dialog-eyebrow">公共議題審核</p>
-      <h3 id="review-rejection-title" class="dialog-title">輸入審核未通過原因</h3>
-      <p class="dialog-description">
-        原因會透過通知傳給提案者，這筆提案不會公開給其他校內使用者。
-      </p>
-      <div class="mt-5 space-y-2">
-        <label class="field-label" for="review-rejection-reason">不通過原因</label>
-        <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm transition-colors focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 dark:border-ink-800 dark:bg-ink-900">
-          <textarea
-            id="review-rejection-reason"
-            v-model="rejectionReason"
-            class="block min-h-36 w-full resize-none bg-transparent px-4 py-3 text-base leading-6 text-ink-800 outline-none placeholder:text-ink-400 disabled:cursor-not-allowed disabled:text-ink-500 dark:text-ink-100 dark:placeholder:text-ink-500 md:text-sm"
-            maxlength="500"
-            placeholder="請簡要說明未通過原因"
-            data-autofocus
-            :disabled="isRejecting"
-          ></textarea>
-          <div class="flex items-center justify-end border-t border-ink-100 bg-ink-50/50 px-4 py-2 text-xs font-medium text-ink-500 dark:border-ink-800 dark:bg-ink-950/30 dark:text-ink-400">
-            <span :class="{ 'text-error': rejectionReason.length > 450 }">{{ rejectionReason.length }} / 500</span>
-          </div>
-        </div>
-      </div>
-      <p v-if="rejectionError" class="mt-2 text-xs font-semibold text-error">{{ rejectionError }}</p>
-      <div class="dialog-actions">
-        <button type="button" class="button-secondary" :disabled="isRejecting" @click="closeRejectionDialog">
-          取消
-        </button>
-        <button type="button" class="button-secondary border-warning/30 text-warning hover:text-warning" :disabled="isRejecting" @click="submitRejection">
-          {{ isRejecting ? '送出中...' : '確認不通過' }}
-        </button>
-      </div>
-    </section>
-  </DialogOverlay>
+  <!-- Shared Moderation Dialogs -->
+  <IssueReviewDialog
+    v-if="isReviewDialogOpen"
+    :open="isReviewDialogOpen"
+    :issue="issue"
+    @success="handleStatusChanged"
+    @close="isReviewDialogOpen = false"
+  />
+
+  <IssueStatusDialog
+    v-if="isStatusDialogOpen"
+    :open="isStatusDialogOpen"
+    :issue="issue"
+    :initial-action="statusDialogInitialAction"
+    @success="handleStatusChanged"
+    @close="isStatusDialogOpen = false"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue';
-import { ADMIN_ISSUE_STATUS_OPTIONS, ISSUE_STATUS_LABELS } from '@/constants/statuses';
-import { issueRequiresReview } from '@/constants/categories';
+import { computed, ref, toRef, watch, onBeforeUnmount } from 'vue';
+import { useSession } from '@/composables/useSession';
+import { ISSUE_STATUS_LABELS } from '@/constants/statuses';
 import { useIssueDisplay } from '@/composables/useIssueDisplay';
 import { useStatusStyling } from '@/composables/useStatusStyling';
-import { useIssueAdminStatus } from '@/composables/useIssueAdminStatus';
 import { useDropdownPosition } from '@/composables/useDropdownPosition';
-import DialogOverlay from '@/components/ui/DialogOverlay.vue';
 import TrashIcon from '@/components/ui/TrashIcon.vue';
 import type { IssueRecord, IssueStatus } from '@/types';
+import { moderateIssueStatus, updateIssueResult } from '@/services/issues';
+
+// Shared Dialog Components
+import IssueReviewDialog from '@/components/IssueReviewDialog.vue';
+import IssueStatusDialog from '@/components/IssueStatusDialog.vue';
 
 const props = defineProps<{
   issue: IssueRecord;
@@ -195,27 +190,43 @@ const emit = defineEmits<{
 const { derivedStatus } = useIssueDisplay(toRef(props, 'issue'));
 const triggerRef = ref<HTMLButtonElement | null>(null);
 const dropdownRef = ref<HTMLDivElement | null>(null);
-const isRejectionDialogOpen = ref(false);
-const isRejecting = ref(false);
-const rejectionReason = ref('');
-const rejectionError = ref('');
-const requiresReview = computed(() => issueRequiresReview(props.issue.category));
-const visibleStatusOptions = computed(() => ADMIN_ISSUE_STATUS_OPTIONS.filter((option) =>
-  requiresReview.value || (option.value !== 'under-review' && option.value !== 'review-rejected')
-));
 
-const {
-  isAdmin,
-  adminStatus,
-  isDropdownOpen,
-  updateStatus,
-} = useIssueAdminStatus({
-  issue: toRef(props, 'issue'),
-  derivedStatus,
-  emitStatusChanged: (issue) => emit('status-changed', issue),
-  emitMessage: (message) => emit('message', message),
-  emitError: (error) => emit('error', error),
-  emitDropdownOpen: (open) => emit('dropdown-open', open),
+const isReviewDialogOpen = ref(false);
+const isStatusDialogOpen = ref(false);
+const statusDialogInitialAction = ref<'processing' | 'closed'>('processing');
+
+// Status groupings
+const isUnderReview = computed(() => props.issue.status === 'under-review');
+const isClosed = computed(() =>
+  props.issue.status === 'completed' ||
+  props.issue.status === 'infeasible' ||
+  props.issue.status === 'review-rejected' ||
+  props.issue.status === 'auto-rejected'
+);
+const isProcessingOrPending = computed(() =>
+  props.issue.status === 'pending' ||
+  props.issue.status === 'processing'
+);
+
+const { isAdmin } = useSession();
+const adminStatus = computed(() => props.issue.status);
+const isDropdownOpen = ref(false);
+
+function closeDropdown() {
+  isDropdownOpen.value = false;
+}
+
+watch(isDropdownOpen, (open) => {
+  emit('dropdown-open', open);
+  if (open) {
+    window.addEventListener('click', closeDropdown);
+  } else {
+    window.removeEventListener('click', closeDropdown);
+  }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('click', closeDropdown);
 });
 
 const { dropdownStyle } = useDropdownPosition(
@@ -233,37 +244,34 @@ function onDeleteClick() {
   emit('delete');
 }
 
-function closeRejectionDialog() {
-  if (isRejecting.value) return;
-  isRejectionDialogOpen.value = false;
-  rejectionError.value = '';
+function openReviewDialog() {
+  isDropdownOpen.value = false;
+  isReviewDialogOpen.value = true;
 }
 
-function selectStatus(status: IssueStatus) {
-  if (status === 'review-rejected') {
-    isDropdownOpen.value = false;
-    rejectionReason.value = props.issue.review_rejection_reason ?? '';
-    rejectionError.value = '';
-    isRejectionDialogOpen.value = true;
-    return;
-  }
-  void updateStatus(status);
+function openStatusDialogWithClosed() {
+  isDropdownOpen.value = false;
+  statusDialogInitialAction.value = 'closed';
+  isStatusDialogOpen.value = true;
 }
 
-async function submitRejection() {
-  const reason = rejectionReason.value.replace(/\s+/g, ' ').trim();
-  if (!reason) {
-    rejectionError.value = '請輸入審核未通過原因。';
-    return;
-  }
-  isRejecting.value = true;
-  rejectionError.value = '';
+async function directlySetProcessing() {
+  isDropdownOpen.value = false;
   try {
-    await updateStatus('review-rejected', reason);
-    isRejectionDialogOpen.value = false;
-  } finally {
-    isRejecting.value = false;
+    const updated = await moderateIssueStatus(props.issue.id, 'processing');
+    let finalIssue = updated;
+    if (props.issue.result_content) {
+      finalIssue = await updateIssueResult(props.issue.id, '');
+    }
+    emit('status-changed', finalIssue);
+    emit('message', '狀態已更新為「處理中」。');
+  } catch {
+    emit('error', '狀態更新失敗，請稍後再試。');
   }
+}
+
+function handleStatusChanged(updatedIssue: IssueRecord) {
+  emit('status-changed', updatedIssue);
 }
 
 function getDropdownButtonTextClass(status: IssueStatus) {
