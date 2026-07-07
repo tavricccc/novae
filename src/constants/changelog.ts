@@ -2,13 +2,16 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
-    title: "大幅提升順暢度",
+    title: "優化啟動階段版本檢查體驗",
     version: "v2.0.101",
     date: "2026-07-08",
-    time: "05:07",
+    time: "05:13",
     items: [
       {
-        title: "不多說。"
+        title: "同步啟動畫面與版本檢查流程，在確定是否有新版本前維持載入畫面，避免進入系統後才彈出更新提示中斷操作。"
+      },
+      {
+        title: "將版本檢查與 Session 檢查採完全平行處理，確保在無更新的正常啟動流程下，完全不增加載入等待時間。"
       }
     ]
   },

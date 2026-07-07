@@ -6,6 +6,7 @@ const updateAvailable = ref(false);
 const checking = ref(false);
 const reloading = ref(false);
 const remoteVersion = ref('');
+const initialCheckDone = ref(false);
 let lastCheckedAt = 0;
 
 const APP_RELOAD_TIMEOUT_MS = 5_000;
@@ -71,7 +72,11 @@ async function updateServiceWorker() {
 }
 
 export async function initializeAppUpdate() {
-  await checkAppVersion();
+  try {
+    await checkAppVersion();
+  } finally {
+    initialCheckDone.value = true;
+  }
   void updateServiceWorker();
 }
 
@@ -116,6 +121,7 @@ export function useAppUpdate() {
   return {
     canAutoReloadCurrentVersion,
     checking: readonly(checking),
+    initialCheckDone: readonly(initialCheckDone),
     reloadApp,
     reloading: readonly(reloading),
     remoteVersion: readonly(remoteVersion),
