@@ -2,8 +2,6 @@
   <div
     v-if="isAdmin"
     :class="compact ? 'relative inline-block text-left z-30' : 'space-y-3 relative z-30'"
-    @click.stop
-    @pointerdown.stop
   >
     <label v-if="!compact" class="field-label">管理員狀態調整</label>
     <div :class="compact ? '' : 'relative inline-block w-full sm:w-60 text-left'">
@@ -20,7 +18,7 @@
           getDropdownButtonTextClass(adminStatus)
         ]"
         :disabled="isClosed"
-        @click.stop="isDropdownOpen = !isDropdownOpen"
+        @click="isDropdownOpen = !isDropdownOpen"
       >
         <span class="flex items-center gap-2">
           <span class="h-2 w-2 rounded-full" :class="getStatusDotClass(adminStatus)"></span>
@@ -51,7 +49,7 @@
         :class="{ 'text-ink-800 dark:text-ink-100': isDropdownOpen }"
         title="管理提案"
         aria-label="管理提案"
-        @click.stop="isDropdownOpen = !isDropdownOpen"
+        @click="isDropdownOpen = !isDropdownOpen"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="5" cy="12" r="1" />
@@ -209,7 +207,11 @@ const { isAdmin } = useSession();
 const adminStatus = computed(() => props.issue.status);
 const isDropdownOpen = ref(false);
 
-function closeDropdown() {
+function closeDropdown(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (triggerRef.value?.contains(target) || dropdownRef.value?.contains(target)) {
+    return;
+  }
   isDropdownOpen.value = false;
 }
 

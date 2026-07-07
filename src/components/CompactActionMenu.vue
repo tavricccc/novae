@@ -1,5 +1,5 @@
 <template>
-  <div class="relative inline-block text-left z-30" @click.stop @pointerdown.stop>
+  <div class="relative inline-block text-left z-30">
     <button
       ref="triggerRef"
       type="button"
@@ -7,7 +7,7 @@
       :class="{ 'text-ink-800 dark:text-ink-100': isOpen }"
       :title="title"
       :aria-label="title"
-      @click.stop="isOpen = !isOpen"
+      @click="isOpen = !isOpen"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="5" cy="12" r="1" />
@@ -23,8 +23,6 @@
           ref="dropdownRef"
           class="fixed z-[100] w-44 origin-top-right rounded-2xl border border-ink-200/80 bg-white p-1.5 shadow-lg dark:border-ink-700/80 dark:bg-ink-900"
           :style="dropdownStyle"
-          @click.stop
-          @pointerdown.stop
         >
           <button
             v-if="showEdit"
@@ -90,7 +88,11 @@ const { dropdownStyle } = useDropdownPosition(
   dropdownRef,
 );
 
-function closeMenu() {
+function closeMenu(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (triggerRef.value?.contains(target) || dropdownRef.value?.contains(target)) {
+    return;
+  }
   isOpen.value = false;
 }
 
