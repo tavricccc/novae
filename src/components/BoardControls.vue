@@ -168,19 +168,6 @@
           </transition>
         </div>
 
-        <!-- 重新整理按鈕 -->
-        <button
-          type="button"
-          class="button-toolbar h-10 w-10 rounded-full p-0 md:h-9 md:w-9 flex items-center justify-center shrink-0"
-          :disabled="refreshing"
-          title="重新整理提案"
-          aria-label="重新整理提案"
-          @click="emit('refresh')"
-        >
-          <LoadingSpinner v-if="refreshing" :size="4" />
-          <AppIcon v-else name="refresh" class="h-4 w-4" />
-        </button>
-
         <!-- 新增提案按鈕 -->
         <button
           v-if="showToggle && activeFilter !== 'my-proposals'"
@@ -214,7 +201,6 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import AppIcon from '@/components/ui/AppIcon.vue';
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import { ISSUE_FILTER_OPTIONS } from '@/constants/categories';
 import type { IssueSortOption } from '@/types';
 
@@ -225,7 +211,6 @@ const props = defineProps<{
   activeFilter: string;
   showToggle: boolean;
   activeCategoryLabel: string;
-  refreshing?: boolean;
   sortOption: IssueSortOption;
 }>();
 
@@ -233,7 +218,6 @@ const emit = defineEmits<{
   'update:statusTab': [value: 'active' | 'closed'];
   'update:searchQuery': [value: string];
   'update:sortOption': [value: IssueSortOption];
-  refresh: [];
   'toggle-form': [];
 }>();
 

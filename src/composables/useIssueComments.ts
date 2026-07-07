@@ -6,6 +6,7 @@ import type { CommentRecord, DiscussionCommentRecord } from '@/types';
 import { formatRequestError, isAbortFailure, RequestFailure } from '@/lib/request';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { isContentUnavailableError } from '@/services/issues-core';
+import { subscribeContentRealtimeEvents } from '@/services/realtime-events';
 
 export function useIssueComments(issueId: Ref<string>, onContentUnavailable?: (issueId: string) => void) {
   const { isAdmin, user } = useSession();
@@ -24,6 +25,8 @@ export function useIssueComments(issueId: Ref<string>, onContentUnavailable?: (i
   const deletingId = ref('');
   let requestVersion = 0;
   let requestController: AbortController | null = null;
+  let realtimeUnsubscribe: (() => void) | null = null;
+  let realtimeRefreshTimer = 0;
 
   function clearCommentState() {
     comments.value = [];
@@ -81,7 +84,29 @@ export function useIssueComments(issueId: Ref<string>, onContentUnavailable?: (i
     void loadComments(issueIdValue);
   }, { immediate: true });
 
+  function scheduleRealtimeRefresh() {
+    window.clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = window.setTimeout(() => {
+      void loadComments();
+    }, 300);
+  }
+
+  watch(issueId, (issueIdValue) => {
+    realtimeUnsubscribe?.();
+    realtimeUnsubscribe = null;
+    window.clearTimeout(realtimeRefreshTimer);
+    if (!issueIdValue) return;
+
+    realtimeUnsubscribe = subscribeContentRealtimeEvents(`issue-comments:${issueIdValue}`, (event) => {
+      if (event.eventType !== 'issue_comment_changed') return;
+      if (event.parentId !== issueIdValue) return;
+      scheduleRealtimeRefresh();
+    });
+  }, { immediate: true });
+
   onScopeDispose(() => {
+    realtimeUnsubscribe?.();
+    window.clearTimeout(realtimeRefreshTimer);
     requestVersion += 1;
     requestController?.abort(new RequestFailure('留言載入已取消。', 'aborted'));
   });

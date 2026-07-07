@@ -42,6 +42,7 @@
           :push-loading="pushLoading"
           :push-status-description="pushStatusDescription"
           @logout="handleLogout"
+          @restart-app="handleRestartApp"
           @set-preference="setPersonalPushPreference"
           @switch-account="switchAccount"
           @toggle-push="handlePushAction"
@@ -58,6 +59,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import UserAvatar from '@/components/ui/UserAvatar.vue';
 import SettingsPanelContent from '@/components/SettingsPanelContent.vue';
 import { usePushNotifications } from '@/composables/usePushNotifications';
+import { useAppUpdate } from '@/composables/useAppUpdate';
 import { useSession } from '@/composables/useSession';
 import { useToast } from '@/composables/useToast';
 import type { PersonalPushPreferenceKey } from '@/services/notifications';
@@ -77,6 +79,7 @@ const props = withDefaults(defineProps<{
 });
 
 const { user, customPhotoUrl, loading, error, login, logout, isAdmin } = useSession();
+const { reloadApp } = useAppUpdate();
 const {
   enabled: pushEnabled,
   error: pushError,
@@ -182,6 +185,11 @@ async function handlePushAction() {
     return;
   }
   await enablePushNotifications();
+}
+
+async function handleRestartApp() {
+  closePanel();
+  await reloadApp();
 }
 
 const handleClickOutside = (event: MouseEvent) => {

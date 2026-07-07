@@ -1,10 +1,11 @@
-import { computed, ref, watch, type Ref } from 'vue';
+import { computed, onScopeDispose, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { normalizeIssueRouteFilterParam } from '@/constants/categories';
 import { getDerivedIssueStatus } from '@/lib/issue-status';
 import { normalizeRouteParam } from '@/lib/route';
 import { useToast } from '@/composables/useToast';
 import { fetchIssueRecordById } from '@/services/issues';
+import { subscribeContentRealtimeEvents } from '@/services/realtime-events';
 import type { IssueRecord } from '@/types';
 import { isAbortFailure } from '@/lib/request';
 
@@ -19,6 +20,8 @@ export function useIssueRouteDetail(
   const routeIssue = ref<IssueRecord | null>(null);
   const routeIssueLoading = ref(false);
   let requestId = 0;
+  let realtimeUnsubscribe: (() => void) | null = null;
+  let realtimeRefreshTimer = 0;
 
   const routeIssueSupportClosed = computed(() => {
     if (!routeIssue.value) {
@@ -126,12 +129,60 @@ export function useIssueRouteDetail(
     { immediate: true },
   );
 
+  async function refreshRouteIssueSilently() {
+    const issueId = routeIssue.value?.id ?? normalizeRouteParam(route.params.issueId);
+    if (!issueId) return;
+
+    const currentRequestId = ++requestId;
+    try {
+      const issue = await fetchIssueRecordById(issueId);
+      if (currentRequestId !== requestId) return;
+      routeIssue.value = {
+        ...issue,
+        currentUserSupported: supportedIssueIds.value.has(issue.id),
+      };
+    } catch (error) {
+      if (isAbortFailure(error)) return;
+      await handleRouteIssueError(currentRequestId);
+    }
+  }
+
+  function scheduleRealtimeRefresh() {
+    window.clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = window.setTimeout(() => {
+      void refreshRouteIssueSilently();
+    }, 300);
+  }
+
+  watch(
+    () => [route.name, route.params.issueId, enabled?.value ?? true] as const,
+    ([routeName, rawIssueId, isEnabled]) => {
+      realtimeUnsubscribe?.();
+      realtimeUnsubscribe = null;
+      window.clearTimeout(realtimeRefreshTimer);
+      const issueId = normalizeRouteParam(rawIssueId);
+      if (!isEnabled || routeName !== 'issue-detail' || !issueId) return;
+
+      realtimeUnsubscribe = subscribeContentRealtimeEvents(`issue-detail:${issueId}`, (event) => {
+        if (event.eventType !== 'issue_changed') return;
+        if (event.targetId !== issueId) return;
+        scheduleRealtimeRefresh();
+      });
+    },
+    { immediate: true },
+  );
+
   watch(supportedIssueIds, (ids) => {
     if (!routeIssue.value) return;
     routeIssue.value = {
       ...routeIssue.value,
       currentUserSupported: ids.has(routeIssue.value.id),
     };
+  });
+
+  onScopeDispose(() => {
+    realtimeUnsubscribe?.();
+    window.clearTimeout(realtimeRefreshTimer);
   });
 
   return {

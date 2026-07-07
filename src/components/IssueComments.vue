@@ -11,7 +11,7 @@
     :has-more="hasMore"
     :loading-more="loadingMore"
     :on-load-more="loadMoreComments"
-    :on-refresh="loadComments"
+    :on-retry="loadComments"
     :on-delete-comment="deleteCommentById"
     :on-submit-comment="handleSubmitComment"
     :submit-error="submitError"

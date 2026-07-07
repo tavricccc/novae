@@ -10,6 +10,7 @@ import { useToast } from '@/composables/useToast';
 import { formatRequestError, isAbortFailure, RequestFailure } from '@/lib/request';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { isContentUnavailableError } from '@/services/issues-core';
+import { subscribeContentRealtimeEvents } from '@/services/realtime-events';
 
 export function useAnnouncementComments(
   announcementId: () => string | null,
@@ -30,6 +31,8 @@ export function useAnnouncementComments(
   const error = ref('');
   let requestVersion = 0;
   let requestController: AbortController | null = null;
+  let realtimeUnsubscribe: (() => void) | null = null;
+  let realtimeRefreshTimer = 0;
 
   function clearCommentState() {
     comments.value = [];
@@ -85,7 +88,27 @@ export function useAnnouncementComments(
     }
   }
 
+  function subscribeCurrentAnnouncementComments() {
+    realtimeUnsubscribe?.();
+    realtimeUnsubscribe = null;
+    window.clearTimeout(realtimeRefreshTimer);
+
+    const id = announcementId();
+    if (!id) return;
+
+    realtimeUnsubscribe = subscribeContentRealtimeEvents(`announcement-comments:${id}`, (event) => {
+      if (event.eventType !== 'announcement_comment_changed') return;
+      if (event.parentId !== id) return;
+      window.clearTimeout(realtimeRefreshTimer);
+      realtimeRefreshTimer = window.setTimeout(() => {
+        void loadComments();
+      }, 300);
+    });
+  }
+
   onScopeDispose(() => {
+    realtimeUnsubscribe?.();
+    window.clearTimeout(realtimeRefreshTimer);
     requestVersion += 1;
     requestController?.abort(new RequestFailure('公告留言載入已取消。', 'aborted'));
   });
@@ -193,5 +216,6 @@ export function useAnnouncementComments(
     submitComment,
     submitting,
     deleteComment,
+    subscribeCurrentAnnouncementComments,
   };
 }

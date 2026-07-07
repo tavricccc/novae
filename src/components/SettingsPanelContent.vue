@@ -150,6 +150,23 @@
             </span>
             <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
           </RouterLink>
+          <button
+            type="button"
+            class="flex w-full items-center justify-between gap-3 text-left"
+            :class="flat ? 'content-trigger px-1 py-4' : 'content-trigger px-3 py-3'"
+            @click="emit('restartApp')"
+          >
+            <span class="flex min-w-0 items-center gap-3">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-ink-100 text-ink-500 dark:bg-ink-800 dark:text-ink-300">
+                <AppIcon name="refresh" :size="4" :stroke-width="2" />
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">重啟 App</span>
+                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">重新載入最新狀態</span>
+              </span>
+            </span>
+            <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
+          </button>
         </div>
       </section>
 
@@ -200,6 +217,7 @@ withDefaults(defineProps<{
 const emit = defineEmits<{
   close: [];
   logout: [];
+  restartApp: [];
   setPreference: [key: PersonalPushPreferenceKey, value: boolean];
   switchAccount: [];
   togglePush: [];

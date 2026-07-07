@@ -91,7 +91,6 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
   const hasMore = computed(() => currentState.value.hasMore);
   const loading = computed(() => currentState.value.loading);
   const loadingMore = computed(() => currentState.value.loadingMore);
-  const refreshing = computed(() => currentState.value.refreshing);
   const error = computed(() => currentState.value.error);
 
   async function loadFirstPage(loadOptions: { silent?: boolean } = {}) {
@@ -217,7 +216,6 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
     cursor,
     loading,
     loadingMore,
-    refreshing,
     error,
     hasMore,
     loadMoreAnnouncements,

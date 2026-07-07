@@ -1,7 +1,6 @@
-import { computed, ref, watch } from 'vue';
+import { computed, onScopeDispose, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAnnouncements } from '@/composables/useAnnouncements';
-import { useAnnouncementListUpdatePrompt } from '@/composables/useContentUpdatePrompt';
 import { useSession } from '@/composables/useSession';
 import { useToast } from '@/composables/useToast';
 import {
@@ -10,6 +9,7 @@ import {
   setAnnouncementLike,
   updateAnnouncement,
 } from '@/services/announcements';
+import { subscribeContentRealtimeEvents } from '@/services/realtime-events';
 import { deleteUploadedImage } from '@/services/uploads';
 import type { UploadedImage } from '@/composables/useImageUpload';
 import type { AnnouncementRecord, AnnouncementSortOption } from '@/types';
@@ -21,14 +21,9 @@ export function useAnnouncementManagement() {
   const { showToast } = useToast();
   const sortOption = ref<AnnouncementSortOption>('latest');
   const {
-    acknowledgeAnnouncementListUpdate,
-    showAnnouncementUpdatePrompt,
-  } = useAnnouncementListUpdatePrompt();
-  const {
     announcements,
     loading,
     loadingMore,
-    refreshing,
     error,
     hasMore,
     loadMoreAnnouncements,
@@ -46,6 +41,8 @@ export function useAnnouncementManagement() {
   const deleting = ref(false);
   const deletePendingAnnouncement = ref<AnnouncementRecord | null>(null);
   const sessionLoading = computed(() => authLoading.value || !initialized.value);
+  let realtimeUnsubscribe: (() => void) | null = null;
+  let realtimeRefreshTimer = 0;
 
   function openAnnouncementDetails(announcement: AnnouncementRecord, initialTab: 'details' | 'comments' = 'details') {
     router.push({
@@ -146,7 +143,13 @@ export function useAnnouncementManagement() {
 
   async function refreshAnnouncementList() {
     await refreshAnnouncements();
-    acknowledgeAnnouncementListUpdate();
+  }
+
+  function scheduleRealtimeRefresh() {
+    window.clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = window.setTimeout(() => {
+      void refreshAnnouncementList();
+    }, 300);
   }
 
   watch(
@@ -158,21 +161,39 @@ export function useAnnouncementManagement() {
         return;
       }
       resetAnnouncements();
-      acknowledgeAnnouncementListUpdate();
     },
     { immediate: true },
   );
+
+  watch(
+    [initialized, isAllowedUser, () => sortOption.value],
+    ([ready, allowed]) => {
+      realtimeUnsubscribe?.();
+      realtimeUnsubscribe = null;
+      window.clearTimeout(realtimeRefreshTimer);
+      if (!ready || !allowed) return;
+
+      realtimeUnsubscribe = subscribeContentRealtimeEvents(`announcements:${sortOption.value}`, (event) => {
+        if (event.eventType !== 'announcement_changed') return;
+        scheduleRealtimeRefresh();
+      });
+    },
+    { immediate: true },
+  );
+
+  onScopeDispose(() => {
+    realtimeUnsubscribe?.();
+    window.clearTimeout(realtimeRefreshTimer);
+  });
 
   return {
     announcements,
     sortOption,
     loading,
     loadingMore,
-    refreshing,
     error,
     hasMore,
     loadMoreAnnouncements,
-    showAnnouncementUpdatePrompt,
     refreshAnnouncements: refreshAnnouncementList,
     editingAnnouncement,
     editorError,

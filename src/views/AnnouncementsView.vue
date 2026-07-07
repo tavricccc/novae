@@ -3,18 +3,7 @@
     <AnnouncementControls
       v-model:sort-option="sortOption"
       :can-create="isAdmin"
-      :refreshing="refreshing"
       @create="openEditor(null)"
-      @refresh="refreshAnnouncements"
-    />
-
-    <ListUpdatePrompt
-      :show="showAnnouncementUpdatePrompt"
-      message="公告列表有更新"
-      action-label="查看最新公告"
-      loading-label="更新中..."
-      :loading="refreshing"
-      @action="refreshAnnouncements"
     />
 
     <div>
@@ -101,7 +90,6 @@ import AnnouncementControls from '@/components/AnnouncementControls.vue';
 import AnnouncementEditorDialog from '@/components/AnnouncementEditorDialog.vue';
 import AnnouncementTable from '@/components/AnnouncementTable.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
-import ListUpdatePrompt from '@/components/ListUpdatePrompt.vue';
 import EmptyStatePanel from '@/components/ui/EmptyStatePanel.vue';
 import SkeletonAnnouncementList from '@/components/ui/SkeletonAnnouncementList.vue';
 import PageLoadFailure from '@/components/ui/PageLoadFailure.vue';
@@ -116,10 +104,8 @@ const {
   sortOption,
   loading,
   loadingMore,
-  refreshing,
   error,
   hasMore,
-  showAnnouncementUpdatePrompt,
   loadMoreAnnouncements,
   refreshAnnouncements,
   editingAnnouncement,

@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onScopeDispose, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AnnouncementDetailPagePanel from '@/components/AnnouncementDetailPagePanel.vue';
 import AnnouncementEditorDialog from '@/components/AnnouncementEditorDialog.vue';
@@ -72,6 +72,7 @@ import {
   setAnnouncementLike,
   updateAnnouncement,
 } from '@/services/announcements';
+import { subscribeContentRealtimeEvents } from '@/services/realtime-events';
 import { deleteUploadedImage } from '@/services/uploads';
 import type { AnnouncementRecord } from '@/types';
 
@@ -90,6 +91,8 @@ const saving = ref(false);
 const deleting = ref(false);
 const deleteDialogOpen = ref(false);
 let requestId = 0;
+let realtimeUnsubscribe: (() => void) | null = null;
+let realtimeRefreshTimer = 0;
 
 const sessionLoading = computed(() => loading.value || !initialized.value);
 const canLoadAnnouncement = computed(() => initialized.value && isAllowedUser.value);
@@ -193,6 +196,32 @@ async function handleToggleLike() {
   }
 }
 
+async function refreshAnnouncementSilently() {
+  const currentAnnouncement = announcement.value;
+  if (!currentAnnouncement) return;
+
+  const currentRequestId = ++requestId;
+  try {
+    const fetchedAnnouncement = await fetchAnnouncementRecordById(currentAnnouncement.id);
+    if (currentRequestId !== requestId) return;
+    announcement.value = {
+      ...fetchedAnnouncement,
+      currentUserLiked: announcement.value?.currentUserLiked ?? fetchedAnnouncement.currentUserLiked,
+    };
+  } catch (caught) {
+    if (currentRequestId !== requestId) return;
+    showToast(caught instanceof Error ? caught.message : '找不到這則公告。', 'error');
+    goBackToAnnouncements();
+  }
+}
+
+function scheduleRealtimeRefresh() {
+  window.clearTimeout(realtimeRefreshTimer);
+  realtimeRefreshTimer = window.setTimeout(() => {
+    void refreshAnnouncementSilently();
+  }, 300);
+}
+
 function handleCommentCountChanged(payload: { announcementId: string; commentCount: number }) {
   if (announcement.value?.id !== payload.announcementId) return;
   announcement.value = {
@@ -238,4 +267,29 @@ watch(
   },
   { immediate: true },
 );
+
+watch(
+  () => [canLoadAnnouncement.value, route.params.announcementId] as const,
+  ([canLoad, rawAnnouncementId]) => {
+    realtimeUnsubscribe?.();
+    realtimeUnsubscribe = null;
+    window.clearTimeout(realtimeRefreshTimer);
+    if (!canLoad) return;
+
+    const announcementId = normalizeRouteParam(rawAnnouncementId);
+    if (!announcementId) return;
+
+    realtimeUnsubscribe = subscribeContentRealtimeEvents(`announcement-detail:${announcementId}`, (event) => {
+      if (event.eventType !== 'announcement_changed') return;
+      if (event.targetId !== announcementId) return;
+      scheduleRealtimeRefresh();
+    });
+  },
+  { immediate: true },
+);
+
+onScopeDispose(() => {
+  realtimeUnsubscribe?.();
+  window.clearTimeout(realtimeRefreshTimer);
+});
 </script>

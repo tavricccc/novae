@@ -52,6 +52,7 @@
 - supabase/migrations/202607060002_cleanup_removed_issue_categories.sql：讓維護清理可依目前有效提案分類刪除已移除分類的資料庫提案與留言，排程清理相關 Cloudinary 圖片，並保留 Notion 備份頁面且標記為已刪除。
 - supabase/migrations/202607070001_nested_comments_and_issue_results.sql：新增提案結果欄位、提案與公告一層留言回覆關聯、父留言驗證與回覆查詢索引，並將既有管理員留言遷移為提案結果。
 - supabase/migrations/202607070002_issue_review_approved_at.sql：新增需審核提案的審核通過時間欄位，供附議期限與前端時間顯示使用。
+- supabase/migrations/202607080001_content_realtime_events.sql：新增提案、公告、留言、附議與讚數的安全 Realtime 事件表、觸發器與 publication，前端只收到目標 id 後再走受控讀取。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/types.ts：受控 action 共用 Supabase client、身份與 JSON record 型別。
 - supabase/functions/backendAction/utils.ts：受控 action 共用 cursor、時間、數值、布林與台北日界限工具。
@@ -106,10 +107,10 @@
 - src/router/adminRoutes.ts：管理員統計頁路由設定，Dashboard 頁面 lazy import。
 - src/views/LoginView.vue：登入頁視圖，沿用平台登入面板並交由 router redirect 在登入後回到原目標頁。
 - src/views/IssueBoardView.vue：提案看板路由視圖；session 恢復期間先顯示提案骨架，已登入則以滿高容器掛載看板，讓列表區獨立捲動。
-- src/views/IssueDetailView.vue：提案詳情子頁視圖，依路由讀取單筆提案，提供左上返回提案列表、分享、附議、刪除、提案結果編輯與留言區。
+- src/views/IssueDetailView.vue：提案詳情子頁視圖，依路由讀取單筆提案，提供左上返回提案列表、分享、附議、刪除、提案結果編輯與留言區；提案與附議數變動由 Realtime 事件觸發重讀。
 - src/views/DashboardView.vue：管理員維運工作台，使用 `usePlatformDashboard` 與 `useDashboardMetrics` 呈現系統狀態、Notion 待同步、同步異常、維護排程、平台成果與分類使用概況；成功畫面不提供手動重新整理，空狀態與錯誤狀態使用共用 EmptyStatePanel。
-- src/views/AnnouncementsView.vue：公告頁視圖，使用 `useAnnouncementManagement` 與 AnnouncementControls 組合公告列表排序、手動重新整理、底部自動載入更多、空狀態、公告骨架載入、管理員編輯對話框與刪除確認；列表列點擊導向公告詳情子頁。
-- src/views/AnnouncementDetailView.vue：公告詳情子頁視圖，依路由讀取單則公告，提供左上返回公告列表、分享、按讚、管理員編輯刪除與留言區。
+- src/views/AnnouncementsView.vue：公告頁視圖，使用 `useAnnouncementManagement` 與 AnnouncementControls 組合公告列表排序、Realtime 更新、底部自動載入更多、空狀態、公告骨架載入、管理員編輯對話框與刪除確認；列表列點擊導向公告詳情子頁。
+- src/views/AnnouncementDetailView.vue：公告詳情子頁視圖，依路由讀取單則公告，提供左上返回公告列表、分享、按讚、管理員編輯刪除與留言區；公告、讚數與留言數變動由 Realtime 事件觸發重讀。
 - src/views/ChangelogView.vue：更新紀錄時間軸視圖，讀取靜態 changelog entries，於頁首顯示累計更新次數，並呈現左側串接圓點與垂直線、右側標題、版本號、日期時間與純文字 bullet；未登入與無資料使用共用 EmptyStatePanel。
 - src/style.css：全域樣式與目前實際使用的共用 UI class 定義，包含避免低於 12px 的輔助文字、14–16px 正文排版層級、所有 button / link 與共用 pressable / content-trigger / nav-item 的手機按壓回饋、focus-ring、按鈕/欄位/選單/分段控制樣式、行動裝置 tap highlight 禁用，以及依 micro / panel 節奏統一的 popover、notification 與 dialog 轉場。
 
@@ -151,20 +152,19 @@
 - src/components/LoginPanel.vue：校內 Google 帳號登入面板，供登入頁使用並維持原本未登入視覺。
 - src/components/AppInstallPromptDialog.vue：App 安裝與瀏覽器引導對話框，沿用共用 DialogOverlay 與提示型對話框排版，依 mode 呈現 in-app browser 提醒、Android 原生安裝按鈕或 iOS Safari 手動步驟。
 - src/components/AppUpdatePromptDialog.vue：偵測到遠端 build 版本較新時顯示不可略過的更新提示；視覺、焦點與捲動行為對齊其他提示型對話框，並阻止舊前端繼續呼叫可能已變更的後端介面。
-- src/components/SettingsPanel.vue：登入 / 設定面板 UI；session 恢復或登入進行中時在頭像位置顯示小型進度，完成後以頭像開啟「設定」面板，集中顯示目前帳號、切換帳號入口、單裝置推播通知狀態、通知類型開關與登出操作。
-- src/components/SettingsPanelContent.vue：設定面板共用內容區，供桌機頭像 popover 與手機全螢幕 Dialog 共用，統一帳號切換、推播通知、通知類型開關、更新紀錄與管理員統計入口呈現。
+- src/components/SettingsPanel.vue：登入 / 設定面板 UI；session 恢復或登入進行中時在頭像位置顯示小型進度，完成後以頭像開啟「設定」面板，集中顯示目前帳號、切換帳號入口、單裝置推播通知狀態、通知類型開關、重啟 App 與登出操作。
+- src/components/SettingsPanelContent.vue：設定面板共用內容區，供桌機頭像 popover 與手機全螢幕 Dialog 共用，統一帳號切換、推播通知、通知類型開關、更新紀錄、重啟 App 與管理員統計入口呈現。
 - src/components/PushPermissionPromptDialog.vue：登入後首次詢問推播權限的提示對話框；以本機 localStorage 記錄每個帳號在目前裝置是否已詢問過，允許使用者稍後再到設定開啟。
 - src/components/ConfirmDialog.vue：通用確認對話框，沿用共用 DialogOverlay、提示型文字層級、焦點管理與捲動鎖定。
 - src/components/ToastViewport.vue：全域 toast 顯示容器，統一呈現成功、資訊與錯誤提示，層級高於 modal dialog。
 - src/components/SegmentedControl.vue：共用分段選項元件，用於分類、狀態與留言模式切換。
-- src/components/ListUpdatePrompt.vue：列表更新提示列，供提案與公告頁在偵測到新內容時提示使用者手動刷新並沿用既有分頁讀取流程。
 - src/components/VoteButtons.vue：附議 / 取消附議按鈕展示層，實際 optimistic UI 與附議流程委派給 `useVoteSupport`。
 - src/components/MarkdownRenderer.vue：將 Markdown 渲染為經 DOMPurify 過濾的安全 HTML，圖片支援尺寸屬性、lazy loading 與預留顯示空間以降低 layout shift。
 - src/components/NotificationBell.vue：頁首右上角 App 內通知中心，使用手機全螢幕面板／桌機右側 popover 呈現未讀數、通知類型圖示、載入與空狀態、分段載入及打開即已讀行為，並依通知目標路由至提案或公告詳情；推播設定統一由頭像設定面板管理。
 - src/components/MarkdownMediaContent.vue：Markdown 圖文分離共用內容元件，圖片置頂以兩欄寬度水平捲動、文字置於下方，支援點圖全螢幕預覽。
-- src/components/CommentThreadPanel.vue：提案與公告共用留言面板，統一緊湊主留言與一層回覆列表、載入 / 錯誤 / 空狀態、重新整理、底部自動載入更多、浮動輸入面板與刪除確認。
+- src/components/CommentThreadPanel.vue：提案與公告共用留言面板，統一緊湊主留言與一層回覆列表、載入 / 錯誤 / 空狀態、底部自動載入更多、浮動輸入面板與刪除確認。
 - src/components/CompactActionMenu.vue：可設定文字與項目的精簡三點操作選單，供公告列表與留言刪除等管理入口共用。
-- src/components/AnnouncementControls.vue：公告列表頂部控制列，對齊提案看板的工具按鈕樣式，提供排序選單、手動重新整理與管理員新增公告操作。
+- src/components/AnnouncementControls.vue：公告列表頂部控制列，對齊提案看板的工具按鈕樣式，提供排序選單與管理員新增公告操作。
 - src/components/AnnouncementTable.vue：公告表格列表容器，比照提案看板設計表格結構，負責渲染公告列表行並轉發開啟詳情、編輯與刪除事件。
 - src/components/AnnouncementTableRow.vue：單則公告表格列表項目，呈現公告標籤、發布者、標題、發布日期、按讚與留言互動按鈕以及管理員選單。
 - src/components/AnnouncementDetailPagePanel.vue：公告詳情子頁內容面板，使用共用詳情頁骨架組合公告內容、icon 操作列與留言區。
@@ -181,8 +181,8 @@
 
 ### 看板與列表元件
 
-- src/components/IssueBoard.vue：提案看板主體。調用 `useIssueBoardData`，以固定控制列與隱藏捲軸的獨立捲動列表組合看板狀態，支援排序、手動重新整理與底部自動載入更多，並在開啟提案時導向提案詳情子頁。
-- src/components/BoardControls.vue：提案看板頂部控制列，包含頁內提案分類 segmented control、搜尋工具面板、整合狀態與排序之篩選工具選單、低層級重新整理按鈕與新增提案按鈕。
+- src/components/IssueBoard.vue：提案看板主體。調用 `useIssueBoardData`，以固定控制列與隱藏捲軸的獨立捲動列表組合看板狀態，支援排序、Realtime 更新與底部自動載入更多，並在開啟提案時導向提案詳情子頁。
+- src/components/BoardControls.vue：提案看板頂部控制列，包含頁內提案分類 segmented control、搜尋工具面板、整合狀態與排序之篩選工具選單與新增提案按鈕。
 - src/components/IssueAdminMenu.vue：管理員狀態調整下拉選單展示層，用於列表視圖與動作選單。
 - src/components/IssueTableRow.vue：列表視圖單筆提案列展示層，桌面動態 grid、手機收折為單行精簡列；共用 `useIssueItemController` 處理提案互動狀態與開啟詳情事件。
 - src/components/IssueBoardTable.vue：列表視圖容器，含欄位標題列與提案列渲染；載入與分頁切換期間顯示 SkeletonTable。
@@ -194,11 +194,11 @@
 
 ## src/composables (狀態與控制邏輯層)
 
-- src/composables/useIssueBoardData.ts：看板 orchestrator，組合目前狀態 bucket、搜尋、使用者提案、全域分頁、文件標題與手動重新整理等專責 composable，依目前螢幕高度決定列表讀取批量。
+- src/composables/useIssueBoardData.ts：看板 orchestrator，組合目前狀態 bucket、搜尋、使用者提案、全域分頁、文件標題與 Realtime 事件刷新，依目前螢幕高度決定列表讀取批量。
 - src/composables/useIssueBoardPagination.ts：看板全域模式分頁 helper，處理搜尋與我的提案在前端分頁時的目前頁、總頁數與顯示清單。
 - src/composables/useUserIssuesData.ts：我的提案讀取 helper，以一次性讀取封裝私有公共提案與一般提案合併、依螢幕高度分段顯示、載入狀態與支援狀態更新。
 - src/composables/useIssueRouteFilter.ts：提案路由分類同步 helper，將 `/issues/:filter` 與 `/issues/:filter/:issueId` 轉成全域 activeFilter。
-- src/composables/useIssueRouteDetail.ts：提案 id 路由詳情 helper，支援列表資料預填後讀取單筆提案，並處理無權限/不存在 toast、載入狀態與返回列表。
+- src/composables/useIssueRouteDetail.ts：提案 id 路由詳情 helper，支援列表資料預填後讀取單筆提案、Realtime 事件重讀，並處理無權限/不存在 toast、載入狀態與返回列表。
 - src/composables/useDocumentTitle.ts：文件標題同步 helper，依目前看板分類更新並在卸載時還原。
 - src/composables/useAppInstallPrompt.ts：PWA 安裝提示狀態管理，處理 standalone 判斷、beforeinstallprompt、iOS Safari 手動引導、in-app browser 優先權與 sessionStorage 關閉記錄。
 - src/composables/useAppUpdate.ts：手動註冊無快取 service worker，啟動時檢查一次 `version.json`，並管理強制更新提示狀態。
@@ -208,7 +208,7 @@
 - src/composables/useNetworkStatus.ts：共用瀏覽器線上 / 離線狀態監聽，供載入逾時與讀取錯誤提示判斷目前連線狀態。
 - src/composables/useAppResume.ts：集中監聽 pageshow 與 visibilitychange；iOS PWA 從背景或 bfcache 恢復時 abort 舊 request scope，供通知等即時狀態重新連線使用。
 - src/composables/useAppStartupGate.ts：合併 router readiness、authChecking、userLoading、appInitializing 與 appReady，控制 AppStartupScreen 顯示時機。
-- src/composables/useIssueBuckets.ts：依使用者、權限、分類、狀態、排序與頁面大小快取提案分段列表；使用一次性讀取、手動重新整理與底部自動載入更多，並以版本 token 忽略快速切換後晚到的結果。
+- src/composables/useIssueBuckets.ts：依使用者、權限、分類、狀態、排序與頁面大小快取提案分段列表；使用一次性讀取、Realtime 刷新與底部自動載入更多，並以版本 token 忽略快速切換後晚到的結果。
 - src/composables/useInfiniteScroll.ts：共用 IntersectionObserver 底部哨兵 helper，供提案、公告與留言列表接近底部時自動載入更多。
 - src/composables/useIssueSearch.ts：提案搜尋狀態管理，包含 700ms debounce、最短 3 字門檻、最多 50 筆 n-gram 候選與 5 分鐘結果快取。
 - src/composables/useIssueDisplay.ts：單筆提案視覺運算（作者實名僅對 admin 顯示、剩餘天數運算、過期自動駁回）。
@@ -236,14 +236,13 @@
 - src/composables/useResolvedMarkdown.ts：解析 Markdown 中的 `srp-upload://` 圖片，透過 Cloud Function 換取 preview/full signed URL 後供渲染元件使用。
 - src/composables/useNotifications.ts：以共享通知資料源合併 broadcast/admin/user 三來源通知、分來源 cursor 載入更多、閱讀游標與紅點狀態；集中管理 realtime 訂閱並將新通知增量合併到本地分頁，避免覆蓋已載入內容。
 - src/composables/useNotificationNavigation.ts：通知目標導航流程，先經受控讀取確認公告或提案仍存在且目前使用者可讀，再使用後端回傳的真實分類開啟詳情。
-- src/composables/useContentUpdatePrompt.ts：監聽通知 realtime 中的新增提案與公告事件，只維護列表有新內容提示狀態，資料本體仍交由既有 backendAction 分頁刷新。
 - src/composables/usePushNotifications.ts：Web Push 推播偏好管理，負責瀏覽器支援與權限狀態、目前裝置 service worker token 註冊 / 關閉、通知分類偏好、跨裝置狀態校正與前景訊息 toast。
-- src/composables/useAnnouncements.ts：公告列表依排序快取分段讀取、依螢幕高度決定讀取批量、手動重新整理、底部自動載入更多與載入 / 錯誤狀態管理。
-- src/composables/useAnnouncementManagement.ts：公告頁管理流程，整合公告列表讀取、id 路由選取、單筆讀取、分享、編輯、新增、背景刪除與明確讚狀態。
-- src/composables/useAnnouncementComments.ts：公告留言分頁讀取、載入更多、重新整理、新增主留言 / 回覆、局部刪除與權限判斷狀態管理，使用留言區自己的請求 scope 避免路由切換誤判空狀態。
+- src/composables/useAnnouncements.ts：公告列表依排序快取分段讀取、依螢幕高度決定讀取批量、Realtime 刷新、底部自動載入更多與載入 / 錯誤狀態管理。
+- src/composables/useAnnouncementManagement.ts：公告頁管理流程，整合公告列表讀取、Realtime 事件訂閱、id 路由選取、單筆讀取、分享、編輯、新增、背景刪除與明確讚狀態。
+- src/composables/useAnnouncementComments.ts：公告留言分頁讀取、載入更多、Realtime 事件刷新、新增主留言 / 回覆、局部刪除與權限判斷狀態管理，使用留言區自己的請求 scope 避免路由切換誤判空狀態。
 - src/composables/useImageUpload.ts：圖片處理 composable，協調本機選圖預覽與上傳狀態，並將前端 WebP 輸出尺寸送入上傳 session。
 - src/composables/useMarkdownImageUpload.ts：Markdown 編輯器圖片流程，選圖時立即完成壓縮與 preview URL 建立，送出時並行上傳已處理圖片，並負責失敗清理與 `![alt|寬x高]()` 語法組合。
-- src/composables/useIssueComments.ts：提案留言分頁讀取、載入更多、重新整理、送出主留言 / 回覆、局部刪除、權限判斷與錯誤狀態，使用留言區自己的請求 scope 避免路由切換誤判空狀態。
+- src/composables/useIssueComments.ts：提案留言分頁讀取、載入更多、Realtime 事件刷新、送出主留言 / 回覆、局部刪除、權限判斷與錯誤狀態，使用留言區自己的請求 scope 避免路由切換誤判空狀態。
 - src/composables/usePlatformDashboard.ts：管理員 Dashboard 資料載入狀態與錯誤管理，保留 stats 與 operations computed 給畫面使用。
 - src/composables/useDashboardMetrics.ts：管理員 Dashboard 資料轉換 helper，計算成果摘要、維運狀態卡、維運清單、最近異常與分類提案/留言對照。
 
@@ -297,6 +296,7 @@
 - src/services/issues-read-shared.ts：提案 read service 共用 response 型別。
 - src/services/issues-write.ts：所有寫入、附議、主留言 / 回覆、提案結果與審核異動，統一呼叫 Supabase 後端安全端點。
 - src/services/notifications.ts：App 內通知來源訂閱、閱讀狀態、單裝置 Web Push token 與通知分類偏好服務；realtime channel 依 broadcast/admin/user 來源或 recipient 過濾 INSERT，並正規化通知與分頁 cursor。
+- src/services/realtime-events.ts：內容 Realtime 事件訂閱服務，集中訂閱 `realtime_events` 並正規化提案、公告、留言、附議與讚數變動事件。
 - src/services/announcements.ts：公告排序分頁、單筆讀取、讚與留言異動服務，並在服務邊界正規化公告與留言分頁 cursor。
 - src/services/dashboard.ts：平台 Dashboard 與登入使用紀錄服務，將後端 stats / operations response 正規化為前端 Date 型別。
 - src/services/uploads.ts：Cloudinary authenticated 圖片直傳服務，向後端取得簽名 session 後直傳 Cloudinary，並提供 signed delivery URL 解析、快取與刪除 action。

@@ -46,18 +46,6 @@
         </div>
 
         <button
-          type="button"
-          class="button-toolbar h-10 w-10 rounded-full p-0 md:h-9 md:w-9 flex items-center justify-center shrink-0"
-          :disabled="refreshing"
-          title="重新整理公告"
-          aria-label="重新整理公告"
-          @click="emit('refresh')"
-        >
-          <LoadingSpinner v-if="refreshing" :size="4" />
-          <AppIcon v-else name="refresh" class="h-4 w-4" />
-        </button>
-
-        <button
           v-if="canCreate"
           type="button"
           class="button-icon-filled !h-10 !w-10 md:!h-9 md:!w-9 flex items-center justify-center shrink-0"
@@ -88,19 +76,16 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import type { AnnouncementSortOption } from '@/types';
 
 const props = defineProps<{
   canCreate?: boolean;
-  refreshing?: boolean;
   sortOption: AnnouncementSortOption;
 }>();
 
 const emit = defineEmits<{
   'update:sortOption': [value: AnnouncementSortOption];
   create: [];
-  refresh: [];
 }>();
 
 const announcementSortOptions = [

@@ -8,18 +8,7 @@
       :show-toggle="showToggle"
       :active-category-label="activeCategoryLabel"
       :search-hint="searchHint"
-      :refreshing="currentRefreshing"
-      @refresh="refreshCurrentData"
       @toggle-form="emit('toggle-form')"
-    />
-
-    <ListUpdatePrompt
-      :show="showIssueUpdatePrompt"
-      message="提案列表有更新"
-      action-label="查看最新提案"
-      loading-label="更新中..."
-      :loading="currentRefreshing"
-      @action="refreshCurrentData"
     />
 
     <div class="scrollbar-none min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-4">
@@ -102,7 +91,6 @@ import { useRouter } from 'vue-router';
 import BoardControls from '@/components/BoardControls.vue';
 import IssueBoardTable from '@/components/IssueBoardTable.vue';
 import IssueComposer from '@/components/IssueComposer.vue';
-import ListUpdatePrompt from '@/components/ListUpdatePrompt.vue';
 import EmptyStatePanel from '@/components/ui/EmptyStatePanel.vue';
 import PageLoadFailure from '@/components/ui/PageLoadFailure.vue';
 import SkeletonTable from '@/components/ui/SkeletonTable.vue';
@@ -145,9 +133,7 @@ const {
   currentIssues,
   currentLoading,
   currentLoadingMore,
-  currentRefreshing,
   currentError,
-  showIssueUpdatePrompt,
   isSearching,
   isGlobalMode,
   searchHint,

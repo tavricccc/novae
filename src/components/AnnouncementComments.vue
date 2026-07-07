@@ -10,7 +10,7 @@
     :has-more="hasMore"
     :loading-more="loadingMore"
     :on-load-more="loadMoreComments"
-    :on-refresh="loadComments"
+    :on-retry="loadComments"
     :on-delete-comment="deleteComment"
     :on-submit-comment="handleSubmit"
     :submit-error="error"
@@ -51,6 +51,7 @@ const {
   submitComment,
   submitting,
   deleteComment,
+  subscribeCurrentAnnouncementComments,
 } = useAnnouncementComments(
   () => props.announcementId,
   (payload) => emit('commentCountChanged', payload),
@@ -68,6 +69,7 @@ function canDeleteThreadComment(comment: DiscussionCommentRecord) {
 watch(
   () => props.announcementId,
   () => {
+    subscribeCurrentAnnouncementComments();
     void loadComments();
   },
   { immediate: true },

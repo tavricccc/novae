@@ -14,17 +14,6 @@
         <span class="tag rounded-full border-none bg-ink-100 px-2.5 py-0.5 text-xs font-semibold dark:bg-ink-800/80">
           {{ comments.length }} 則
         </span>
-        <button
-          type="button"
-          class="button-toolbar h-8 w-8 rounded-full p-0"
-          :disabled="loading || loadingMore"
-          aria-label="重新整理留言"
-          title="重新整理留言"
-          @click="onRefresh"
-        >
-          <LoadingSpinner v-if="loading" :size="4" />
-          <AppIcon v-else name="refresh" />
-        </button>
       </div>
     </div>
 
@@ -35,17 +24,6 @@
       <span class="tag rounded-full border-none bg-ink-100 px-2.5 py-0.5 text-xs font-semibold dark:bg-ink-800/80">
         {{ comments.length }} 則留言
       </span>
-      <button
-        type="button"
-        class="button-toolbar h-8 w-8 rounded-full p-0"
-        :disabled="loading || loadingMore"
-        aria-label="重新整理留言"
-        title="重新整理留言"
-        @click="onRefresh"
-      >
-        <LoadingSpinner v-if="loading" :size="4" />
-        <AppIcon v-else name="refresh" />
-      </button>
     </div>
 
     <div class="min-h-0 flex-1 overflow-y-auto py-2 pr-1">
@@ -58,7 +36,7 @@
         icon="warning"
         tone="danger"
         action-label="重新整理"
-        @action="onRefresh"
+        @action="onRetry"
       />
 
       <EmptyStatePanel
@@ -130,7 +108,6 @@ import CommentItem from '@/components/CommentItem.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
 import EmptyStatePanel from '@/components/ui/EmptyStatePanel.vue';
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import SkeletonCommentList from '@/components/ui/SkeletonCommentList.vue';
 import { useMinimumLoading } from '@/composables/useMinimumLoading';
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll';
@@ -152,7 +129,7 @@ const props = withDefaults(defineProps<{
   targetId: string;
   onDeleteComment: (commentId: string) => Promise<void>;
   onLoadMore?: () => Promise<void>;
-  onRefresh: () => Promise<void>;
+  onRetry: () => Promise<void>;
   onSubmitComment: (payload: { content: string; parentCommentId: string | null }) => Promise<boolean>;
   disabledComposerLabel?: string;
 }>(), {

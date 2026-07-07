@@ -8,8 +8,8 @@ import { useIssueSearch } from '@/composables/useIssueSearch';
 import { useSession } from '@/composables/useSession';
 import { useTimedMessage } from '@/composables/useTimedMessage';
 import { useUserIssuesData } from '@/composables/useUserIssuesData';
-import { useIssueListUpdatePrompt } from '@/composables/useContentUpdatePrompt';
 import { resolveViewportPageSize } from '@/lib/page-size';
+import { subscribeContentRealtimeEvents } from '@/services/realtime-events';
 import type { IssueRecord, IssueSortOption } from '@/types';
 
 export function useIssueBoardData() {
@@ -104,10 +104,8 @@ export function useIssueBoardData() {
     pageSize: currentPageSize,
     filterIssues,
   });
-  const {
-    acknowledgeIssueListUpdate,
-    showIssueUpdatePrompt,
-  } = useIssueListUpdatePrompt(activeFilter, statusTab);
+  let realtimeUnsubscribe: (() => void) | null = null;
+  let realtimeRefreshTimer = 0;
 
   const filteredActiveIssues = computed(() => {
     if (isGlobalMode.value && statusTab.value === 'active') {
@@ -136,10 +134,6 @@ export function useIssueBoardData() {
   const currentLoadingMore = computed(() => {
     if (activeFilter.value === 'my-proposals') return userIssuesState.loadingMore;
     return currentState.value.loadingMore;
-  });
-  const currentRefreshing = computed(() => {
-    if (activeFilter.value === 'my-proposals') return userIssuesState.refreshing;
-    return currentState.value.refreshing;
   });
   const currentError = computed(() => {
     if (activeFilter.value === 'my-proposals') return userIssuesState.error;
@@ -233,6 +227,38 @@ export function useIssueBoardData() {
     searchQuery.value = '';
   });
 
+  function scheduleRealtimeRefresh() {
+    window.clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = window.setTimeout(() => {
+      void refreshCurrentData();
+    }, 300);
+  }
+
+  watch(
+    () => [
+      isAllowedUser.value,
+      user.value?.uid ?? '',
+      activeFilter.value,
+      statusTab.value,
+    ] as const,
+    ([allowed, uid]) => {
+      realtimeUnsubscribe?.();
+      realtimeUnsubscribe = null;
+      window.clearTimeout(realtimeRefreshTimer);
+      if (!allowed || !uid) return;
+
+      realtimeUnsubscribe = subscribeContentRealtimeEvents(
+        `issues:${uid}:${activeFilter.value}:${statusTab.value}`,
+        (event) => {
+          if (event.eventType !== 'issue_changed') return;
+          if (activeFilter.value !== 'my-proposals' && event.category !== activeFilter.value) return;
+          scheduleRealtimeRefresh();
+        },
+      );
+    },
+    { immediate: true },
+  );
+
   async function refreshCurrentData() {
     document.documentElement.classList.add('no-transitions');
     resetSearchResults();
@@ -244,7 +270,6 @@ export function useIssueBoardData() {
     } else {
       await refreshBucket(statusTab.value);
     }
-    acknowledgeIssueListUpdate();
 
     setTimeout(() => {
       document.documentElement.classList.remove('no-transitions');
@@ -267,6 +292,8 @@ export function useIssueBoardData() {
   });
 
   onBeforeUnmount(() => {
+    realtimeUnsubscribe?.();
+    window.clearTimeout(realtimeRefreshTimer);
     restoreDocumentTitle();
     bumpUserIssuesRequestToken();
     resetSearchResults();
@@ -289,14 +316,11 @@ export function useIssueBoardData() {
     currentIssues,
     currentLoading,
     currentLoadingMore,
-    currentRefreshing,
     currentError,
     hasMoreCurrentData,
-    showIssueUpdatePrompt,
     loadMoreCurrentData,
     showEmptySearchResult,
     handleSupportChanged,
-    acknowledgeIssueListUpdate,
     handleIssueSubmitted,
     handleIssueUpdated,
     handleIssueDeleted,

@@ -2,6 +2,26 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善內容同步體驗",
+    version: "v2.0.96",
+    date: "2026-07-08",
+    time: "04:28",
+    items: [
+      {
+        title: "新增提案、公告與留言的即時更新，內容異動後可自動同步最新狀態。"
+      },
+      {
+        title: "支援附議數與讚數即時更新，減少手動重新整理需求。"
+      },
+      {
+        title: "新增設定中的重啟 App 入口，協助快速重新載入最新狀態。"
+      },
+      {
+        title: "改善版本更新流程，避免更新等待時間過長。"
+      }
+    ]
+  },
+  {
     title: "改善內建瀏覽器開啟體驗",
     version: "v2.0.95",
     date: "2026-07-07",

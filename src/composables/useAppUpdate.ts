@@ -7,6 +7,7 @@ const checking = ref(false);
 const remoteVersion = ref('');
 let lastCheckedAt = 0;
 
+const APP_RELOAD_TIMEOUT_MS = 5_000;
 const AUTO_RELOAD_STORAGE_KEY = 'srp:auto-update-reloaded-version';
 const PENDING_UPDATE_VERSION_STORAGE_KEY = 'srp:pending-update-version';
 
@@ -25,7 +26,7 @@ async function checkAppVersion() {
   try {
     const response = await safeFetch('/version.json', { cache: 'no-store' }, {
       label: '版本檢查',
-      timeoutMs: 8_000,
+      timeoutMs: APP_RELOAD_TIMEOUT_MS,
     });
 
     const data = await response.json() as VersionResponse;
@@ -53,10 +54,16 @@ async function updateServiceWorker() {
         scope: '/',
         updateViaCache: 'none',
       }),
-      { label: 'Service Worker 註冊' },
+      { label: 'Service Worker 註冊', timeoutMs: APP_RELOAD_TIMEOUT_MS },
     );
-    await withRequestTimeout(() => navigator.serviceWorker.ready, { label: 'Service Worker 啟動' });
-    await withRequestTimeout(() => registration.update(), { label: 'Service Worker 更新' });
+    await withRequestTimeout(() => navigator.serviceWorker.ready, {
+      label: 'Service Worker 啟動',
+      timeoutMs: APP_RELOAD_TIMEOUT_MS,
+    });
+    await withRequestTimeout(() => registration.update(), {
+      label: 'Service Worker 更新',
+      timeoutMs: APP_RELOAD_TIMEOUT_MS,
+    });
   } catch {
     return;
   }
@@ -85,8 +92,17 @@ export function useAppUpdate() {
     if (remoteVersion.value) {
       localStorage.setItem(PENDING_UPDATE_VERSION_STORAGE_KEY, remoteVersion.value);
     }
-    await updateServiceWorker();
-    await resetAppConnection();
+    let reloadTimeout = 0;
+    await Promise.race([
+      (async () => {
+        await updateServiceWorker();
+        await resetAppConnection();
+      })(),
+      new Promise<void>((resolve) => {
+        reloadTimeout = window.setTimeout(resolve, APP_RELOAD_TIMEOUT_MS);
+      }),
+    ]);
+    window.clearTimeout(reloadTimeout);
     window.location.reload();
   }
 
