@@ -28,6 +28,7 @@ export function useAnnouncementManagement() {
     hasMore,
     loadMoreAnnouncements,
     upsertAnnouncement,
+    patchAnnouncement,
     removeAnnouncement,
     refreshAnnouncements,
     resetAnnouncements,
@@ -121,11 +122,11 @@ export function useAnnouncementManagement() {
     likingAnnouncementId.value = announcement.id;
     try {
       const result = await setAnnouncementLike(announcement.id, !announcement.currentUserLiked);
-      announcements.value = announcements.value.map((item) =>
-        item.id === announcement.id
-          ? { ...item, currentUserLiked: result.liked, like_count: result.like_count }
-          : item
-      );
+      patchAnnouncement(announcement.id, (item) => ({
+        ...item,
+        currentUserLiked: result.liked,
+        like_count: result.like_count,
+      }));
     } catch (caught) {
       if (isContentUnavailableError(caught)) {
         handleAnnouncementUnavailable(announcement.id);

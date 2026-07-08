@@ -7,67 +7,43 @@
       aria-labelledby="status-dialog-title"
       tabindex="-1"
     >
-      <h3 id="status-dialog-title" class="dialog-title">變更提案狀態/結果</h3>
+      <h3 id="status-dialog-title" class="dialog-title">更新提案狀態</h3>
       <p class="dialog-description">
-        您可以將提案標記為「處理中」或進行「結案」，並填寫最終的處理結果。
+        選擇下一個狀態；結案時請填寫使用者看得到的處理結果。
       </p>
 
       <div class="mt-5 space-y-4">
-        <!-- Main Action Selector: Processing or Closed -->
         <div>
-          <label class="field-label mb-2">處理狀態</label>
-          <div class="grid grid-cols-2 gap-2">
+          <label class="field-label mb-2">下一個狀態</label>
+          <div class="grid gap-2">
             <button
+              v-for="option in availableStatusOptions"
+              :key="option.value"
               type="button"
-              class="interactive-surface flex items-center justify-center py-2.5 text-sm font-semibold rounded-2xl border transition-colors"
-              :class="actionType === 'processing'
-                ? 'border-secondary bg-secondary/5 text-secondary dark:border-secondary dark:bg-secondary/10'
-                : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-50 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-300'"
-              @click="actionType = 'processing'"
+              class="content-trigger flex w-full items-center justify-between gap-3 border px-3 py-3 text-left"
+              :class="nextStatus === option.value
+                ? 'button-toolbar--active border-secondary/50'
+                : 'border-ink-100 dark:border-ink-800'"
+              @click="nextStatus = option.value"
             >
-              處理中
-            </button>
-            <button
-              type="button"
-              class="interactive-surface flex items-center justify-center py-2.5 text-sm font-semibold rounded-2xl border transition-colors"
-              :class="actionType === 'closed'
-                ? 'border-secondary bg-secondary/5 text-secondary dark:border-secondary dark:bg-secondary/10'
-                : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-50 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-300'"
-              @click="actionType = 'closed'"
-            >
-              結案
+              <span class="min-w-0">
+                <span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">{{ option.label }}</span>
+                <span class="mt-0.5 block text-xs leading-5 text-ink-500 dark:text-ink-400">{{ option.description }}</span>
+              </span>
+              <span
+                class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs font-bold"
+                :class="nextStatus === option.value
+                  ? 'border-ink-900 bg-ink-900 text-white dark:border-ink-50 dark:bg-ink-50 dark:text-ink-950'
+                  : 'border-ink-300 text-transparent dark:border-ink-700'"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
             </button>
           </div>
         </div>
 
-        <!-- Closed configuration options -->
-        <div v-if="actionType === 'closed'" class="space-y-4 pt-4 border-t border-ink-100 dark:border-ink-800/60">
-          <div>
-            <label class="field-label mb-2">結案結果類型</label>
-            <div class="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                class="interactive-surface flex items-center justify-center py-2 text-sm font-semibold rounded-xl border transition-colors"
-                :class="closedStatus === 'completed'
-                  ? 'border-secondary bg-secondary/5 text-secondary dark:border-secondary dark:bg-secondary/10'
-                  : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-50 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-300'"
-                @click="closedStatus = 'completed'"
-              >
-                已完成
-              </button>
-              <button
-                type="button"
-                class="interactive-surface flex items-center justify-center py-2 text-sm font-semibold rounded-xl border transition-colors"
-                :class="closedStatus === 'infeasible'
-                  ? 'border-secondary bg-secondary/5 text-secondary dark:border-secondary dark:bg-secondary/10'
-                  : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-50 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-300'"
-                @click="closedStatus = 'infeasible'"
-              >
-                無法實行
-              </button>
-            </div>
-          </div>
-
+        <div v-if="requiresResult" class="space-y-4 pt-4 border-t border-ink-100 dark:border-ink-800/60">
           <div class="space-y-2">
             <label class="field-label" for="closed-result-content">提案結果說明</label>
             <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm transition-colors focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 dark:border-ink-800 dark:bg-ink-900">
@@ -85,6 +61,13 @@
             </div>
           </div>
         </div>
+
+        <p
+          v-else-if="issue.result_content"
+          class="rounded-xl border border-warning/20 bg-warning-container/40 px-3 py-2 text-xs font-semibold leading-5 text-on-warning-container"
+        >
+          改為處理中會清除目前的提案結果說明。
+        </p>
       </div>
 
       <p v-if="errorMsg" class="mt-3 text-xs font-semibold text-error">{{ errorMsg }}</p>
@@ -94,7 +77,7 @@
           取消
         </button>
         <button type="button" class="button-primary" :disabled="saving" @click="save">
-          {{ saving ? '儲存中...' : '儲存結果' }}
+          {{ saving ? '儲存中...' : saveLabel }}
         </button>
       </div>
     </section>
@@ -102,10 +85,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import DialogOverlay from '@/components/ui/DialogOverlay.vue';
 import { moderateIssueStatus, updateIssueResult } from '@/services/issues';
-import type { IssueRecord } from '@/types';
+import type { IssueRecord, IssueStatus } from '@/types';
 
 const props = withDefaults(
   defineProps<{
@@ -123,13 +106,54 @@ const emit = defineEmits<{
   success: [issue: IssueRecord];
 }>();
 
-const actionType = ref<'processing' | 'closed'>(props.initialAction);
-const closedStatus = ref<'completed' | 'infeasible'>(
-  props.issue.status === 'infeasible' ? 'infeasible' : 'completed'
+type EditableStatus = Extract<IssueStatus, 'processing' | 'completed' | 'infeasible'>;
+
+const statusOptions: Array<{
+  description: string;
+  label: string;
+  value: EditableStatus;
+}> = [
+  {
+    value: 'processing',
+    label: '處理中',
+    description: '提案已開始處理，尚未有最終結果。',
+  },
+  {
+    value: 'completed',
+    label: '已完成',
+    description: '提案已實行或已有明確完成結果。',
+  },
+  {
+    value: 'infeasible',
+    label: '無法實行',
+    description: '提案經評估後無法辦理，需說明原因。',
+  },
+];
+const availableStatusOptions = computed(() =>
+  props.issue.status === 'processing'
+    ? statusOptions.filter((option) => option.value !== 'processing')
+    : statusOptions
 );
+
+function initialStatus(): EditableStatus {
+  if (props.issue.status === 'processing') {
+    return 'completed';
+  }
+  if (props.initialAction === 'closed') {
+    return props.issue.status === 'infeasible' ? 'infeasible' : 'completed';
+  }
+  if (props.issue.status === 'completed' || props.issue.status === 'infeasible') {
+    return props.issue.status;
+  }
+  return 'processing';
+}
+
+const nextStatus = ref<EditableStatus>(initialStatus());
 const resultContent = ref(props.issue.result_content ?? '');
 const saving = ref(false);
 const errorMsg = ref('');
+const requiresResult = computed(() => nextStatus.value === 'completed' || nextStatus.value === 'infeasible');
+const saveLabel = computed(() => requiresResult.value ? '儲存狀態與結果' : '改為處理中');
 
 function handleClose() {
   if (saving.value) return;
@@ -140,7 +164,7 @@ async function save() {
   saving.value = true;
   errorMsg.value = '';
   try {
-    if (actionType.value === 'processing') {
+    if (!requiresResult.value) {
       const updated = await moderateIssueStatus(props.issue.id, 'processing');
       let finalIssue = updated;
       if (props.issue.result_content) {
@@ -154,8 +178,7 @@ async function save() {
         saving.value = false;
         return;
       }
-      // Order: set closed status, then write result explanation
-      const updated = await moderateIssueStatus(props.issue.id, closedStatus.value);
+      const updated = await moderateIssueStatus(props.issue.id, nextStatus.value);
       const finalIssue = await updateIssueResult(props.issue.id, content);
       emit('success', finalIssue);
     }
@@ -166,4 +189,17 @@ async function save() {
     saving.value = false;
   }
 }
+
+watch(
+  () => [props.open, props.issue.id, props.issue.status, props.initialAction] as const,
+  () => {
+    if (!props.open) return;
+    nextStatus.value = initialStatus();
+    if (!availableStatusOptions.value.some((option) => option.value === nextStatus.value)) {
+      nextStatus.value = availableStatusOptions.value[0]?.value ?? 'completed';
+    }
+    resultContent.value = props.issue.result_content ?? '';
+    errorMsg.value = '';
+  },
+);
 </script>

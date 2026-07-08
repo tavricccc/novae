@@ -212,7 +212,7 @@ export function useIssueBoardData() {
   );
 
   watch(statusTab, (newTab) => {
-    if (newTab === 'closed' && sortOption.value === 'ending-soon') {
+    if (newTab === 'closed' && sortOption.value !== 'latest') {
       sortOption.value = 'latest';
       return;
     }

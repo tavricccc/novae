@@ -102,21 +102,14 @@
         issue.support_enabled ? (compact ? 'mt-2 border-t border-ink-100 pt-2 dark:border-ink-800' : 'mt-3 border-t border-ink-100 pt-3 dark:border-ink-800') : ''
       ]"
     >
-      <div class="flex items-center gap-1" :class="{ 'shrink-0': compact }">
-        <span class="font-semibold text-ink-400">{{ compact ? `${primaryTimeShortLabel}：` : `${primaryTimeLabel}：` }}</span>
-        <span class="font-medium text-ink-700 dark:text-ink-300">{{ primaryTimeValueLabel || (compact ? '未定' : '未設定') }}</span>
-      </div>
-      <div v-if="issue.support_enabled && issue.support_deadline_at" class="flex items-center gap-1" :class="{ 'shrink-0': compact, 'sm:justify-end': !compact }">
-        <span class="font-semibold text-ink-400">{{ compact ? '截止：' : '附議截止：' }}</span>
-        <span class="font-medium text-ink-700 dark:text-ink-300">{{ supportDeadlineLabel }}</span>
-      </div>
-      <div v-if="issue.response_deadline_at" class="flex items-center gap-1" :class="{ 'shrink-0': compact }">
-        <span class="font-semibold text-ink-400">{{ compact ? '回覆：' : '回覆期限：' }}</span>
-        <span class="font-medium text-ink-700 dark:text-ink-300">{{ responseDeadlineLabel }}</span>
-      </div>
-      <div v-if="!compact && issue.support_met_at" class="flex items-center gap-1.5 sm:justify-end">
-        <span class="font-semibold text-ink-400">達標時間：</span>
-        <span class="font-medium text-ink-700 dark:text-ink-300">{{ supportMetLabel }}</span>
+      <div
+        v-for="item in operationTimeItems"
+        :key="item.label"
+        class="flex items-center gap-1"
+        :class="{ 'shrink-0': compact }"
+      >
+        <span class="font-semibold text-ink-400">{{ compact ? `${item.shortLabel}：` : `${item.label}：` }}</span>
+        <span class="font-medium text-ink-700 dark:text-ink-300">{{ item.valueLabel }}</span>
       </div>
     </div>
   </div>
@@ -129,7 +122,7 @@ import ShareIcon from '@/components/ui/ShareIcon.vue';
 import TrashIcon from '@/components/ui/TrashIcon.vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
 import VoteButtons from '@/components/VoteButtons.vue';
-import type { IssueRecord } from '@/types';
+import type { IssueOperationTimeItem, IssueRecord } from '@/types';
 
 const props = defineProps<{
   canManage?: boolean;
@@ -137,15 +130,10 @@ const props = defineProps<{
   compact?: boolean;
   currentUserSupported: boolean;
   issue: IssueRecord;
-  primaryTimeLabel: string;
-  primaryTimeShortLabel: string;
-  primaryTimeValueLabel: string;
-  responseDeadlineLabel: string;
+  operationTimeItems: IssueOperationTimeItem[];
   statusLabel: string;
   supportClosed: boolean;
   supportCount: number;
-  supportDeadlineLabel: string;
-  supportMetLabel: string;
   supportProgressStyle: CSSProperties;
   supportRemainingLabel: string;
 }>();

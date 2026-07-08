@@ -61,6 +61,9 @@
 - supabase/migrations/202607080007_fix_notification_rpc_ambiguity.sql：修正通知 RPC 欄位與參數名稱解析，避免通知列表與推播偏好讀取在資料庫端產生欄位歧義。
 - supabase/migrations/202607080008_fix_issue_rpc_deleting_field.sql：修正提案讀取 RPC 的回傳欄位，避免讀取不存在的刪除狀態資料表欄位。
 - supabase/migrations/202607080009_fix_issue_result_rpc_actor_reference.sql：修正提案結果更新 RPC 的身份參數引用，避免管理員更新結果時觸發錯誤。
+- supabase/migrations/202607080010_issue_closed_at_and_reply_notifications.sql：新增提案結案時間、已結案排序所需索引與 RPC 回傳欄位，並補齊巢狀留言回覆通知收件人 payload。
+- supabase/migrations/202607080011_issue_result_updated_outbox.sql：讓提案結果更新建立獨立 outbox 事件，供 Notion 同步結果內容與時間欄位。
+- supabase/migrations/202607080012_user_issues_operation_time_sort.sql：讓我的提案讀取依各提案目前操作時間排序，並維持穩定 cursor 分頁。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、入口限流、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/rate-limit.ts：受控 action 入口限流分級，依讀取、一般寫入、高風險寫入、管理寫入、圖片 URL 解析與 healthcheck 套用 Upstash 秒級與長視窗固定限制。
 - supabase/functions/backendAction/types.ts：受控 action 共用 Supabase client、身份與 JSON record 型別。
@@ -86,7 +89,7 @@
 - supabase/functions/backendAction/dashboard.ts：管理員統計資料、同步/通知/推播/清理異常、最近維護排程結果彙整與分類使用概況。
 - supabase/functions/syncUser/index.ts：Firebase 登入後同步使用者 custom claim 與 Supabase app role 的 Edge Function，依 ADMIN_EMAILS 將使用者角色寫入 user_roles，與受控 action 共用登入資格驗證。
 - supabase/functions/cloudinaryWebhook/index.ts：Cloudinary 上傳完成 webhook，限制 POST、驗證簽章、套用入口限流並安全解析 payload 後將 pending upload 轉為 ready。
-- supabase/functions/outboxWorker/index.ts：Outbox worker wake-up endpoint，限制 POST、驗證 secret 並套用入口限流後批次 claim pending events，依固定事件規格建立廣播、管理員或作者通知，依收件人與推播偏好送出 FCM 並記錄送達結果，同步 Notion 狀態、留言、附議數與刪除標記。
+- supabase/functions/outboxWorker/index.ts：Outbox worker wake-up endpoint，限制 POST、驗證 secret 並套用入口限流後批次 claim pending events，依固定事件規格建立廣播、管理員或作者通知，依收件人與推播偏好送出 FCM 並記錄送達結果，同步 Notion 狀態、留言、附議數、提案結果、時間欄位與刪除標記。
 - supabase/functions/processDeletionJobs/index.ts：外部資源刪除工作入口，限制 POST、驗證 secret 並套用入口限流後處理 Cloudinary / Notion 清理，保留失敗的可重試 metadata。
 - supabase/functions/maintenanceCleanup/index.ts：維護清理手動入口，限制 POST、驗證 secret 並套用入口限流後呼叫資料庫清理 RPC；日常清理由 Supabase cron 直接執行同一 RPC。
 - supabase/functions/_shared/env.ts：Edge Functions 環境變數讀取 helper。
@@ -97,7 +100,7 @@
 - supabase/functions/_shared/google-oauth.ts：Edge Functions 使用 `npm:google-auth-library` 取得並快取 Google OAuth access token，供 Firebase custom claims 與 FCM HTTP v1 使用。
 - supabase/functions/_shared/issue-categories.ts：由提案分類 config 產生的 Edge Functions 分類權限與行為常數，供受控 action 套用審核、私密讀取、作者隱藏與留言規則。
 - supabase/functions/_shared/fcm.ts：FCM HTTP v1 發送 helper，不依賴 Node Firebase Admin SDK。
-- supabase/functions/_shared/notion.ts：Notion 同步 helper，以中文欄位寫入提案與公告資料、管理受控正文區塊、將 Cloudinary 圖片上傳為 Notion 檔案，並在刪除時只標記頁面狀態。
+- supabase/functions/_shared/notion.ts：Notion 同步 helper，以中文欄位寫入提案與公告資料、管理受控正文區塊、提案狀態 / 附議 / 結果與時間欄位同步、將 Cloudinary 圖片上傳為 Notion 檔案，並在刪除時只標記頁面狀態。
 - supabase/functions/_shared/rate-limits.ts：由 rate limit config 產生的 Edge Functions 限流常數，供受控 action 套用提案、留言與圖片上傳頻率限制。
 - supabase/functions/_shared/upstash-rate-limit.ts：Upstash Redis REST 固定時間窗限流 helper，集中計數 key、TTL、UTC 秒 / 分鐘 / 小時視窗與服務不可用錯誤處理。
 - supabase/functions/_shared/webhook.ts：Supabase / Cloudinary webhook shared secret 與簽章驗證 helper。
@@ -191,12 +194,13 @@
 ### 看板與列表元件
 
 - src/components/IssueBoard.vue：提案看板主體。調用 `useIssueBoardData`，以固定控制列與隱藏捲軸的獨立捲動列表組合看板狀態，支援排序、Realtime 更新與底部自動載入更多，並在開啟提案時導向提案詳情子頁。
-- src/components/BoardControls.vue：提案看板頂部控制列，包含頁內提案分類選單、進行中 / 已結案分段切換器、搜尋工具面板、排序選單與新增提案按鈕。
+- src/components/BoardControls.vue：提案看板頂部控制列，包含頁內提案分類選單、進行中 / 已結案分段切換器、搜尋工具面板與排序選單。
 - src/components/IssueAdminMenu.vue：管理員狀態調整下拉選單展示層，用於列表視圖與動作選單。
 - src/components/IssueTableRow.vue：列表視圖單筆提案列展示層，桌面動態 grid、手機收折為單行精簡列；共用 `useIssueItemController` 處理提案互動狀態與開啟詳情事件。
 - src/components/IssueBoardTable.vue：列表視圖容器，含欄位標題列與提案列渲染；載入與分頁切換期間顯示 SkeletonTable。
 - src/components/IssueDetailPagePanel.vue：提案詳情子頁內容面板。採用 `useIssueDisplay` 呈現附議進度與期限，公共議題對一般人隱藏作者，自己提案則顯示作者，管理員可編輯提案結果，作者或管理員可從詳情 footer 刪除提案。
 - src/components/IssueComments.vue：提案留言區資料 wrapper，串接提案留言 composable 與共用 CommentThreadPanel。
+- src/components/IssueCreateFab.vue：提案看板底部置中新增入口，提供手機與桌機共用的 icon-only FAB，點擊後先選擇提案分類再開啟新增表單。
 - src/components/IssueComposer.vue：新增提案表單對話框展示層，表單驗證、圖片上傳與送出流程委派給 `useIssueComposerForm`，內容輸入與圖片預覽使用共用 MarkdownImageEditor。
 
 ---
@@ -270,6 +274,7 @@
 - src/lib/route-request.ts：維護目前路由的 AbortSignal，路由切換或 App resume 時取消上一批尚未完成的讀取。
 - src/lib/reconnect.ts：重試 / 重新載入前的共用連線重置 helper，集中中斷目前路由請求並交還事件迴圈。
 - src/lib/issue-status.ts：提案狀態推導與附議期限訊息。
+- src/lib/issue-timeline.ts：提案結案判定、狀態分桶、列表排序時間與詳情操作時間清單共用工具，供列表、搜尋與詳情畫面保持一致。
 - src/lib/route.ts：Vue Router 單值參數正規化工具，統一處理字串與字串陣列 route params。
 - src/lib/page-size.ts：依目前 viewport 高度推導列表讀取批量，並提供載入更多的最低等待時間 helper。
 - src/lib/in-app-browser.ts：依 user agent 辨識 LINE、Meta、TikTok 與 WeChat 等常見 App 內建瀏覽器的純函式。

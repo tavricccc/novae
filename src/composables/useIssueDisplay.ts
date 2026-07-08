@@ -1,10 +1,11 @@
 import { computed, type Ref } from 'vue';
 import { getDerivedIssueStatus, getRemainingCalendarDays } from '@/lib/issue-status';
 import { formatDate } from '@/lib/format';
+import { getIssueOperationTimeItems, isClosedIssueStatus } from '@/lib/issue-timeline';
 import { ISSUE_CATEGORY_LABELS, issueRequiresReview } from '@/constants/categories';
 import { ISSUE_STATUS_LABELS } from '@/constants/statuses';
 import { useAuthorAvatarUrl } from '@/composables/useAuthorAvatar';
-import type { IssueRecord } from '@/types';
+import type { IssueOperationTimeItem, IssueRecord } from '@/types';
 
 export function useIssueDisplay(issue: Ref<IssueRecord> | (() => IssueRecord)) {
   const resolvedIssue = computed(() => {
@@ -35,23 +36,12 @@ export function useIssueDisplay(issue: Ref<IssueRecord> | (() => IssueRecord)) {
   const derivedStatus = computed(() => getDerivedIssueStatus(resolvedIssue.value));
   const categoryLabel = computed(() => ISSUE_CATEGORY_LABELS[resolvedIssue.value.category]);
   const statusLabel = computed(() => ISSUE_STATUS_LABELS[derivedStatus.value]);
-  const isClosed = computed(() =>
-    derivedStatus.value === 'completed'
-    || derivedStatus.value === 'infeasible'
-    || derivedStatus.value === 'review-rejected'
-    || derivedStatus.value === 'auto-rejected'
-  );
+  const isClosed = computed(() => isClosedIssueStatus(derivedStatus.value));
 
-  const createdLabel = computed(() => formatDate(resolvedIssue.value.created_at));
   const primaryTimeLabel = computed(() => {
     const i = resolvedIssue.value;
     if (isClosed.value) return '結案時間';
     return issueRequiresReview(i.category) && i.review_approved_at ? '審核通過時間' : '提案時間';
-  });
-  const primaryTimeShortLabel = computed(() => {
-    const i = resolvedIssue.value;
-    if (isClosed.value) return '結案';
-    return issueRequiresReview(i.category) && i.review_approved_at ? '審核通過' : '提案';
   });
   const primaryTimeValue = computed(() => {
     const i = resolvedIssue.value;
@@ -59,9 +49,12 @@ export function useIssueDisplay(issue: Ref<IssueRecord> | (() => IssueRecord)) {
     return issueRequiresReview(i.category) && i.review_approved_at ? i.review_approved_at : i.created_at;
   });
   const primaryTimeValueLabel = computed(() => formatDate(primaryTimeValue.value));
-  const supportDeadlineLabel = computed(() => formatDate(resolvedIssue.value.support_deadline_at));
-  const responseDeadlineLabel = computed(() => formatDate(resolvedIssue.value.response_deadline_at));
-  const supportMetLabel = computed(() => formatDate(resolvedIssue.value.support_met_at));
+  const operationTimeItems = computed<IssueOperationTimeItem[]>(() =>
+    getIssueOperationTimeItems(resolvedIssue.value).map((item) => ({
+      ...item,
+      valueLabel: formatDate(item.value),
+    }))
+  );
 
   const remainingDays = computed(() => getRemainingCalendarDays(resolvedIssue.value.support_deadline_at));
 
@@ -71,13 +64,9 @@ export function useIssueDisplay(issue: Ref<IssueRecord> | (() => IssueRecord)) {
     derivedStatus,
     categoryLabel,
     statusLabel,
-    createdLabel,
     primaryTimeLabel,
-    primaryTimeShortLabel,
     primaryTimeValueLabel,
-    supportDeadlineLabel,
-    responseDeadlineLabel,
-    supportMetLabel,
+    operationTimeItems,
     remainingDays,
     isOwnIssue,
   };

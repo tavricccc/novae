@@ -22,6 +22,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 type AppSupabase = SupabaseClient<Database>;
 const knownSelectOptions = new Set<string>();
+const knownDateProperties = new Set<string>();
 
 function translateStatus(status: string): string {
   return STATUS_LABELS[status] ?? status;
@@ -102,6 +103,56 @@ async function ensureSelectOption(propertyName: "分類" | "狀態", label: stri
     },
   });
   knownSelectOptions.add(cacheKey);
+}
+
+async function ensureDateProperty(propertyName: string): Promise<void> {
+  if (!propertyName || knownDateProperties.has(propertyName)) return;
+  const database = await callNotionAPI(`/databases/${requireEnv("NOTION_DATABASE_ID")}`, "GET");
+  if (!isRecord(database) || !isRecord(database.properties)) return;
+  const property = database.properties[propertyName];
+  if (isRecord(property) && property.type === "date") {
+    knownDateProperties.add(propertyName);
+    return;
+  }
+
+  await callNotionAPI(`/databases/${requireEnv("NOTION_DATABASE_ID")}`, "PATCH", {
+    properties: {
+      [propertyName]: { date: {} },
+    },
+  });
+  knownDateProperties.add(propertyName);
+}
+
+function dateProperty(value: unknown) {
+  return typeof value === "string" && value
+    ? { date: { start: value } }
+    : { date: null };
+}
+
+function issueTimeProperties(issue: Partial<Database["app_private"]["Tables"]["issues"]["Row"]>) {
+  return {
+    "提案時間": dateProperty(issue.created_at),
+    "審核通過時間": dateProperty(issue.review_approved_at),
+    "附議截止時間": dateProperty(issue.support_deadline_at),
+    "附議達標時間": dateProperty(issue.support_met_at),
+    "回覆期限": dateProperty(issue.response_deadline_at),
+    "結案時間": dateProperty(issue.closed_at),
+    "結果更新時間": dateProperty(issue.result_updated_at),
+  };
+}
+
+async function ensureIssueTimeProperties() {
+  await Promise.all(Object.keys(issueTimeProperties({})).map(ensureDateProperty));
+}
+
+async function updateIssueTimeProperties(
+  pageId: string,
+  issue: Partial<Database["app_private"]["Tables"]["issues"]["Row"]>,
+) {
+  await ensureIssueTimeProperties();
+  await callNotionAPI(`/pages/${pageId}`, "PATCH", {
+    properties: issueTimeProperties(issue),
+  });
 }
 
 /** Append a single paragraph block to a Notion page. */
@@ -313,7 +364,7 @@ export async function syncIssueCreatedToNotion(
   const { data: issue } = await supabase
     .schema("app_private")
     .from("issues")
-    .select("title, content, category, status, author_name, support_count, support_goal")
+    .select("title, content, category, status, author_name, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at, result_updated_at")
     .eq("id", targetId)
     .maybeSingle();
 
@@ -328,13 +379,16 @@ export async function syncIssueCreatedToNotion(
     issue?.support_count ?? payload.support_count,
     issue?.support_goal ?? payload.support_goal,
   );
-  if (pageId) await replaceManagedContent(
-    supabase,
-    "issue",
-    targetId,
-    pageId,
-    String(issue?.content ?? payload.content ?? ""),
-  );
+  if (pageId) {
+    await updateIssueTimeProperties(pageId, issue ?? {});
+    await replaceManagedContent(
+      supabase,
+      "issue",
+      targetId,
+      pageId,
+      String(issue?.content ?? payload.content ?? ""),
+    );
+  }
 }
 
 /**
@@ -356,7 +410,7 @@ export async function syncIssueStatusChangedToNotion(
   const { data: issue } = await supabase
     .schema("app_private")
     .from("issues")
-    .select("title, category, author_name, support_count, support_goal")
+    .select("title, category, author_name, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at, result_updated_at")
     .eq("id", targetId)
     .maybeSingle();
 
@@ -374,10 +428,12 @@ export async function syncIssueStatusChangedToNotion(
   if (!pageId) return;
 
   await ensureSelectOption("狀態", newStatusLabel);
+  await ensureIssueTimeProperties();
   await callNotionAPI(`/pages/${pageId}`, "PATCH", {
     properties: {
       "狀態": { select: { name: newStatusLabel } },
       "附議數": { rich_text: [{ text: { content: supportLabel(issue?.support_count ?? payload.support_count, issue?.support_goal ?? payload.support_goal) } }] },
+      ...issueTimeProperties(issue ?? {}),
     },
   });
   const oldLabel = oldStatus ? `${translateStatus(oldStatus)} → ` : "";
@@ -393,7 +449,7 @@ export async function syncIssueSupportToNotion(
   const { data: issue } = await supabase
     .schema("app_private")
     .from("issues")
-    .select("title, category, status, author_name, support_count, support_goal")
+    .select("title, category, status, author_name, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at, result_updated_at")
     .eq("id", targetId)
     .maybeSingle();
 
@@ -411,10 +467,45 @@ export async function syncIssueSupportToNotion(
   if (!pageId) return;
 
   const label = supportLabel(issue?.support_count, issue?.support_goal);
+  await ensureIssueTimeProperties();
   await callNotionAPI(`/pages/${pageId}`, "PATCH", {
-    properties: { "附議數": { rich_text: [{ text: { content: label } }] } },
+    properties: {
+      "附議數": { rich_text: [{ text: { content: label } }] },
+      ...issueTimeProperties(issue ?? {}),
+    },
   });
   await appendBlock(pageId, `【附議更新】目前附議數：${label}`);
+}
+
+export async function syncIssueResultUpdatedToNotion(
+  supabase: AppSupabase,
+  targetId: string,
+  payload: Record<string, unknown>,
+): Promise<void> {
+  if (!notionEnabled()) return;
+
+  const { data: issue } = await supabase
+    .schema("app_private")
+    .from("issues")
+    .select("title, category, status, author_name, support_count, support_goal, result_content, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at, result_updated_at")
+    .eq("id", targetId)
+    .maybeSingle();
+
+  const pageId = await getOrCreateNotionPage(
+    supabase,
+    "issue",
+    targetId,
+    String(issue?.title ?? payload.title ?? "提案"),
+    String(issue?.category ?? "公共議題"),
+    String(issue?.status ?? "pending"),
+    String(issue?.author_name ?? "未提供"),
+    issue?.support_count ?? payload.support_count,
+    issue?.support_goal ?? payload.support_goal,
+  );
+  if (!pageId) return;
+
+  await updateIssueTimeProperties(pageId, issue ?? {});
+  await appendBlock(pageId, `【結果更新】${String(issue?.result_content ?? payload.result_content ?? "").slice(0, 150)}`);
 }
 
 /**

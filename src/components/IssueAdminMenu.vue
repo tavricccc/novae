@@ -84,28 +84,14 @@
           <!-- Approved state (pending / processing): Show "處理中" and "提案結果" -->
           <template v-if="isProcessingOrPending">
             <button
+              v-if="props.issue.status === 'pending'"
               type="button"
               class="menu-item justify-between"
-              :class="adminStatus === 'processing' ? 'bg-ink-50/50 dark:bg-ink-800/40' : ''"
               @click.stop="directlySetProcessing"
             >
               <span class="font-semibold text-secondary">
                 處理中
               </span>
-              <svg
-                v-if="adminStatus === 'processing'"
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 text-secondary"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M5 12l5 5l10 -10" />
-              </svg>
             </button>
 
             <button

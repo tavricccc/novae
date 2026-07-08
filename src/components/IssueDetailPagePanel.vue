@@ -41,15 +41,10 @@
         :compact="compact"
         :current-user-supported="currentUserSupported"
         :issue="issue"
-        :primary-time-label="primaryTimeLabel"
-        :primary-time-short-label="primaryTimeShortLabel"
-        :primary-time-value-label="primaryTimeValueLabel"
-        :response-deadline-label="responseDeadlineLabel"
+        :operation-time-items="operationTimeItems"
         :status-label="statusLabel"
         :support-closed="supportClosed"
         :support-count="supportCount"
-        :support-deadline-label="supportDeadlineLabel"
-        :support-met-label="supportMetLabel"
         :support-progress-style="supportProgressStyle"
         :support-remaining-label="supportRemainingLabel"
         @content-unavailable="emit('contentUnavailable', $event)"
@@ -167,11 +162,8 @@ const {
   categoryLabel,
   statusLabel,
   primaryTimeLabel,
-  primaryTimeShortLabel,
   primaryTimeValueLabel,
-  supportDeadlineLabel,
-  responseDeadlineLabel,
-  supportMetLabel,
+  operationTimeItems,
   remainingDays,
 } = useIssueDisplay(toRef(props, 'issue'));
 
@@ -192,7 +184,7 @@ function handleModerate() {
 }
 
 function handleEditResult() {
-  statusDialogInitialAction.value = props.issue.status === 'completed' || props.issue.status === 'infeasible' ? 'closed' : 'processing';
+  statusDialogInitialAction.value = props.issue.status === 'pending' ? 'processing' : 'closed';
   isStatusDialogOpen.value = true;
 }
 

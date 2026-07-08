@@ -56,6 +56,13 @@ export interface IssueRecord {
   author_photo_url?: string | null;
 }
 
+export interface IssueOperationTimeItem {
+  label: string;
+  shortLabel: string;
+  value: Date;
+  valueLabel: string;
+}
+
 export interface IssueCursor {
   id: string;
   created_at: Date | null;

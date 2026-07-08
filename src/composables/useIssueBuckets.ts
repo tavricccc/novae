@@ -1,5 +1,6 @@
 import { computed, onBeforeUnmount, reactive, watch, type Ref } from 'vue';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
+import { getIssueStatusBucket, sortIssuesByOption } from '@/lib/issue-timeline';
 import { fetchIssuesPageByStatus } from '@/services/issues';
 import type { IssueCursor, IssueFilter, IssueRecord, IssueSortOption, IssueStatusBucket } from '@/types';
 
@@ -40,22 +41,6 @@ function mergeIssues(existing: IssueRecord[], incoming: IssueRecord[]) {
   const issueMap = new Map(existing.map((issue) => [issue.id, issue]));
   incoming.forEach((issue) => issueMap.set(issue.id, issue));
   return Array.from(issueMap.values());
-}
-
-function sortIssuesByOption(issues: IssueRecord[], sortOption: IssueSortOption) {
-  return [...issues].sort((left, right) => {
-    const leftCreatedAt = left.created_at?.getTime() ?? 0;
-    const rightCreatedAt = right.created_at?.getTime() ?? 0;
-    if (sortOption === 'most-supported') {
-      return right.support_count - left.support_count || rightCreatedAt - leftCreatedAt;
-    }
-    if (sortOption === 'ending-soon') {
-      return (left.support_deadline_at?.getTime() ?? Number.POSITIVE_INFINITY)
-        - (right.support_deadline_at?.getTime() ?? Number.POSITIVE_INFINITY)
-        || rightCreatedAt - leftCreatedAt;
-    }
-    return rightCreatedAt - leftCreatedAt;
-  });
 }
 
 export function useIssueBuckets(deps: BucketDeps) {
@@ -174,12 +159,10 @@ export function useIssueBuckets(deps: BucketDeps) {
 
   function addIssueToBucket(issue: IssueRecord) {
     if (activeFilter.value === 'my-proposals') return;
-    const statusBucket = issue.status === 'under-review' || issue.status === 'pending' || issue.status === 'processing'
-      ? 'active'
-      : 'closed';
+    const statusBucket = getIssueStatusBucket(issue);
     if (issue.category !== activeFilter.value) return;
     const bucket = getBucketState(statusBucket);
-    bucket.issues = sortIssuesByOption(mergeIssues(bucket.issues, [issue]), sortOption.value);
+    bucket.issues = sortIssuesByOption(mergeIssues(bucket.issues, [issue]), sortOption.value, statusBucket);
     bucket.initialized = true;
   }
 

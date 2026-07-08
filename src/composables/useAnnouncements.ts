@@ -136,7 +136,10 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
     try {
       const page = await fetchAnnouncementsPage(state.cursor, sortOption.value, pageSize.value);
       if (currentVersion !== getVersion(state)) return;
-      state.announcements = mergeAnnouncements(state.announcements, page.announcements);
+      state.announcements = sortAnnouncements(
+        mergeAnnouncements(state.announcements, page.announcements),
+        sortOption.value,
+      );
       state.cursor = page.cursor;
       state.hasMore = page.hasMore;
     } catch {

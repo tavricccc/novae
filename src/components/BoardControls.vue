@@ -211,31 +211,6 @@
             </div>
           </transition>
         </div>
-
-        <!-- 桌機版新增提案按鈕 (黑色) -->
-        <button
-          v-if="showToggle && activeFilter !== 'my-proposals'"
-          type="button"
-          class="button-icon-filled hidden md:flex !h-9 !w-9 items-center justify-center shrink-0 bg-ink-950 text-ink-50 hover:bg-ink-900 dark:bg-ink-50 dark:text-ink-950 dark:hover:bg-ink-100"
-          :title="`新增到${activeCategoryLabel}`"
-          :aria-label="`新增到${activeCategoryLabel}`"
-          @click="emit('toggle-form')"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 shrink-0"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <path d="M12 5l0 14" />
-            <path d="M5 12l14 0" />
-          </svg>
-        </button>
       </div>
     </div>
   </div>
@@ -253,7 +228,6 @@ const props = defineProps<{
   searchQuery: string;
   searchHint: string;
   activeFilter: string;
-  showToggle: boolean;
   activeCategoryLabel: string;
   sortOption: IssueSortOption;
 }>();
@@ -262,7 +236,6 @@ const emit = defineEmits<{
   'update:statusTab': [value: 'active' | 'closed'];
   'update:searchQuery': [value: string];
   'update:sortOption': [value: IssueSortOption];
-  'toggle-form': [];
 }>();
 
 const issueSortOptions = [
@@ -274,7 +247,7 @@ const issueSortOptions = [
 const router = useRouter();
 const visibleSortOptions = computed(() =>
   props.statusTab === 'closed'
-    ? issueSortOptions.filter((option) => option.value !== 'ending-soon')
+    ? issueSortOptions.filter((option) => option.value === 'latest')
     : issueSortOptions
 );
 

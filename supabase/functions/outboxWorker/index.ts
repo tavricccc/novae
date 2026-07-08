@@ -10,6 +10,7 @@ import {
   syncAnnouncementCreatedToNotion,
   syncIssueCommentToNotion,
   syncIssueCreatedToNotion,
+  syncIssueResultUpdatedToNotion,
   syncIssueSupportToNotion,
   syncIssueStatusChangedToNotion,
 } from "../_shared/notion.ts";
@@ -276,6 +277,9 @@ async function syncNotionForEvent(
     case "issue.status_changed":
       await syncIssueStatusChangedToNotion(supabase, event.target_id, event.payload);
       break;
+    case "issue.result_updated":
+      await syncIssueResultUpdatedToNotion(supabase, event.target_id, event.payload);
+      break;
     case "issue.comment_created":
       await syncIssueCommentToNotion(supabase, event.target_id, event.payload);
       break;
@@ -479,6 +483,7 @@ async function processEvent(supabase: AppSupabase, event: OutboxEvent) {
     event.event_type === "announcement.updated"
     || event.event_type === "announcement.deleted"
     || event.event_type === "issue.status_changed"
+    || event.event_type === "issue.result_updated"
     || event.event_type === "support.created"
     || event.event_type === "support.deleted"
     || event.event_type === "support.goal_met"

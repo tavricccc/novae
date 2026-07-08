@@ -1,6 +1,7 @@
 import { computed, onBeforeUnmount, reactive, ref, watch, type Ref } from 'vue';
 import { normalizeSearchText } from '@/lib/search';
 import { getDerivedIssueStatus } from '@/lib/issue-status';
+import { sortIssuesByOption } from '@/lib/issue-timeline';
 import { fetchIssuesForTitleSearch } from '@/services/issues';
 import type { IssueFilter, IssueRecord, IssueSortOption, IssueStatusBucket } from '@/types';
 
@@ -116,9 +117,9 @@ export function useIssueSearch(options: {
   }
 
   function applySearchFilter(query: string) {
-    searchState.issues = searchPool.filter((issue) =>
+    searchState.issues = sortIssuesByOption(searchPool.filter((issue) =>
       normalizeSearchText(issue.title).includes(query)
-    );
+    ), options.sortOption.value, options.statusBucket.value);
   }
 
   watch(searchQuery, (value) => {

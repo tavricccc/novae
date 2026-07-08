@@ -5,10 +5,8 @@
       v-model:search-query="searchQuery"
       v-model:sort-option="sortOption"
       :active-filter="activeFilter"
-      :show-toggle="showToggle"
       :active-category-label="activeCategoryLabel"
       :search-hint="searchHint"
-      @toggle-form="emit('toggle-form')"
     />
 
     <div class="scrollbar-none min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-4">
@@ -75,45 +73,27 @@
       </template>
     </div>
 
-    <!-- 浮動新增提案按鈕 (FAB) -->
-    <button
-      v-if="showToggle && activeFilter !== 'my-proposals'"
-      type="button"
-      class="fixed bottom-[calc(var(--app-bottom-nav-height)+1.5rem)] right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-ink-950 text-ink-50 shadow-elevated transition-transform hover:scale-105 active:scale-95 md:hidden dark:bg-ink-50 dark:text-ink-950 dark:hover:bg-ink-100"
-      :title="`新增到${activeCategoryLabel}`"
-      :aria-label="`新增到${activeCategoryLabel}`"
-      @click="emit('toggle-form')"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-6 w-6 shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-        <path d="M12 5l0 14" />
-        <path d="M5 12l14 0" />
-      </svg>
-    </button>
+    <IssueCreateFab
+      :visible="showToggle && activeFilter !== 'my-proposals'"
+      :default-category="defaultComposerCategory"
+      @create="openComposerForCategory"
+    />
   </section>
 
   <IssueComposer
     :open="isFormOpen"
-    :category="activeFilter === 'my-proposals' ? DEFAULT_ISSUE_CATEGORY : activeFilter"
-    :category-label="activeCategoryLabel"
+    :category="composerCategory"
+    :category-label="composerCategoryLabel"
     @close="emit('toggle-form')"
     @submitted="handleIssueSubmitted"
   />
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import BoardControls from '@/components/BoardControls.vue';
+import IssueCreateFab from '@/components/IssueCreateFab.vue';
 import IssueBoardTable from '@/components/IssueBoardTable.vue';
 import IssueComposer from '@/components/IssueComposer.vue';
 import EmptyStatePanel from '@/components/ui/EmptyStatePanel.vue';
@@ -125,9 +105,9 @@ import { useMinimumLoading } from '@/composables/useMinimumLoading';
 import { useLoadingTimeout } from '@/composables/useLoadingTimeout';
 import { useSession } from '@/composables/useSession';
 import { useToast } from '@/composables/useToast';
-import { DEFAULT_ISSUE_CATEGORY, issueIsPrivateToOwner, issueStoresAuthorPrivately } from '@/constants/categories';
+import { DEFAULT_ISSUE_CATEGORY, ISSUE_CATEGORY_LABELS, issueIsPrivateToOwner, issueStoresAuthorPrivately } from '@/constants/categories';
 import { resetAppConnection } from '@/lib/reconnect';
-import type { IssueRecord } from '@/types';
+import type { IssueCategory, IssueRecord } from '@/types';
 
 type IssueDetailsOpenPayload = {
   issue: IssueRecord;
@@ -146,6 +126,8 @@ const emit = defineEmits<{
 const { isAdmin } = useSession();
 const { showToast } = useToast();
 const router = useRouter();
+const composerCategory = ref<IssueCategory>(DEFAULT_ISSUE_CATEGORY);
+const composerCategoryLabel = computed(() => ISSUE_CATEGORY_LABELS[composerCategory.value]);
 
 const {
   activeFilter,
@@ -212,6 +194,9 @@ const emptyStateDescription = computed(() => {
   const statusLabel = statusTab.value === 'active' ? '進行中' : '已結案';
   return `目前在「${activeCategoryLabel.value}」分類中沒有${statusLabel}提案。`;
 });
+const defaultComposerCategory = computed(() =>
+  activeFilter.value === 'my-proposals' ? DEFAULT_ISSUE_CATEGORY : activeFilter.value
+);
 
 async function openIssueDetails(payload: IssueDetailsOpenPayload) {
   await router.push({
@@ -226,6 +211,11 @@ async function openIssueDetails(payload: IssueDetailsOpenPayload) {
 
 function handleIssueUpdatedFromList(issue: IssueRecord) {
   handleIssueUpdated(issue);
+}
+
+function openComposerForCategory(category: IssueCategory) {
+  composerCategory.value = category;
+  emit('toggle-form');
 }
 
 watch(composerMessage, (message) => {
