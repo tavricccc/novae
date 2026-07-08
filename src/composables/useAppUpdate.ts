@@ -108,7 +108,7 @@ export function useAppUpdate() {
     }
     const savedCountStr = sessionStorage.getItem(AUTO_RELOAD_COUNT_KEY) || '0';
     const savedCount = parseInt(savedCountStr, 10);
-    return savedCount < 2;
+    return savedCount < 3;
   }
 
   async function reloadApp(options: { automatic?: boolean; reason?: 'update' | 'restart' } = {}) {

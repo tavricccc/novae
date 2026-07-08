@@ -320,11 +320,11 @@ test('personal notification writes and pushes are scoped to the recipient', asyn
   assert.match(outboxWorker, /title: isReviewApproved \? "提案審核已通過" : "提案狀態已變更"/u);
   assert.match(outboxWorker, /`\$\{title\} 已通過審核並開放附議。`/u);
   assert.match(outboxWorker, /`\$\{title\} 現在狀態為 \$\{issueStatusLabel\(newStatus\)\}`/u);
-  assert.match(outboxWorker, /title: "提案有新的留言"/u);
+  assert.match(outboxWorker, /title: `來自 \$\{authorName\} 的留言`/u);
   assert.match(outboxWorker, /title: "提案已達附議門檻"/u);
   assert.match(outboxWorker, /title: "提案已被刪除"/u);
   assert.match(outboxWorker, /title: "有新的公告"/u);
-  assert.match(outboxWorker, /title: "公告有新的留言"/u);
+  assert.match(outboxWorker, /title: `來自 \$\{authorName\} 的留言`/u);
   assert.match(outboxWorker, /return text\.slice\(0, 80\)/u);
 });
 

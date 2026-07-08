@@ -32,6 +32,11 @@
       @install="promptInstall"
     />
   </AppShell>
+  <AppUpdatePromptDialog
+    :open="shouldShowUpdateDialog"
+    :busy="Boolean(reloading)"
+    @reload="reloadApp({ reason: 'update' })"
+  />
   <Teleport to="body">
     <Transition name="dialog" appear>
       <div
@@ -55,6 +60,7 @@ import { RouterView, useRoute, useRouter } from 'vue-router';
 import AppShell from '@/components/AppShell.vue';
 import AppStartupScreen from '@/components/AppStartupScreen.vue';
 import AppInstallPromptDialog from '@/components/AppInstallPromptDialog.vue';
+import AppUpdatePromptDialog from '@/components/AppUpdatePromptDialog.vue';
 import PushPermissionPromptDialog from '@/components/PushPermissionPromptDialog.vue';
 import ToastViewport from '@/components/ToastViewport.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
@@ -77,7 +83,7 @@ if (typeof document !== 'undefined') {
   document.documentElement.dataset.appRelease = APP_RELEASE_MARKER;
 }
 
-const { reloadApp, reloading, updateAvailable } = useAppUpdate();
+const { canAutoReloadCurrentVersion, reloadApp, reloading, updateAvailable } = useAppUpdate();
 const { open: startupGateOpen } = useAppStartupGate();
 const route = useRoute();
 const router = useRouter();
@@ -89,6 +95,13 @@ const reloadingText = computed(() => {
 
 const reloadingAriaLabel = computed(() => {
   return reloading.value === 'restart' ? '正在重啟' : '正在更新';
+});
+
+const shouldShowUpdateDialog = computed(() => {
+  if (!updateAvailable.value) return false;
+  if (reloading.value) return false;
+  if (canAutoReloadCurrentVersion()) return false;
+  return true;
 });
 
 const {
@@ -161,8 +174,8 @@ async function enablePushFromPrompt() {
 watch(
   updateAvailable,
   (hasUpdate) => {
-    if (hasUpdate) {
-      void reloadApp({ reason: 'update' });
+    if (hasUpdate && canAutoReloadCurrentVersion()) {
+      void reloadApp({ automatic: true, reason: 'update' });
     }
   },
   { immediate: true },
