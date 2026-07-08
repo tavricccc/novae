@@ -54,6 +54,7 @@
       :show-close="false"
       :flat="true"
       @logout="handleLogout"
+      @restart-app="handleRestartApp"
       @set-preference="setPersonalPushPreference"
       @switch-account="switchAccount"
       @toggle-push="handlePushAction"
@@ -71,11 +72,13 @@ import { useRouter } from 'vue-router';
 import GoogleLoginButton from '@/components/ui/GoogleLoginButton.vue';
 import SettingsPanelContent from '@/components/SettingsPanelContent.vue';
 import { usePushNotifications } from '@/composables/usePushNotifications';
+import { useAppUpdate } from '@/composables/useAppUpdate';
 import { useSession } from '@/composables/useSession';
 import type { PersonalPushPreferenceKey } from '@/services/notifications';
 
 const router = useRouter();
 const { user, customPhotoUrl, loading, login, logout, isAdmin } = useSession();
+const { reloadApp } = useAppUpdate();
 const {
   enabled: pushEnabled,
   error: pushError,
@@ -159,5 +162,9 @@ async function handlePushAction() {
     return;
   }
   await enablePushNotifications();
+}
+
+async function handleRestartApp() {
+  await reloadApp();
 }
 </script>

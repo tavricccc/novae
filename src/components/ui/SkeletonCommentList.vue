@@ -1,11 +1,11 @@
 <template>
-  <div class="space-y-1" aria-label="留言載入中" aria-busy="true">
+  <div class="space-y-0.5" aria-label="留言載入中" aria-busy="true">
     <div
       v-for="index in count"
       :key="index"
-      class="flex items-start gap-3 border-b border-ink-100 py-4 dark:border-ink-800"
+      class="flex items-start gap-2.5 py-2.5"
     >
-      <span class="h-8 w-8 shrink-0 rounded-full bg-ink-200/60 dark:bg-ink-700/50 animate-skeleton"></span>
+      <span class="mt-0.5 h-8 w-8 shrink-0 rounded-full bg-ink-200/60 dark:bg-ink-700/50 animate-skeleton"></span>
       <div class="min-w-0 flex-1 space-y-2">
         <div class="flex items-center gap-2">
           <span class="h-3.5 w-24 rounded bg-ink-200/60 dark:bg-ink-700/50 animate-skeleton"></span>

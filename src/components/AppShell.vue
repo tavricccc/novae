@@ -66,7 +66,7 @@
       :style="{ bottom: `${bottomGap}px` }"
       aria-label="手機主要導覽"
     >
-      <div ref="mobileNavRef" class="app-bottom-nav__inner mx-auto grid grid-cols-5 gap-1 relative">
+      <div ref="mobileNavRef" class="app-bottom-nav__inner mx-auto grid grid-cols-4 gap-1 relative">
         <!-- 行動版滑動背景膠囊 -->
         <div
           class="absolute rounded-full bg-ink-100 dark:bg-ink-800/70 pointer-events-none"
@@ -106,12 +106,12 @@
           :ref="el => setMobileNavElement('settings', el)"
           to="/settings"
           class="app-bottom-nav__item overflow-visible"
-          :class="{ 'app-bottom-nav__item--active': ['settings', 'changelog', 'dashboard'].includes(route.name as string) }"
+          :class="{ 'app-bottom-nav__item--active': isMyProposalsRouteActive || ['settings', 'changelog', 'dashboard'].includes(route.name as string) }"
         >
           <span class="app-bottom-nav__icon" aria-hidden="true">
-            <AppIcon name="settings" :size="5" :stroke-width="1.9" />
+            <UserAvatar :photo-url="displayPhotoUrl" :name="user?.displayName || 'U'" size="sm" alt-text="使用者頭像" class="h-5 w-5" />
           </span>
-          <span class="app-bottom-nav__label">設定</span>
+          <span class="app-bottom-nav__label">我的</span>
         </RouterLink>
       </div>
     </nav>
@@ -125,12 +125,13 @@ import SettingsPanel from '@/components/SettingsPanel.vue';
 import NotificationBell from '@/components/NotificationBell.vue';
 import BrandMark from '@/components/ui/BrandMark.vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
+import UserAvatar from '@/components/ui/UserAvatar.vue';
 import { DEFAULT_ISSUE_ROUTE_FILTER } from '@/constants/categories';
 import { useIssueRouteFilter } from '@/composables/useIssueRouteFilter';
 import { useSession } from '@/composables/useSession';
 import { useNotifications } from '@/composables/useNotifications';
 
-const { isAllowedUser } = useSession();
+const { customPhotoUrl, isAllowedUser, user } = useSession();
 const { activeFilter } = useIssueRouteFilter();
 const { hasUnread } = useNotifications();
 const route = useRoute();
@@ -163,6 +164,7 @@ const navItems = computed(() => {
   ];
   return items;
 });
+const displayPhotoUrl = computed(() => customPhotoUrl.value || user.value?.photoURL || null);
 const mobileRouteNavItems = computed(() => [
   {
     icon: 'comment' as const,
@@ -178,19 +180,12 @@ const mobileRouteNavItems = computed(() => [
     label: '公告',
     to: navItems.value[1]?.to,
   },
-  {
-    icon: 'user' as const,
-    isActive: navItems.value[2]?.isActive ?? false,
-    key: 'my-proposals',
-    label: '我的提案',
-    to: navItems.value[2]?.to,
-  },
 ]);
 const mobileHeaderTitle = computed(() => {
   if (route.name === 'dashboard') return '統計';
   if (route.name === 'changelog') return '更新紀錄';
   if (route.name === 'notifications') return '通知';
-  if (route.name === 'settings') return '設定';
+  if (route.name === 'settings') return '我的';
   if (isAnnouncementRouteActive.value) return '公告';
   if (isMyProposalsRouteActive.value) return '我的提案';
   return '提案';
@@ -252,7 +247,7 @@ function activeNavKey() {
 
 function activeMobileNavKey() {
   if (isAnnouncementRouteActive.value) return 'announcements';
-  if (isMyProposalsRouteActive.value) return 'my-proposals';
+  if (isMyProposalsRouteActive.value) return 'settings';
   if (route.name === 'notifications') return 'notifications';
   if (['settings', 'changelog', 'dashboard'].includes(route.name as string)) return 'settings';
   if (isIssueRouteActive.value) return 'issues';

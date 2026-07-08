@@ -1,12 +1,13 @@
 <template>
-  <section class="startup-screen" role="status" aria-live="polite" aria-label="正在啟動 App">
+  <section class="startup-screen" role="status" aria-live="polite" :aria-label="ariaLabel">
     <div class="startup-screen__surface">
       <div class="startup-screen__brand" aria-hidden="true">
         <BrandMark custom-class="startup-screen__mark" />
       </div>
 
       <div class="startup-screen__copy">
-        <h1 class="startup-screen__title">{{ appTitle }}</h1>
+        <h1 class="startup-screen__title">{{ title }}</h1>
+        <p v-if="message" class="startup-screen__message">{{ message }}</p>
       </div>
 
       <LoadingSpinner :size="6" class="startup-screen__loader" />
@@ -18,7 +19,18 @@
 import BrandMark from '@/components/ui/BrandMark.vue';
 import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 
+const props = withDefaults(defineProps<{
+  ariaLabel?: string;
+  message?: string;
+  title?: string;
+}>(), {
+  ariaLabel: '正在啟動 App',
+  message: '',
+  title: '',
+});
+
 const appTitle = import.meta.env.VITE_APP_TITLE ?? 'SRP';
+const title = props.title || appTitle;
 </script>
 
 <style scoped>
@@ -99,6 +111,15 @@ const appTitle = import.meta.env.VITE_APP_TITLE ?? 'SRP';
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1.05;
+}
+
+.startup-screen__message {
+  margin: 0;
+  color: rgb(var(--color-on-surface-variant));
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.5;
 }
 
 .startup-screen__loader {

@@ -89,6 +89,7 @@ export function normalizeIssueRecord(id: string, data: Record<string, unknown>):
     content: String(data.content ?? ''),
     created_at: normalizeDate(data.created_at),
     updated_at: normalizeDate(data.updated_at),
+    closed_at: normalizeDate(data.closed_at),
     support_count: typeof data.support_count === 'number' ? data.support_count : 0,
     status: normalizeStatus(data.status),
     category,

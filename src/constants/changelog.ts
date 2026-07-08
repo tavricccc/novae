@@ -2,6 +2,32 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善提案與通知體驗",
+    version: "v2.0.109",
+    date: "2026-07-08",
+    time: "23:23",
+    items: [
+      {
+        title: "新增提案結案時間，已結案提案會依最新結案時間排列。"
+      },
+      {
+        title: "改善留言回覆通知，回覆留言時會提醒被回覆的人。"
+      },
+      {
+        title: "改善新提案待處理與待審核提醒，提升管理員推播可靠性。"
+      },
+      {
+        title: "調整手機版底部導覽，將設定改為我的並顯示個人頭像。"
+      },
+      {
+        title: "改善 App 重啟與自動更新流程，更新時顯示一致的全螢幕動畫。"
+      },
+      {
+        title: "修正留言載入畫面對齊，讓等待狀態與實際留言版面一致。"
+      }
+    ]
+  },
+  {
     title: "提升讀取與登入穩定性",
     version: "v2.0.108",
     date: "2026-07-08",

@@ -5,7 +5,7 @@
       class="flex items-start justify-between gap-3 border-b border-ink-100 px-4 py-3 dark:border-ink-700"
     >
       <div>
-        <p class="text-base font-bold tracking-tight text-ink-950 dark:text-ink-50">設定</p>
+        <p class="text-base font-bold tracking-tight text-ink-950 dark:text-ink-50">我的</p>
         <p class="mt-0.5 text-xs text-ink-500 dark:text-ink-400">帳號與通知偏好</p>
       </div>
       <button
@@ -115,6 +115,23 @@
       >
         <p v-if="!flat" class="mb-2 text-xs font-semibold text-ink-600 dark:text-ink-300">其他</p>
         <div :class="flat ? 'divide-y divide-ink-100 dark:divide-ink-800/60' : 'space-y-1'">
+          <RouterLink
+            to="/issues/my-proposals"
+            class="flex w-full items-center justify-between gap-3 text-left"
+            :class="flat ? 'content-trigger px-1 py-4' : 'content-trigger px-3 py-3'"
+            @click="emit('close')"
+          >
+            <span class="flex min-w-0 items-center gap-3">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-ink-100 text-ink-500 dark:bg-ink-800 dark:text-ink-300">
+                <AppIcon name="user" :size="4" :stroke-width="2" />
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">我的提案</span>
+                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看自己提出的所有提案</span>
+              </span>
+            </span>
+            <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
+          </RouterLink>
           <RouterLink
             to="/changelog"
             class="flex w-full items-center justify-between gap-3 text-left"

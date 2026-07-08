@@ -39,18 +39,13 @@
   />
   <Teleport to="body">
     <Transition name="dialog" appear>
-      <div
+      <AppStartupScreen
         v-if="reloading"
-        class="fixed inset-0 z-[70] flex items-center justify-center bg-ink-900/50 text-white backdrop-blur-sm"
-        role="status"
-        aria-live="assertive"
+        class="z-[70]"
         aria-label="正在更新應用程式"
-      >
-        <div class="flex flex-col items-center gap-3">
-          <LoadingSpinner :size="8" />
-          <p class="text-sm font-semibold">正在更新</p>
-        </div>
-      </div>
+        title="正在更新"
+        message="正在重新載入最新狀態"
+      />
     </Transition>
   </Teleport>
 </template>
@@ -63,7 +58,6 @@ import AppInstallPromptDialog from '@/components/AppInstallPromptDialog.vue';
 import AppUpdatePromptDialog from '@/components/AppUpdatePromptDialog.vue';
 import PushPermissionPromptDialog from '@/components/PushPermissionPromptDialog.vue';
 import ToastViewport from '@/components/ToastViewport.vue';
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import { useAppInstallPrompt } from '@/composables/useAppInstallPrompt';
 import { useAppStartupGate } from '@/composables/useAppStartupGate';
 import { useAppUpdate } from '@/composables/useAppUpdate';

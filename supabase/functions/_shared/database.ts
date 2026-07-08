@@ -19,6 +19,7 @@ interface IssueRow {
   author_photo_url: string | null;
   category: string;
   content: string;
+  closed_at: string | null;
   created_at: string;
   response_deadline_at: string | null;
   result_content: string | null;

@@ -8,6 +8,7 @@ const reloading = ref(false);
 const remoteVersion = ref('');
 const initialCheckDone = ref(false);
 let lastCheckedAt = 0;
+let listenersRegistered = false;
 
 const APP_RELOAD_TIMEOUT_MS = 5_000;
 const AUTO_RELOAD_STORAGE_KEY = 'srp:auto-update-reloaded-version';
@@ -46,6 +47,10 @@ async function checkAppVersion() {
   }
 }
 
+function shouldCheckAfterResume() {
+  return Date.now() - lastCheckedAt >= 5 * 60_000;
+}
+
 async function updateServiceWorker() {
   if (!('serviceWorker' in navigator)) {
     return;
@@ -73,6 +78,19 @@ async function updateServiceWorker() {
 }
 
 export async function initializeAppUpdate() {
+  if (!listenersRegistered && typeof window !== 'undefined') {
+    listenersRegistered = true;
+    window.addEventListener('online', () => void checkAppVersion());
+    window.addEventListener('pageshow', () => {
+      if (shouldCheckAfterResume()) void checkAppVersion();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && shouldCheckAfterResume()) {
+        void checkAppVersion();
+      }
+    });
+  }
+
   try {
     await checkAppVersion();
   } finally {

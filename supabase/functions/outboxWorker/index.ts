@@ -146,7 +146,7 @@ function notificationForEvent(event: OutboxEvent): Record<string, unknown> | nul
   }
   if (event.event_type === "announcement.comment_created") {
     return {
-      source: "admin",
+      source: asString(event.payload.parent_author_uid) ? "user" : "admin",
       type: "announcement_comment_created",
       target_type: "announcement",
       target_id: event.target_id,
@@ -186,6 +186,9 @@ async function findIssueAuthorUid(
   supabase: AppSupabase,
   event: OutboxEvent,
 ) {
+  const replyRecipientUid = asString(event.payload.parent_author_uid);
+  if (replyRecipientUid) return replyRecipientUid;
+
   const payloadAuthorUid = asString(event.payload.issue_author_uid)
     || asString(event.payload.author_uid);
   if (payloadAuthorUid) return payloadAuthorUid;
@@ -232,6 +235,12 @@ async function resolveNotification(
     const recipientUid = await findIssueAuthorUid(supabase, event);
     if (!recipientUid) return null;
     if (recipientUid === event.actor_uid && event.event_type !== "support.goal_met") return null;
+    return { ...notification, recipient_uid: recipientUid };
+  }
+
+  if (event.event_type === "announcement.comment_created") {
+    const recipientUid = asString(event.payload.parent_author_uid);
+    if (!recipientUid || recipientUid === event.actor_uid) return null;
     return { ...notification, recipient_uid: recipientUid };
   }
 
