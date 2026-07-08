@@ -2,6 +2,26 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "最佳化管理員審核介面與帳號切換體驗",
+    version: "v2.0.117",
+    date: "2026-07-09",
+    time: "01:57",
+    items: [
+      {
+        title: "改善管理員提案審核對話框之視覺效果與風格一致性。"
+      },
+      {
+        title: "調整管理員操作選單之審核按鈕顏色以符合其他項目。"
+      },
+      {
+        title: "重新設計設定面板中的帳號切換按鈕，提升小螢幕顯示之視覺美感與比例協調。"
+      },
+      {
+        title: "重繪切換圖示為直覺的水平雙向箭頭設計。"
+      }
+    ]
+  },
+  {
     title: "修正問題。",
     version: "v2.0.116",
     date: "2026-07-09",

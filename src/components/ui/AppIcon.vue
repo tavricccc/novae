@@ -106,10 +106,10 @@
       <path d="m15 6-6 6 6 6" />
     </template>
     <template v-else-if="name === 'switch-horizontal'">
-      <path d="M16 5h3v3" />
-      <path d="M8 19H5v-3" />
-      <path d="M19 8a7 7 0 0 0-12-2.5L5 8" />
-      <path d="M5 16a7 7 0 0 0 12 2.5L19 16" />
+      <path d="M20 17H4" />
+      <path d="m17 14 3 3-3 3" />
+      <path d="M4 7h16" />
+      <path d="m7 10-3-3 3-3" />
     </template>
     <template v-else-if="name === 'download'">
       <path d="M12 4.5v10" />

@@ -16,26 +16,30 @@
         <!-- Moderation choice -->
         <div>
           <p class="field-label mb-2">審核結果</p>
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid gap-2">
             <button
+              v-for="option in reviewOptions"
+              :key="option.value"
               type="button"
-              class="interactive-surface flex items-center justify-center py-2.5 text-sm font-semibold rounded-2xl border transition-colors"
-              :class="reviewDecision === 'approved'
-                ? 'border-secondary bg-secondary/5 text-secondary dark:border-secondary dark:bg-secondary/10'
-                : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-50 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-300'"
-              @click="reviewDecision = 'approved'"
+              class="content-trigger flex w-full items-center justify-between gap-3 border px-3 py-3 text-left"
+              :class="reviewDecision === option.value
+                ? 'button-toolbar--active border-secondary/50'
+                : 'border-ink-100 dark:border-ink-800'"
+              @click="reviewDecision = option.value"
             >
-              審核通過
-            </button>
-            <button
-              type="button"
-              class="interactive-surface flex items-center justify-center py-2.5 text-sm font-semibold rounded-2xl border transition-colors"
-              :class="reviewDecision === 'rejected'
-                ? 'border-secondary bg-secondary/5 text-secondary dark:border-secondary dark:bg-secondary/10'
-                : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-50 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-300'"
-              @click="reviewDecision = 'rejected'"
-            >
-              審核不通過
+              <span class="min-w-0">
+                <span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">{{ option.label }}</span>
+                <span class="mt-0.5 block text-xs leading-5 text-ink-500 dark:text-ink-400">{{ option.description }}</span>
+              </span>
+              <span
+                class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs font-bold"
+                :class="reviewDecision === option.value
+                  ? 'border-ink-900 bg-ink-900 text-white dark:border-ink-50 dark:bg-ink-50 dark:text-ink-950'
+                  : 'border-ink-300 text-transparent dark:border-ink-700'"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
             </button>
           </div>
         </div>
@@ -68,11 +72,10 @@
         <button
           type="button"
           class="button-primary"
-          :class="reviewDecision === 'rejected' ? 'bg-warning hover:bg-warning-hover text-on-warning border-transparent' : ''"
           :disabled="saving"
           @click="submitReview"
         >
-          {{ saving ? '送出中...' : '確認' }}
+          {{ saving ? '儲存中...' : '儲存審核結果' }}
         </button>
       </div>
     </section>
@@ -94,6 +97,19 @@ const emit = defineEmits<{
   close: [];
   success: [issue: IssueRecord];
 }>();
+
+const reviewOptions = [
+  {
+    value: 'approved' as const,
+    label: '審核通過',
+    description: '提案將會公開，並開始接受使用者附議。',
+  },
+  {
+    value: 'rejected' as const,
+    label: '審核不通過',
+    description: '提案將不會公開，需提供不通過原因通知提案者。',
+  },
+];
 
 const reviewDecision = ref<'approved' | 'rejected'>('approved');
 const rejectionReason = ref(props.issue.review_rejection_reason ?? '');

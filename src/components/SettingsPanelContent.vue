@@ -34,11 +34,11 @@
           </div>
           <button
             type="button"
-            class="button-secondary h-10 shrink-0 gap-2 px-3 text-sm font-semibold"
+            class="flex h-8 items-center gap-1.5 rounded-full border border-ink-200 bg-white px-2.5 py-1 text-xs font-bold text-ink-700 shadow-sm transition-all hover:bg-ink-50 hover:text-ink-900 active:scale-95 dark:border-ink-700/80 dark:bg-ink-900 dark:text-ink-300 dark:hover:bg-ink-800 dark:hover:text-ink-100 shrink-0"
             @click="emit('switchAccount')"
           >
-            <AppIcon name="switch-horizontal" :size="4" :stroke-width="2" />
-            切換
+            <AppIcon name="switch-horizontal" :size="3" :stroke-width="2" />
+            切換帳號
           </button>
         </div>
       </section>

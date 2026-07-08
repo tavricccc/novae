@@ -76,7 +76,7 @@
             class="menu-item justify-between"
             @click.stop="openReviewDialog"
           >
-            <span class="font-semibold text-warning">
+            <span class="font-semibold text-ink-900 dark:text-ink-100">
               審核提案
             </span>
           </button>
