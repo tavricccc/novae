@@ -161,11 +161,11 @@ begin
 
   return app_api.backend_issue_to_json(
     issue_record,
-    backend_delete_issue_with_upload_targets.actor_uid,
-    actor_is_admin,
-    private_to_owner_categories,
-    review_required_categories,
-    author_private_categories
+    backend_update_issue_result.actor_uid,
+    backend_update_issue_result.actor_is_admin,
+    backend_update_issue_result.private_to_owner_categories,
+    backend_update_issue_result.review_required_categories,
+    backend_update_issue_result.author_private_categories
   );
 end;
 $$;

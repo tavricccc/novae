@@ -60,6 +60,7 @@
 - supabase/migrations/202607080006_backend_issue_write_rpc.sql：新增 service role 專用提案寫入 RPC，集中處理提案建立、審核/狀態更新、結果更新與刪除時的事件與圖片清理目標回傳。
 - supabase/migrations/202607080007_fix_notification_rpc_ambiguity.sql：修正通知 RPC 欄位與參數名稱解析，避免通知列表與推播偏好讀取在資料庫端產生欄位歧義。
 - supabase/migrations/202607080008_fix_issue_rpc_deleting_field.sql：修正提案讀取 RPC 的回傳欄位，避免讀取不存在的刪除狀態資料表欄位。
+- supabase/migrations/202607080009_fix_issue_result_rpc_actor_reference.sql：修正提案結果更新 RPC 的身份參數引用，避免管理員更新結果時觸發錯誤。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、入口限流、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/rate-limit.ts：受控 action 入口限流分級，依讀取、一般寫入、高風險寫入、管理寫入、圖片 URL 解析與 healthcheck 套用 Upstash 秒級與長視窗固定限制。
 - supabase/functions/backendAction/types.ts：受控 action 共用 Supabase client、身份與 JSON record 型別。

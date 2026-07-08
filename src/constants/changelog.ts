@@ -12,6 +12,9 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
       },
       {
         title: "改善頭像更新流程，已完成快取時不再重複觸發更新限制。"
+      },
+      {
+        title: "修正管理員更新提案結果時可能失敗的問題。"
       }
     ]
   },
