@@ -53,6 +53,11 @@
 - supabase/migrations/202607070001_nested_comments_and_issue_results.sql：新增提案結果欄位、提案與公告一層留言回覆關聯、父留言驗證與回覆查詢索引，並將既有管理員留言遷移為提案結果。
 - supabase/migrations/202607070002_issue_review_approved_at.sql：新增需審核提案的審核通過時間欄位，供附議期限與前端時間顯示使用。
 - supabase/migrations/202607080001_content_realtime_events.sql：新增提案、公告、留言、附議與讚數的安全 Realtime 事件表、觸發器與 publication，前端只收到目標 id 後再走受控讀取。
+- supabase/migrations/202607080002_backend_issue_read_rpc.sql：新增 service role 專用提案讀取 RPC，依目前登入者、管理員狀態與分類政策回傳列表、搜尋、我的提案與詳情 view model，集中處理作者可見性、本人/管理權限與附議狀態。
+- supabase/migrations/202607080003_backend_announcement_rpc.sql：新增 service role 專用公告 RPC，集中處理公告列表、詳情、建立、更新、刪除與按讚狀態回傳。
+- supabase/migrations/202607080004_backend_comments_rpc.sql：新增 service role 專用留言 RPC，集中處理提案留言與公告留言的分頁、回覆驗證、建立、刪除與圖片清理目標回傳。
+- supabase/migrations/202607080005_backend_notifications_rpc.sql：新增 service role 專用通知與推播偏好 RPC，集中處理通知列表、閱讀狀態、推播 token 與個人偏好。
+- supabase/migrations/202607080006_backend_issue_write_rpc.sql：新增 service role 專用提案寫入 RPC，集中處理提案建立、審核/狀態更新、結果更新與刪除時的事件與圖片清理目標回傳。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、入口限流、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/rate-limit.ts：受控 action 入口限流分級，依讀取、一般寫入、高風險寫入、管理寫入、圖片 URL 解析與 healthcheck 套用 Upstash 秒級與長視窗固定限制。
 - supabase/functions/backendAction/types.ts：受控 action 共用 Supabase client、身份與 JSON record 型別。
@@ -63,18 +68,18 @@
 - supabase/functions/backendAction/uploads.ts：Cloudinary 上傳 session、上傳完成確認、Markdown 圖片附加標記、圖片 URL 解析與外部圖片清理 action。
 - supabase/functions/backendAction/issue-shared.ts：提案讀取權限、作者欄位清洗、提案/留言回應正規化與單筆提案查詢 helper。
 - supabase/functions/backendAction/issues.ts：提案 action 分派器，依 read / write / comments 子模組處理。
-- supabase/functions/backendAction/issue-read.ts：提案列表、搜尋、我的提案、已附議 id 與私密作者資料讀取；審核類別在查詢階段合併公開狀態與本人可讀私密狀態，避免分頁後過濾漏資料。
-- supabase/functions/backendAction/issue-create.ts：新增提案、分類審核狀態、作者私密保存、限流與建立通知/同步事件。
-- supabase/functions/backendAction/issue-moderation.ts：管理員提案狀態調整、審核退回原因、提案結果更新、期限更新與狀態通知事件。
+- supabase/functions/backendAction/issue-read.ts：提案讀取 action 的 RPC 呼叫邊界，負責驗證分類、分頁 cursor、搜尋文字與傳入分類政策參數；提案列表、搜尋、我的提案與詳情資料由資料庫 view model 回傳。
+- supabase/functions/backendAction/issue-create.ts：新增提案 action 的 RPC 呼叫邊界，保留新增限流、分類期限計算與圖片附加流程，提案建立、作者私密保存與回傳 view model 由資料庫 RPC 處理。
+- supabase/functions/backendAction/issue-moderation.ts：管理員提案狀態與結果 action 的 RPC 呼叫邊界，保留管理員檢查、分類期限計算與輸入驗證，提案狀態/結果更新與回傳 view model 由資料庫 RPC 處理。
 - supabase/functions/backendAction/issue-support.ts：提案附議/取消附議、附議數同步事件與達標通知事件。
-- supabase/functions/backendAction/issue-delete.ts：提案硬刪除與刪除通知/同步事件。
-- supabase/functions/backendAction/issue-comments.ts：提案留言分頁、新增、刪除、一層回覆驗證、留言權限與留言通知事件。
+- supabase/functions/backendAction/issue-delete.ts：提案刪除 action 的 RPC 呼叫邊界，刪除權限、刪除事件與留言清理目標由資料庫 RPC 處理，圖片清理排程仍由 Edge 共用 helper 執行。
+- supabase/functions/backendAction/issue-comments.ts：提案留言 action 的 RPC 呼叫邊界，保留留言新增限流與圖片附加/清理流程，留言分頁、回覆驗證、權限與刪除由資料庫 RPC 處理。
 - supabase/functions/backendAction/announcements.ts：公告 action 分派器，依 read / write / comments 子模組處理。
 - supabase/functions/backendAction/announcement-shared.ts：公告回應正規化與 cursor helper。
-- supabase/functions/backendAction/announcement-read.ts：公告列表、排序 cursor 與單筆公告讀取。
-- supabase/functions/backendAction/announcement-write.ts：管理員公告新增、編輯、硬刪除與公告按讚 action。
-- supabase/functions/backendAction/announcement-comments.ts：公告留言分頁、新增、刪除、一層回覆驗證與管理員通知事件。
-- supabase/functions/backendAction/notifications.ts：App 內通知分頁、閱讀游標、Web Push token 與分類推播偏好 action。
+- supabase/functions/backendAction/announcement-read.ts：公告讀取 action 的 RPC 呼叫邊界，負責排序 cursor 與單筆公告讀取參數正規化。
+- supabase/functions/backendAction/announcement-write.ts：公告寫入 action 的 RPC 呼叫邊界，保留管理員檢查、按讚限流與圖片附加/清理流程，公告資料建立、更新、刪除與按讚由資料庫 RPC 處理。
+- supabase/functions/backendAction/announcement-comments.ts：公告留言 action 的 RPC 呼叫邊界，保留留言新增限流與圖片附加/清理流程，留言分頁、回覆驗證、建立與刪除由資料庫 RPC 處理。
+- supabase/functions/backendAction/notifications.ts：通知 action 的 RPC 呼叫邊界，保留推播 token 寫入限流與 payload 長度驗證，通知分頁、閱讀狀態、Web Push token 與分類推播偏好由資料庫 RPC 處理。
 - supabase/functions/backendAction/dashboard.ts：管理員統計資料、同步/通知/推播/清理異常、最近維護排程結果彙整與分類使用概況。
 - supabase/functions/syncUser/index.ts：Firebase 登入後同步使用者 custom claim 與 Supabase app role 的 Edge Function，依 ADMIN_EMAILS 將使用者角色寫入 user_roles，與受控 action 共用登入資格驗證。
 - supabase/functions/cloudinaryWebhook/index.ts：Cloudinary 上傳完成 webhook，限制 POST、驗證簽章、套用入口限流並安全解析 payload 後將 pending upload 轉為 ready。
@@ -289,10 +294,9 @@
 - src/services/issues-errors.ts：後端錯誤轉使用者可讀訊息 helper。
 - src/services/issues-utils.ts：提案服務日期運算工具。
 - src/services/issues-normalize.ts：提案資料正規化、預設值、bucket 判定、cursor、支援狀態與 page result helper。
-- src/services/issues-read.ts：提案唯讀 service 匯出入口，只 re-export 分頁搜尋、使用者提案、私有作者與留言讀取子服務。
+- src/services/issues-read.ts：提案唯讀 service 匯出入口，只 re-export 分頁搜尋、使用者提案與留言讀取子服務。
 - src/services/issues-read-pages.ts：提案排序分頁讀取、載入更多與標題搜尋讀取，並在服務邊界正規化後端 cursor。
 - src/services/issues-read-user.ts：使用者提案游標分頁與已附議提案 id 讀取。
-- src/services/issues-read-private-author.ts：公共議題私有作者 metadata 讀取。
 - src/services/issues-read-comments.ts：提案留言讀取、日期與 cursor 正規化。
 - src/services/issues-read-shared.ts：提案 read service 共用 response 型別。
 - src/services/issues-write.ts：所有寫入、附議、主留言 / 回覆、提案結果與審核異動，統一呼叫 Supabase 後端安全端點。

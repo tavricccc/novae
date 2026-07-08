@@ -63,7 +63,7 @@ export async function requireEligibleFirebaseUser(request: Request): Promise<Fir
   return {
     customAttributes: asString(firebaseUser.customAttributes, "{}"),
     email,
-    name: asString(firebaseUser.displayName, asString(claims.name, email || "匿名使用者")),
+    name: asString(firebaseUser.displayName, asString(claims.name, email || "使用者")),
     photoUrl: asString(firebaseUser.photoUrl, asString(claims.picture)) || null,
     uid,
   };
@@ -95,7 +95,7 @@ export async function requireVerifiedFirebaseUser(request: Request): Promise<Fir
   return {
     customAttributes: "{}",
     email,
-    name: asString(payload.name, email || "匿名使用者"),
+    name: asString(payload.name, email || "使用者"),
     photoUrl: asString(payload.picture) || null,
     uid,
   };

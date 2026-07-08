@@ -33,16 +33,23 @@ export function canReadIssue(issue: JsonRecord, auth: AuthContext) {
 export function issueToReadableResponse(issue: JsonRecord, auth: AuthContext): JsonRecord {
   const response = issueToResponse(issue);
   const authorUid = asString(issue.author_uid);
-  const shouldHideAuthor = issueStoresAuthorPrivately(asString(issue.category))
+  const isOwnIssue = authorUid === auth.uid;
+  const canManageIssue = auth.isAdmin || isOwnIssue;
+  const canViewAuthor = !issueStoresAuthorPrivately(asString(issue.category))
     && !auth.isAdmin
-    && authorUid !== auth.uid;
-  if (!shouldHideAuthor) return response;
+    && !isOwnIssue
+    ? false
+    : true;
 
-  const { author_uid, author_name, author_photo_url, ...publicIssue } = response;
-  void author_uid;
-  void author_name;
-  void author_photo_url;
-  return publicIssue;
+  return {
+    ...response,
+    isOwnIssue,
+    canManageIssue,
+    canViewAuthor,
+    author_uid: canViewAuthor ? response.author_uid : null,
+    author_name: canViewAuthor ? response.author_name : null,
+    author_photo_url: canViewAuthor ? response.author_photo_url : null,
+  };
 }
 
 export function commentToResponse(comment: JsonRecord): JsonRecord {

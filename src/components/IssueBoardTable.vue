@@ -50,6 +50,7 @@
           :key="issue.id"
           :issue="issue"
           :highlight-query="highlightQuery"
+          :show-author-column="showAuthor"
           @open-details="emit('open-details', $event)"
           @support-changed="emit('support-changed', $event)"
           @issue-updated="emit('issue-updated', $event)"

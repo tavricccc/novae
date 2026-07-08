@@ -5,7 +5,6 @@ import {
   getIssueSupportGoal,
   isIssueCategory,
   issueAllowsSupport,
-  issueStoresAuthorPrivately,
 } from '@/constants/categories';
 import type {
   IssueCursor,
@@ -113,14 +112,20 @@ export function normalizeIssueRecord(id: string, data: Record<string, unknown>):
       ? data.review_rejection_reason
       : undefined,
     currentUserSupported: data.currentUserSupported === true,
+    isOwnIssue: data.isOwnIssue === true,
+    canManageIssue: data.canManageIssue === true,
+    canViewAuthor: data.canViewAuthor === true,
     deleting: data.deleting === true,
+    author_uid: data.canViewAuthor === true && typeof data.author_uid === 'string'
+      ? data.author_uid
+      : null,
+    author_name: data.canViewAuthor === true && typeof data.author_name === 'string'
+      ? data.author_name
+      : null,
+    author_photo_url: data.canViewAuthor === true && typeof data.author_photo_url === 'string'
+      ? data.author_photo_url
+      : null,
   };
-
-  if (!issueStoresAuthorPrivately(category)) {
-    record.author_uid = typeof data.author_uid === 'string' ? data.author_uid : undefined;
-    record.author_name = typeof data.author_name === 'string' ? data.author_name : undefined;
-    record.author_photo_url = typeof data.author_photo_url === 'string' ? data.author_photo_url : null;
-  }
 
   return record;
 }

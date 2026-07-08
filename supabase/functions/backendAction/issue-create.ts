@@ -1,17 +1,27 @@
-import { asString } from "../_shared/http.ts";
+import { asRecord, asString } from "../_shared/http.ts";
 import {
   getIssueCategoryConfigOrDefault,
   isIssueCategory,
+  ISSUE_CATEGORIES,
   issueRequiresReview,
   issueStoresAuthorPrivately,
 } from "../_shared/issue-categories.ts";
 import { RATE_LIMITS } from "../_shared/rate-limits.ts";
 import { claimFixedWindowRateLimit } from "../_shared/upstash-rate-limit.ts";
-import { issueToReadableResponse } from "./issue-shared.ts";
 import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 import { markMarkdownUploadsAttached } from "./uploads.ts";
 import { taipeiDayWindow } from "./utils.ts";
 import { INPUT_LIMITS, requiredText } from "./validation.ts";
+
+const PRIVATE_TO_OWNER_CATEGORIES = ISSUE_CATEGORIES
+  .filter((categoryConfig) => categoryConfig.readAccess === "owner-admin")
+  .map((categoryConfig) => categoryConfig.id);
+const REVIEW_REQUIRED_CATEGORIES = ISSUE_CATEGORIES
+  .filter((categoryConfig) => categoryConfig.readAccess === "reviewed-school")
+  .map((categoryConfig) => categoryConfig.id);
+const AUTHOR_PRIVATE_CATEGORIES = ISSUE_CATEGORIES
+  .filter((categoryConfig) => categoryConfig.authorStorage === "private")
+  .map((categoryConfig) => categoryConfig.id);
 
 export async function createIssue(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
   await claimFixedWindowRateLimit(auth.uid, "issue.create", taipeiDayWindow(), RATE_LIMITS.issueCreateDaily);
@@ -29,32 +39,26 @@ export async function createIssue(payload: JsonRecord, auth: AuthContext, supaba
   const responseDeadlineAt = categoryConfig.responseDeadline.start === "created" && categoryConfig.responseDeadline.days !== null
     ? new Date(now.getTime() + categoryConfig.responseDeadline.days * 24 * 60 * 60 * 1000).toISOString()
     : null;
-  const { data, error } = await supabase.schema("app_private").from("issues").insert({
-    author_uid: auth.uid,
-    author_name: auth.name,
-    author_photo_url: auth.photoUrl,
-    category,
-    content,
-    response_deadline_at: responseDeadlineAt,
-    review_approved_at: null,
-    status: requiresReview ? "under-review" : "pending",
-    support_deadline_at: supportDeadlineAt,
+  const { data, error } = await supabase.schema("app_api").rpc("backend_create_issue", {
+    actor_uid: auth.uid,
+    actor_name: auth.name,
+    actor_photo_url: auth.photoUrl,
+    issue_title: title,
+    issue_content: content,
+    issue_category: category,
+    issue_status: requiresReview ? "under-review" : "pending",
     support_enabled: categoryConfig.support.enabled,
     support_goal: categoryConfig.support.goal,
-    title,
-    title_search: title.toLowerCase(),
-  }).select("*").single();
+    support_deadline_at: supportDeadlineAt,
+    response_deadline_at: responseDeadlineAt,
+    author_is_private: issueStoresAuthorPrivately(category),
+    actor_is_admin: auth.isAdmin,
+    private_to_owner_categories: PRIVATE_TO_OWNER_CATEGORIES,
+    review_required_categories: REVIEW_REQUIRED_CATEGORIES,
+    author_private_categories: AUTHOR_PRIVATE_CATEGORIES,
+  });
   if (error) throw error;
-  await markMarkdownUploadsAttached(supabase, auth.uid, content, "issue", data.id);
-
-  if (issueStoresAuthorPrivately(category)) {
-    const { error: privateAuthorError } = await supabase.schema("app_private").from("private_issue_authors").upsert({
-      author_name: auth.name,
-      author_photo_url: auth.photoUrl,
-      author_uid: auth.uid,
-      issue_id: data.id,
-    }, { onConflict: "issue_id" });
-    if (privateAuthorError) throw privateAuthorError;
-  }
-  return { issue: issueToReadableResponse(data as JsonRecord, auth) };
+  const issue = asRecord(data);
+  await markMarkdownUploadsAttached(supabase, auth.uid, content, "issue", asString(issue.id));
+  return { issue: data };
 }

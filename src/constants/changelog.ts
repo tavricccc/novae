@@ -2,6 +2,26 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善提案瀏覽體驗",
+    version: "v2.0.107",
+    date: "2026-07-08",
+    time: "14:04",
+    items: [
+      {
+        title: "改善提案列表與詳情的作者資訊呈現，無法查看作者時不再顯示舊式匿名標示。"
+      },
+      {
+        title: "提升提案列表、搜尋與詳情讀取的一致性，減少切換頁面時的額外等待。"
+      },
+      {
+        title: "強化本人提案與管理操作的顯示判斷，提升操作狀態穩定性。"
+      },
+      {
+        title: "提升公告、留言與通知互動的資料一致性，降低快速操作時的重複等待。"
+      }
+    ]
+  },
+  {
     title: "強化短時間請求保護",
     version: "v2.0.106",
     date: "2026-07-08",

@@ -1,118 +1,77 @@
-import { asString } from "../_shared/http.ts";
+import { asRecord, asString } from "../_shared/http.ts";
 import { RATE_LIMITS } from "../_shared/rate-limits.ts";
 import { claimFixedWindowRateLimit } from "../_shared/upstash-rate-limit.ts";
-import { commentCursor, commentToResponse } from "./issue-shared.ts";
 import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 import { markMarkdownUploadsAttached, queueAttachedUploadsForDeletion } from "./uploads.ts";
-import { applyAscendingDateCursor, readCursor, utcHourWindow } from "./utils.ts";
+import { asUuid, readCursor, readCursorDate, utcHourWindow } from "./utils.ts";
 import { INPUT_LIMITS, requiredText } from "./validation.ts";
 
-function attachReplies(comments: JsonRecord[], replies: JsonRecord[]) {
-  const groupedReplies = new Map<string, JsonRecord[]>();
-  for (const reply of replies) {
-    const parentId = asString(reply.parent_comment_id);
-    if (!parentId) continue;
-    groupedReplies.set(parentId, [...(groupedReplies.get(parentId) ?? []), reply]);
-  }
-  return comments.map((comment) => ({
-    ...comment,
-    replies: groupedReplies.get(asString(comment.id)) ?? [],
-  }));
+function uploadTargetsFromResult(
+  data: unknown,
+  fallback: { id: string; type: "announcement_comment" },
+) {
+  const result = asRecord(data);
+  return Array.isArray(result.upload_targets)
+    ? result.upload_targets.map((target) => {
+      const record = asRecord(target);
+      return {
+        id: asString(record.id),
+        type: asString(record.type) as "announcement_comment",
+      };
+    }).filter((target) => target.id && target.type === "announcement_comment")
+    : [fallback];
 }
 
 async function listAnnouncementComments(payload: JsonRecord, supabase: BackendSupabase) {
-  const pageSize = 20;
-  let query = supabase
-    .schema("app_private")
-    .from("announcement_comments")
-    .select("*")
-    .eq("announcement_id", asString(payload.announcementId))
-    .is("parent_comment_id", null);
-  query = applyAscendingDateCursor(query, readCursor(payload), "created_at");
-  const { data, error } = await query.order("created_at", { ascending: true }).order("id", { ascending: true }).limit(pageSize + 1);
+  const announcementId = asUuid(payload.announcementId);
+  if (!announcementId) throw new Error("not-found");
+  const cursor = readCursor(payload);
+  const { data, error } = await supabase.schema("app_api").rpc("backend_list_announcement_comments", {
+    announcement_id: announcementId,
+    cursor_id: asUuid(cursor.id) || null,
+    cursor_created_at: readCursorDate(cursor, "createdAtMs", "created_at") || null,
+  });
   if (error) throw error;
-  const rootComments = (data ?? []).slice(0, pageSize).map((comment) => comment as JsonRecord);
-  const rootIds = rootComments.map((comment) => asString(comment.id)).filter(Boolean);
-  const { data: replyData, error: replyError } = rootIds.length
-    ? await supabase
-      .schema("app_private")
-      .from("announcement_comments")
-      .select("*")
-      .in("parent_comment_id", rootIds)
-      .order("created_at", { ascending: true })
-      .order("id", { ascending: true })
-    : { data: [], error: null };
-  if (replyError) throw replyError;
-  const comments = attachReplies(rootComments, (replyData ?? []).map((reply) => reply as JsonRecord))
-    .map((comment) => commentToResponse(comment));
-  const lastComment = rootComments[Math.min(pageSize - 1, rootComments.length - 1)];
-  return {
-    comments: comments.slice(0, pageSize),
-    cursor: (data ?? []).length > pageSize && lastComment ? commentCursor(commentToResponse(lastComment)) : null,
-    hasMore: (data ?? []).length > pageSize,
-  };
+  return data;
 }
 
 async function createAnnouncementComment(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
   await claimFixedWindowRateLimit(auth.uid, "comment.create", utcHourWindow(), RATE_LIMITS.commentCreateHourly);
-  const announcementId = asString(payload.announcementId);
+  const announcementId = asUuid(payload.announcementId);
+  if (!announcementId) throw new Error("not-found");
   const content = requiredText(payload.content, "comment", INPUT_LIMITS.comment);
-  const parentCommentId = asString(payload.parentCommentId);
-  if (parentCommentId) {
-    const { data: parentComment, error: parentError } = await supabase
-      .schema("app_private")
-      .from("announcement_comments")
-      .select("id, announcement_id, parent_comment_id")
-      .eq("id", parentCommentId)
-      .maybeSingle();
-    if (parentError) throw parentError;
-    if (
-      !parentComment
-      || parentComment.announcement_id !== announcementId
-      || parentComment.parent_comment_id !== null
-    ) {
-      throw new Error("invalid-parent-comment");
-    }
-  }
-  const { data, error } = await supabase.schema("app_private").from("announcement_comments").insert({
+  const parentCommentId = asUuid(payload.parentCommentId) || null;
+  const { data, error } = await supabase.schema("app_api").rpc("backend_create_announcement_comment", {
     announcement_id: announcementId,
-    parent_comment_id: parentCommentId || null,
-    author_uid: auth.uid,
-    author_name: auth.name,
-    author_photo_url: auth.photoUrl,
-    content,
-    is_admin_comment: false,
-  }).select("*").single();
+    parent_comment_id: parentCommentId,
+    actor_uid: auth.uid,
+    actor_name: auth.name,
+    actor_photo_url: auth.photoUrl,
+    comment_content: content,
+  });
   if (error) throw error;
-  await markMarkdownUploadsAttached(supabase, auth.uid, content, "announcement_comment", data.id);
-  const { data: announcement, error: announcementError } = await supabase.schema("app_private").from("announcements").select("comment_count").eq("id", announcementId).single();
-  if (announcementError) throw announcementError;
-  return { comment: commentToResponse(data as JsonRecord), comment_count: announcement.comment_count ?? 0 };
+  const result = asRecord(data);
+  const comment = asRecord(result.comment);
+  await markMarkdownUploadsAttached(supabase, auth.uid, content, "announcement_comment", asString(comment.id));
+  return { comment, comment_count: result.comment_count };
 }
 
 async function deleteAnnouncementComment(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
-  const commentId = asString(payload.commentId);
-  const { data } = await supabase.schema("app_private").from("announcement_comments").select("*").eq("id", commentId).maybeSingle();
-  if (data && data.author_uid !== auth.uid && !auth.isAdmin) throw new Error("permission-denied");
-  if (data) {
-    const { data: replies, error: repliesError } = await supabase
-      .schema("app_private")
-      .from("announcement_comments")
-      .select("id")
-      .eq("parent_comment_id", commentId);
-    if (repliesError) throw repliesError;
-    await queueAttachedUploadsForDeletion(supabase, [
-      { id: commentId, type: "announcement_comment" },
-      ...(replies ?? []).map((reply) => ({ id: asString(reply.id), type: "announcement_comment" as const })),
-    ]);
-  }
-  const announcementId = data?.announcement_id ?? "";
-  const { error } = await supabase.schema("app_private").from("announcement_comments").delete().eq("id", commentId);
+  const commentId = asUuid(payload.commentId);
+  if (!commentId) return { success: true, announcement_id: "", comment_count: 0 };
+  const { data, error } = await supabase.schema("app_api").rpc("backend_delete_announcement_comment", {
+    comment_id: commentId,
+    actor_uid: auth.uid,
+    actor_is_admin: auth.isAdmin,
+  });
   if (error) throw error;
-  const { data: announcement } = announcementId
-    ? await supabase.schema("app_private").from("announcements").select("comment_count").eq("id", announcementId).single()
-    : { data: null };
-  return { success: true, announcement_id: announcementId, comment_count: announcement?.comment_count ?? 0 };
+  await queueAttachedUploadsForDeletion(supabase, uploadTargetsFromResult(data, { id: commentId, type: "announcement_comment" }));
+  const result = asRecord(data);
+  return {
+    success: true,
+    announcement_id: asString(result.announcement_id),
+    comment_count: typeof result.comment_count === "number" ? result.comment_count : 0,
+  };
 }
 
 export function isAnnouncementCommentAction(action: string) {

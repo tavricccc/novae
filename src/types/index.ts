@@ -46,9 +46,12 @@ export interface IssueRecord {
   support_met_at: Date | null;
   review_rejection_reason?: string;
   currentUserSupported?: boolean;
+  isOwnIssue: boolean;
+  canManageIssue: boolean;
+  canViewAuthor: boolean;
   deleting?: boolean;
-  author_uid?: string;
-  author_name?: string;
+  author_uid: string | null;
+  author_name: string | null;
   author_photo_url?: string | null;
 }
 
@@ -90,14 +93,6 @@ export interface ComposerInput {
 
 export interface CommentInput {
   content: string;
-}
-
-export interface PrivateAuthorRecord {
-  issue_id: string;
-  author_uid: string;
-  author_name: string;
-  author_photo_url: string | null;
-  created_at: Date | null;
 }
 
 export type CategoryCountMap = Record<IssueCategory, number> & Record<string, number>;

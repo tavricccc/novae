@@ -1,120 +1,92 @@
-import { asString } from "../_shared/http.ts";
-import { issueAllowsCommentsForStatus } from "../_shared/issue-categories.ts";
+import { asRecord, asString } from "../_shared/http.ts";
+import { ISSUE_CATEGORIES } from "../_shared/issue-categories.ts";
 import { RATE_LIMITS } from "../_shared/rate-limits.ts";
 import { claimFixedWindowRateLimit } from "../_shared/upstash-rate-limit.ts";
-import { canReadIssue, commentCursor, commentToResponse, selectIssue } from "./issue-shared.ts";
 import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 import { markMarkdownUploadsAttached, queueAttachedUploadsForDeletion } from "./uploads.ts";
-import { applyAscendingDateCursor, readCursor, utcHourWindow } from "./utils.ts";
+import { asUuid, readCursor, readCursorDate, utcHourWindow } from "./utils.ts";
 import { INPUT_LIMITS, requiredText } from "./validation.ts";
 
-function attachReplies(comments: JsonRecord[], replies: JsonRecord[]) {
-  const groupedReplies = new Map<string, JsonRecord[]>();
-  for (const reply of replies) {
-    const parentId = asString(reply.parent_comment_id);
-    if (!parentId) continue;
-    groupedReplies.set(parentId, [...(groupedReplies.get(parentId) ?? []), reply]);
-  }
-  return comments.map((comment) => ({
-    ...comment,
-    replies: groupedReplies.get(asString(comment.id)) ?? [],
-  }));
+const PRIVATE_TO_OWNER_CATEGORIES = ISSUE_CATEGORIES
+  .filter((category) => category.readAccess === "owner-admin")
+  .map((category) => category.id);
+const REVIEW_REQUIRED_CATEGORIES = ISSUE_CATEGORIES
+  .filter((category) => category.readAccess === "reviewed-school")
+  .map((category) => category.id);
+const PUBLIC_COMMENT_CATEGORIES = ISSUE_CATEGORIES
+  .filter((category) => category.comments.enabledWhen === "public")
+  .map((category) => category.id);
+
+function issueCommentPolicyParams(auth: AuthContext) {
+  return {
+    actor_uid: auth.uid,
+    actor_is_admin: auth.isAdmin,
+    private_to_owner_categories: PRIVATE_TO_OWNER_CATEGORIES,
+    review_required_categories: REVIEW_REQUIRED_CATEGORIES,
+    public_comment_categories: PUBLIC_COMMENT_CATEGORIES,
+  };
+}
+
+function uploadTargetsFromResult(
+  data: unknown,
+  fallback: { id: string; type: "comment" },
+) {
+  const result = asRecord(data);
+  return Array.isArray(result.upload_targets)
+    ? result.upload_targets.map((target) => {
+      const record = asRecord(target);
+      return {
+        id: asString(record.id),
+        type: asString(record.type) as "comment",
+      };
+    }).filter((target) => target.id && target.type === "comment")
+    : [fallback];
 }
 
 async function listComments(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
-  const pageSize = 20;
-  const issue = await selectIssue(supabase, asString(payload.issueId));
-  if (!canReadIssue(issue, auth) || !issueAllowsCommentsForStatus(asString(issue.category), asString(issue.status))) {
-    throw new Error("not-found");
-  }
-  let query = supabase
-    .schema("app_private")
-    .from("comments")
-    .select("*")
-    .eq("issue_id", asString(payload.issueId))
-    .is("parent_comment_id", null);
-  query = applyAscendingDateCursor(query, readCursor(payload), "created_at");
-  const { data, error } = await query.order("created_at", { ascending: true }).order("id", { ascending: true }).limit(pageSize + 1);
+  const issueId = asUuid(payload.issueId);
+  if (!issueId) throw new Error("not-found");
+  const cursor = readCursor(payload);
+  const { data, error } = await supabase.schema("app_api").rpc("backend_list_issue_comments", {
+    issue_id: issueId,
+    cursor_id: asUuid(cursor.id) || null,
+    cursor_created_at: readCursorDate(cursor, "createdAtMs", "created_at") || null,
+    ...issueCommentPolicyParams(auth),
+  });
   if (error) throw error;
-  const rootComments = (data ?? []).slice(0, pageSize).map((comment) => comment as JsonRecord);
-  const rootIds = rootComments.map((comment) => asString(comment.id)).filter(Boolean);
-  const { data: replyData, error: replyError } = rootIds.length
-    ? await supabase
-      .schema("app_private")
-      .from("comments")
-      .select("*")
-      .in("parent_comment_id", rootIds)
-      .order("created_at", { ascending: true })
-      .order("id", { ascending: true })
-    : { data: [], error: null };
-  if (replyError) throw replyError;
-  const comments = attachReplies(rootComments, (replyData ?? []).map((reply) => reply as JsonRecord))
-    .map((comment) => commentToResponse(comment));
-  const lastComment = rootComments[Math.min(pageSize - 1, rootComments.length - 1)];
-  return {
-    comments: comments.slice(0, pageSize),
-    cursor: (data ?? []).length > pageSize && lastComment ? commentCursor(commentToResponse(lastComment)) : null,
-    hasMore: (data ?? []).length > pageSize,
-  };
+  return data;
 }
 
 async function createComment(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
   await claimFixedWindowRateLimit(auth.uid, "comment.create", utcHourWindow(), RATE_LIMITS.commentCreateHourly);
-  const issueId = asString(payload.issueId);
-  const issue = await selectIssue(supabase, issueId);
-  if (!canReadIssue(issue, auth) || !issueAllowsCommentsForStatus(asString(issue.category), asString(issue.status))) {
-    throw new Error("permission-denied");
-  }
+  const issueId = asUuid(payload.issueId);
+  if (!issueId) throw new Error("not-found");
   const content = requiredText(payload.content, "comment", INPUT_LIMITS.comment);
-  const parentCommentId = asString(payload.parentCommentId);
-  if (parentCommentId) {
-    const { data: parentComment, error: parentError } = await supabase
-      .schema("app_private")
-      .from("comments")
-      .select("id, issue_id, parent_comment_id")
-      .eq("id", parentCommentId)
-      .maybeSingle();
-    if (parentError) throw parentError;
-    if (
-      !parentComment
-      || parentComment.issue_id !== issueId
-      || parentComment.parent_comment_id !== null
-    ) {
-      throw new Error("invalid-parent-comment");
-    }
-  }
-  const { data, error } = await supabase.schema("app_private").from("comments").insert({
+  const parentCommentId = asUuid(payload.parentCommentId) || null;
+  const { data, error } = await supabase.schema("app_api").rpc("backend_create_issue_comment", {
     issue_id: issueId,
-    parent_comment_id: parentCommentId || null,
-    author_uid: auth.uid,
-    author_name: auth.name,
-    author_photo_url: auth.photoUrl,
-    content,
-    is_admin_comment: false,
-  }).select("*").single();
+    parent_comment_id: parentCommentId,
+    actor_name: auth.name,
+    actor_photo_url: auth.photoUrl,
+    comment_content: content,
+    ...issueCommentPolicyParams(auth),
+  });
   if (error) throw error;
-  await markMarkdownUploadsAttached(supabase, auth.uid, content, "comment", data.id);
-  return { comment: commentToResponse(data as JsonRecord) };
+  const comment = asRecord(data);
+  await markMarkdownUploadsAttached(supabase, auth.uid, content, "comment", asString(comment.id));
+  return { comment };
 }
 
 async function deleteComment(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
-  const commentId = asString(payload.commentId);
-  const { data } = await supabase.schema("app_private").from("comments").select("*").eq("id", commentId).maybeSingle();
-  if (data && data.author_uid !== auth.uid && !auth.isAdmin) throw new Error("permission-denied");
-  if (data) {
-    const { data: replies, error: repliesError } = await supabase
-      .schema("app_private")
-      .from("comments")
-      .select("id")
-      .eq("parent_comment_id", commentId);
-    if (repliesError) throw repliesError;
-    await queueAttachedUploadsForDeletion(supabase, [
-      { id: commentId, type: "comment" },
-      ...(replies ?? []).map((reply) => ({ id: asString(reply.id), type: "comment" as const })),
-    ]);
-  }
-  const { error } = await supabase.schema("app_private").from("comments").delete().eq("id", commentId);
+  const commentId = asUuid(payload.commentId);
+  if (!commentId) return { success: true };
+  const { data, error } = await supabase.schema("app_api").rpc("backend_delete_issue_comment", {
+    comment_id: commentId,
+    actor_uid: auth.uid,
+    actor_is_admin: auth.isAdmin,
+  });
   if (error) throw error;
+  await queueAttachedUploadsForDeletion(supabase, uploadTargetsFromResult(data, { id: commentId, type: "comment" }));
   return { success: true };
 }
 

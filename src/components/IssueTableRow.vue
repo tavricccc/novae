@@ -9,7 +9,7 @@
         <span class="tag shrink-0 px-2 py-0.5 text-xs" :class="statusClass">
           {{ statusLabel }}
         </span>
-        <UserAvatar v-if="isOwnIssue" :photo-url="displayPhotoUrl" :name="displayAuthorName" size="sm" :alt-text="`${displayAuthorName} 的頭像`" class="shrink-0" />
+        <UserAvatar v-if="issue.canViewAuthor" :photo-url="displayPhotoUrl" :name="displayAuthorName" size="sm" :alt-text="`${displayAuthorName} 的頭像`" class="shrink-0" />
         <div class="flex-1 py-1 text-left">
           <span class="line-clamp-1 font-semibold text-sm tracking-normal text-ink-900 dark:text-ink-50 hover:underline">
             <SearchHighlight :text="issue.title" :query="highlightQuery" />
@@ -94,7 +94,7 @@
       </div>
 
       <div class="flex items-center gap-2 flex-1 min-w-0 pr-3">
-        <UserAvatar v-if="isOwnIssue && issueStoresAuthorPrivately(issue.category) && !isAdmin" :photo-url="displayPhotoUrl" :name="displayAuthorName" size="sm" :alt-text="`${displayAuthorName} 的頭像`" class="shrink-0" />
+        <UserAvatar v-if="issue.canViewAuthor && !showAuthorCol" :photo-url="displayPhotoUrl" :name="displayAuthorName" size="sm" :alt-text="`${displayAuthorName} 的頭像`" class="shrink-0" />
         <div class="w-full py-1 text-left text-sm font-semibold tracking-tight text-ink-900 hover:text-ink-950 hover:underline dark:text-ink-100 dark:hover:text-white sm:text-base truncate" :title="issue.title">
           <SearchHighlight :text="issue.title" :query="highlightQuery" />
         </div>
@@ -179,14 +179,15 @@ import AppIcon from '@/components/ui/AppIcon.vue';
 import SearchHighlight from '@/components/ui/SearchHighlight.vue';
 import UserAvatar from '@/components/ui/UserAvatar.vue';
 import { useIssueItemController } from '@/composables/useIssueItemController';
-import { issueStoresAuthorPrivately } from '@/constants/categories';
 import type { IssueRecord } from '@/types';
 
 const props = withDefaults(defineProps<{
   issue: IssueRecord;
   highlightQuery?: string;
+  showAuthorColumn?: boolean;
 }>(), {
   highlightQuery: '',
+  showAuthorColumn: true,
 });
 
 const emit = defineEmits<{
@@ -201,7 +202,6 @@ const {
   displayPhotoUrl,
   statusLabel,
   primaryTimeValueLabel,
-  isOwnIssue,
   isAdmin,
   currentUserSupported,
   supportCount,
@@ -226,11 +226,11 @@ const {
   (issueId) => emit('issue-deleted', issueId),
 );
 
-const showAuthorCol = computed(() => !issueStoresAuthorPrivately(props.issue.category) || isAdmin.value);
+const showAuthorCol = computed(() => props.showAuthorColumn && props.issue.canViewAuthor);
 const stopRowActionClick = () => undefined;
 const tableCols = computed(() => {
   const cols = ['6rem'];
-  if (showAuthorCol.value) cols.push('8rem');
+  if (props.showAuthorColumn) cols.push('8rem');
   cols.push('1fr', '8rem', '9rem', '7rem');
   if (isAdmin.value) cols.push('2.5rem');
   return cols.join(' ');

@@ -13,8 +13,6 @@ const readActions = new Set([
   "listIssues",
   "searchIssues",
   "listUserIssues",
-  "getPrivateIssueAuthor",
-  "batchGetPrivateIssueAuthors",
   "listComments",
   "listAnnouncements",
   "getAnnouncement",

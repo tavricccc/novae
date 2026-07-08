@@ -32,8 +32,12 @@ interface IssueResponseRecord {
   result_updated_at_ms?: number | null;
   support_met_at_ms: number | null;
   review_rejection_reason?: string;
-  author_uid?: string;
-  author_name?: string;
+  currentUserSupported?: boolean;
+  isOwnIssue?: boolean;
+  canManageIssue?: boolean;
+  canViewAuthor?: boolean;
+  author_uid?: string | null;
+  author_name?: string | null;
   author_photo_url?: string | null;
 }
 
@@ -65,15 +69,14 @@ function normalizeIssueResponse(issue: IssueResponseRecord): IssueRecord {
     result_updated_at: dateFromMs(issue.result_updated_at_ms),
     support_met_at: dateFromMs(issue.support_met_at_ms),
     review_rejection_reason: issue.review_rejection_reason,
+    currentUserSupported: issue.currentUserSupported,
+    isOwnIssue: issue.isOwnIssue,
+    canManageIssue: issue.canManageIssue,
+    canViewAuthor: issue.canViewAuthor,
     author_uid: issue.author_uid,
     author_name: issue.author_name,
     author_photo_url: issue.author_photo_url,
   });
-  if (issue.author_uid) {
-    record.author_uid = issue.author_uid;
-    record.author_name = issue.author_name;
-    record.author_photo_url = issue.author_photo_url ?? null;
-  }
   return record;
 }
 

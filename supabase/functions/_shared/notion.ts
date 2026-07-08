@@ -324,7 +324,7 @@ export async function syncIssueCreatedToNotion(
     String(issue?.title ?? payload.title ?? "未命名提案"),
     String(issue?.category ?? payload.category ?? "公共議題"),
     String(issue?.status ?? "pending"),
-    String(issue?.author_name ?? "匿名使用者"),
+    String(issue?.author_name ?? "未提供"),
     issue?.support_count ?? payload.support_count,
     issue?.support_goal ?? payload.support_goal,
   );
@@ -367,7 +367,7 @@ export async function syncIssueStatusChangedToNotion(
     String(issue?.title ?? payload.title ?? "提案"),
     String(issue?.category ?? "公共議題"),
     newStatus,
-    String(issue?.author_name ?? "匿名使用者"),
+    String(issue?.author_name ?? "未提供"),
     issue?.support_count ?? payload.support_count,
     issue?.support_goal ?? payload.support_goal,
   );
@@ -404,7 +404,7 @@ export async function syncIssueSupportToNotion(
     String(issue?.title ?? "提案"),
     String(issue?.category ?? "公共議題"),
     String(issue?.status ?? "pending"),
-    String(issue?.author_name ?? "匿名使用者"),
+    String(issue?.author_name ?? "未提供"),
     issue?.support_count,
     issue?.support_goal,
   );

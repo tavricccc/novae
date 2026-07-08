@@ -36,7 +36,7 @@
 
     <template #actions="{ compact }">
       <IssueDetailSupportFooter
-        :can-manage="isAdmin || isOwnIssue"
+        :can-manage="issue.canManageIssue"
         :is-admin="isAdmin"
         :compact="compact"
         :current-user-supported="currentUserSupported"
@@ -126,7 +126,7 @@ import IssueDetailContent from '@/components/IssueDetailContent.vue';
 import IssueDetailSupportFooter from '@/components/IssueDetailSupportFooter.vue';
 import IssueComments from '@/components/IssueComments.vue';
 import { useSession } from '@/composables/useSession';
-import { issueAllowsCommentsForStatus, issueStoresAuthorPrivately } from '@/constants/categories';
+import { issueAllowsCommentsForStatus } from '@/constants/categories';
 
 // Shared Moderation Dialogs
 import IssueReviewDialog from '@/components/IssueReviewDialog.vue';
@@ -173,7 +173,6 @@ const {
   responseDeadlineLabel,
   supportMetLabel,
   remainingDays,
-  isOwnIssue,
 } = useIssueDisplay(toRef(props, 'issue'));
 
 const { statusClass } = useStatusStyling(derivedStatus, 'dialog');
@@ -183,7 +182,7 @@ const supportProgressStyle = computed(() => {
   return { width: `${progress}%` };
 });
 
-const showAuthor = computed(() => !issueStoresAuthorPrivately(props.issue.category) || isAdmin.value || isOwnIssue.value);
+const showAuthor = computed(() => props.issue.canViewAuthor);
 
 const supportRemainingLabel = computed(() => getSupportRemainingLabel(remainingDays.value));
 const commentsEnabled = computed(() => issueAllowsCommentsForStatus(props.issue.category, props.issue.status));

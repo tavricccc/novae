@@ -69,7 +69,7 @@ function normalizeAnnouncementComment(data: Record<string, unknown>): Announceme
     parent_comment_id: typeof data.parent_comment_id === 'string' ? data.parent_comment_id : null,
     content: String(data.content ?? ''),
     author_uid: String(data.author_uid ?? ''),
-    author_name: String(data.author_name ?? '匿名使用者'),
+    author_name: String(data.author_name ?? '管理員'),
     author_photo_url: data.author_photo_url ? String(data.author_photo_url) : null,
     is_admin_comment: Boolean(data.is_admin_comment),
     created_at: dateFromMs(data.created_at_ms ?? data.created_at),

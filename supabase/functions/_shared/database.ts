@@ -265,6 +265,226 @@ interface AppPrivateTables {
 }
 
 interface AppApiFunctions {
+  backend_announcement_to_json: AppFunction<{
+    actor_uid: string;
+    announcement_record: AnnouncementRow;
+  }, Json>;
+  backend_create_announcement: AppFunction<{
+    actor_name: string;
+    actor_photo_url: string | null;
+    actor_uid: string;
+    announcement_content: string;
+    announcement_title: string;
+  }, Json>;
+  backend_announcement_comment_to_json: AppFunction<{
+    comment_record: AnnouncementCommentRow;
+    replies?: Json;
+  }, Json>;
+  backend_assert_issue_comment_access: AppFunction<{
+    actor_is_admin: boolean;
+    actor_uid: string;
+    issue_id: string;
+    private_to_owner_categories: string[];
+    public_comment_categories: string[];
+    review_required_categories: string[];
+  }, IssueRow>;
+  backend_comment_to_json: AppFunction<{
+    comment_record: CommentRow;
+    replies?: Json;
+  }, Json>;
+  backend_create_announcement_comment: AppFunction<{
+    actor_name: string;
+    actor_photo_url: string | null;
+    actor_uid: string;
+    announcement_id: string;
+    comment_content: string;
+    parent_comment_id: string | null;
+  }, Json>;
+  backend_create_issue_comment: AppFunction<{
+    actor_is_admin: boolean;
+    actor_name: string;
+    actor_photo_url: string | null;
+    actor_uid: string;
+    comment_content: string;
+    issue_id: string;
+    parent_comment_id: string | null;
+    private_to_owner_categories: string[];
+    public_comment_categories: string[];
+    review_required_categories: string[];
+  }, Json>;
+  backend_create_issue: AppFunction<{
+    actor_is_admin: boolean;
+    actor_name: string;
+    actor_photo_url: string | null;
+    actor_uid: string;
+    author_is_private: boolean;
+    author_private_categories: string[];
+    issue_category: string;
+    issue_content: string;
+    issue_status: string;
+    issue_title: string;
+    private_to_owner_categories: string[];
+    response_deadline_at: string | null;
+    review_required_categories: string[];
+    support_deadline_at: string | null;
+    support_enabled: boolean;
+    support_goal: number | null;
+  }, Json>;
+  backend_delete_announcement: AppFunction<{ announcement_id: string }, Json>;
+  backend_delete_announcement_comment: AppFunction<{
+    actor_is_admin: boolean;
+    actor_uid: string;
+    comment_id: string;
+  }, Json>;
+  backend_delete_issue_comment: AppFunction<{
+    actor_is_admin: boolean;
+    actor_uid: string;
+    comment_id: string;
+  }, Json>;
+  backend_delete_issue_with_upload_targets: AppFunction<{
+    actor_is_admin: boolean;
+    actor_uid: string;
+    issue_id: string;
+  }, Json>;
+  backend_get_issue: AppFunction<{
+    actor_is_admin: boolean;
+    actor_uid: string;
+    author_private_categories: string[];
+    issue_id: string;
+    private_to_owner_categories: string[];
+    review_required_categories: string[];
+  }, Json>;
+  backend_get_announcement: AppFunction<{ actor_uid: string; announcement_id: string }, Json>;
+  backend_list_announcements: AppFunction<{
+    actor_uid: string;
+    cursor_id: string | null;
+    cursor_published_at: string | null;
+    cursor_sort_number: number | null;
+    page_size: number;
+    sort_name: string;
+  }, Json>;
+  backend_list_announcement_comments: AppFunction<{
+    announcement_id: string;
+    cursor_created_at: string | null;
+    cursor_id: string | null;
+  }, Json>;
+  backend_list_issue_comments: AppFunction<{
+    actor_is_admin: boolean;
+    actor_uid: string;
+    cursor_created_at: string | null;
+    cursor_id: string | null;
+    issue_id: string;
+    private_to_owner_categories: string[];
+    public_comment_categories: string[];
+    review_required_categories: string[];
+  }, Json>;
+  backend_list_issues: AppFunction<{
+    action_name: string;
+    actor_is_admin: boolean;
+    actor_uid: string;
+    active_filter: string;
+    author_private_categories: string[];
+    cursor_created_at: string | null;
+    cursor_id: string | null;
+    cursor_sort_date: string | null;
+    cursor_sort_number: number | null;
+    page_size: number;
+    private_to_owner_categories: string[];
+    review_required_categories: string[];
+    sort_name: string;
+    status_bucket: string;
+    title_query: string | null;
+  }, Json>;
+  backend_list_user_issues: AppFunction<{
+    actor_is_admin: boolean;
+    actor_uid: string;
+    author_private_categories: string[];
+    cursor_created_at: string | null;
+    cursor_id: string | null;
+    cursor_sort_date: string | null;
+    cursor_sort_number: number | null;
+    page_size: number;
+    private_to_owner_categories: string[];
+    review_required_categories: string[];
+    sort_name: string;
+  }, Json>;
+  backend_list_notifications: AppFunction<{
+    actor_is_admin: boolean;
+    actor_uid: string;
+    cursor_created_at: string | null;
+    cursor_id: string | null;
+    notification_source: string;
+    page_size: number;
+  }, Json>;
+  backend_get_notification_read_state: AppFunction<{ actor_uid: string }, Json>;
+  backend_mark_notifications_opened: AppFunction<{
+    actor_uid: string;
+    opened_at: string;
+  }, Json>;
+  backend_moderate_issue_status: AppFunction<{
+    actor_is_admin: boolean;
+    actor_uid: string;
+    author_private_categories: string[];
+    issue_id: string;
+    next_status: string;
+    private_to_owner_categories: string[];
+    response_deadline_at: string | null;
+    review_approved_at: string | null;
+    review_rejection_reason: string | null;
+    review_required_categories: string[];
+    support_deadline_at: string | null;
+  }, Json>;
+  backend_notification_state_to_json: AppFunction<{ state_record: NotificationStateRow }, Json>;
+  backend_notification_to_json: AppFunction<{
+    notification_record: NotificationRow;
+    opened_at: string | null;
+  }, Json>;
+  backend_push_notification_preference: AppFunction<{
+    actor_uid: string;
+    device_id: string;
+    permission: string;
+  }, Json>;
+  backend_register_push_token: AppFunction<{
+    actor_uid: string;
+    device_id: string;
+    permission: string;
+    platform: string;
+    token: string;
+    user_agent: string;
+  }, Json>;
+  backend_unregister_push_token: AppFunction<{
+    actor_uid: string;
+    device_id: string;
+    permission: string;
+  }, Json>;
+  backend_update_push_notification_preferences: AppFunction<{
+    actor_uid: string;
+    comments_enabled: boolean;
+    device_id: string;
+    issue_updates_enabled: boolean;
+    permission: string;
+  }, Json>;
+  backend_set_announcement_like: AppFunction<{
+    actor_uid: string;
+    announcement_id: string;
+    liked: boolean;
+  }, Json>;
+  backend_update_announcement: AppFunction<{
+    actor_uid: string;
+    announcement_content: string;
+    announcement_id: string;
+    announcement_title: string;
+  }, Json>;
+  backend_update_issue_result: AppFunction<{
+    actor_is_admin: boolean;
+    actor_uid: string;
+    author_private_categories: string[];
+    issue_id: string;
+    private_to_owner_categories: string[];
+    result_content: string | null;
+    result_updated_at: string | null;
+    review_required_categories: string[];
+  }, Json>;
   backend_toggle_support: AppFunction<{
     actor_uid: string;
     issue_id: string;

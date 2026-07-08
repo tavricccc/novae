@@ -1,80 +1,90 @@
-import { asString } from "../_shared/http.ts";
+import { asRecord, asString } from "../_shared/http.ts";
 import { RATE_LIMITS } from "../_shared/rate-limits.ts";
 import { claimFixedWindowRateLimit } from "../_shared/upstash-rate-limit.ts";
 import { requireAdmin } from "./auth.ts";
-import { announcementToResponse } from "./announcement-shared.ts";
 import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 import { markMarkdownUploadsAttached, queueAttachedUploadsForDeletion, queueUploadIdsForDeletion } from "./uploads.ts";
-import { asBoolean, utcHourWindow } from "./utils.ts";
+import { asBoolean, asUuid, utcHourWindow } from "./utils.ts";
 import { INPUT_LIMITS, requiredText } from "./validation.ts";
 
 async function createAnnouncement(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
   requireAdmin(auth);
   const content = requiredText(payload.content, "content", INPUT_LIMITS.content);
-  const { data, error } = await supabase.schema("app_private").from("announcements").insert({
-    author_uid: auth.uid,
-    author_name: auth.name || "管理員",
-    author_photo_url: auth.photoUrl,
-    title: requiredText(payload.title, "title", INPUT_LIMITS.title),
-    content,
-  }).select("*").single();
+  const { data, error } = await supabase.schema("app_api").rpc("backend_create_announcement", {
+    actor_uid: auth.uid,
+    actor_name: auth.name || "管理員",
+    actor_photo_url: auth.photoUrl,
+    announcement_title: requiredText(payload.title, "title", INPUT_LIMITS.title),
+    announcement_content: content,
+  });
   if (error) throw error;
-  await markMarkdownUploadsAttached(supabase, auth.uid, content, "announcement", data.id);
-  return { announcement: announcementToResponse(data as JsonRecord) };
+  const announcement = asRecord(data);
+  await markMarkdownUploadsAttached(supabase, auth.uid, content, "announcement", asString(announcement.id));
+  return { announcement };
 }
 
 async function updateAnnouncement(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
   requireAdmin(auth);
-  const announcementId = asString(payload.announcementId);
-  const { data: previouslyAttached, error: previousUploadsError } = await supabase.schema("app_private")
-    .from("uploads").select("id").eq("attached_target_type", "announcement").eq("attached_target_id", announcementId);
-  if (previousUploadsError) throw previousUploadsError;
+  const announcementId = asUuid(payload.announcementId);
+  if (!announcementId) throw new Error("not-found");
   const content = requiredText(payload.content, "content", INPUT_LIMITS.content);
-  const { data, error } = await supabase.schema("app_private").from("announcements").update({
-    title: requiredText(payload.title, "title", INPUT_LIMITS.title),
-    content,
-  }).eq("id", announcementId).select("*").single();
+  const { data, error } = await supabase.schema("app_api").rpc("backend_update_announcement", {
+    announcement_id: announcementId,
+    actor_uid: auth.uid,
+    announcement_title: requiredText(payload.title, "title", INPUT_LIMITS.title),
+    announcement_content: content,
+  });
   if (error) throw error;
-  await markMarkdownUploadsAttached(supabase, auth.uid, content, "announcement", data.id);
+  const result = asRecord(data);
+  const announcement = asRecord(result.announcement);
+  await markMarkdownUploadsAttached(supabase, auth.uid, content, "announcement", asString(announcement.id));
   const retainedUploadIds = new Set(
     [...content.matchAll(/srp-upload:\/\/([0-9a-fA-F-]{36})/gu)].map((match) => match[1]),
   );
-  const removedUploads = (previouslyAttached ?? []).filter((upload) => !retainedUploadIds.has(upload.id));
-  if (removedUploads.length > 0) {
-    await queueUploadIdsForDeletion(supabase, removedUploads.map((upload) => upload.id));
+  const previousUploadIds = Array.isArray(result.previous_upload_ids)
+    ? result.previous_upload_ids.map((id) => asString(id)).filter(Boolean)
+    : [];
+  const removedUploadIds = previousUploadIds.filter((id) => !retainedUploadIds.has(id));
+  if (removedUploadIds.length > 0) {
+    await queueUploadIdsForDeletion(supabase, removedUploadIds);
   }
-  return { announcement: announcementToResponse(data as JsonRecord) };
+  return { announcement };
 }
 
 async function deleteAnnouncement(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
   requireAdmin(auth);
-  const announcementId = asString(payload.announcementId);
-  const { data: comments, error: commentsError } = await supabase.schema("app_private")
-    .from("announcement_comments").select("id").eq("announcement_id", announcementId);
-  if (commentsError) throw commentsError;
-  await queueAttachedUploadsForDeletion(supabase, [
-    { id: announcementId, type: "announcement" },
-    ...(comments ?? []).map((comment) => ({ id: comment.id, type: "announcement_comment" as const })),
-  ]);
-  const { error } = await supabase.schema("app_private").from("announcements").delete().eq("id", announcementId);
+  const announcementId = asUuid(payload.announcementId);
+  if (!announcementId) throw new Error("not-found");
+  const { data, error } = await supabase.schema("app_api").rpc("backend_delete_announcement", {
+    announcement_id: announcementId,
+  });
   if (error) throw error;
+  const result = asRecord(data);
+  const uploadTargets = Array.isArray(result.upload_targets)
+    ? result.upload_targets.map((target) => {
+      const record = asRecord(target);
+      return {
+        id: asString(record.id),
+        type: asString(record.type) as "announcement" | "announcement_comment",
+      };
+    }).filter((target) => target.id && (target.type === "announcement" || target.type === "announcement_comment"))
+    : [{ id: announcementId, type: "announcement" as const }];
+  await queueAttachedUploadsForDeletion(supabase, uploadTargets);
   return { success: true };
 }
 
 async function setAnnouncementLike(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
   await claimFixedWindowRateLimit(auth.uid, "announcement.like", utcHourWindow(), RATE_LIMITS.announcementLikeHourly);
-  const announcementId = asString(payload.announcementId);
+  const announcementId = asUuid(payload.announcementId);
+  if (!announcementId) throw new Error("not-found");
   const liked = asBoolean(payload.liked);
-  if (liked) {
-    const { error } = await supabase.schema("app_private").from("announcement_likes").upsert({ announcement_id: announcementId, uid: auth.uid });
-    if (error) throw error;
-  } else {
-    const { error } = await supabase.schema("app_private").from("announcement_likes").delete().eq("announcement_id", announcementId).eq("uid", auth.uid);
-    if (error) throw error;
-  }
-  const { data: announcement, error } = await supabase.schema("app_private").from("announcements").select("like_count").eq("id", announcementId).single();
+  const { data, error } = await supabase.schema("app_api").rpc("backend_set_announcement_like", {
+    announcement_id: announcementId,
+    actor_uid: auth.uid,
+    liked,
+  });
   if (error) throw error;
-  return { liked, like_count: announcement.like_count ?? 0 };
+  return data;
 }
 
 export function isAnnouncementWriteAction(action: string) {

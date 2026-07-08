@@ -261,6 +261,7 @@ test('backend list actions use stable cursor pagination at the service boundary'
     await read('supabase/functions/backendAction/announcement-comments.ts'),
     await read('supabase/functions/backendAction/notifications.ts'),
   ].join('\n');
+  const issueReadMigration = await read('supabase/migrations/202607080002_backend_issue_read_rpc.sql');
   const issuePages = await read('src/services/issues-read-pages.ts');
   const issueComments = await read('src/services/issues-read-comments.ts');
   const announcements = await read('src/services/announcements.ts');
@@ -269,13 +270,18 @@ test('backend list actions use stable cursor pagination at the service boundary'
   assert.match(backendAction, /function applyDescendingDateCursor/u);
   assert.match(backendAction, /function applyAscendingDateCursor/u);
   assert.match(backendAction, /if \(action === "listIssues" \|\| action === "searchIssues"\)/u);
-  assert.match(backendAction, /sort === "most-supported"/u);
-  assert.match(backendAction, /sort === "ending-soon"/u);
-  assert.match(backendAction, /action === "listIssues" && cursorId && cursorCreatedAt/u);
+  assert.match(backendAction, /rpc\("backend_list_issues"/u);
+  assert.match(backendAction, /rpc\("backend_list_user_issues"/u);
+  assert.match(backendAction, /cursor_created_at: readCursorDate\(cursor, "created_at"\) \|\| null/u);
+  assert.match(backendAction, /private_to_owner_categories: PRIVATE_TO_OWNER_CATEGORIES/u);
+  assert.match(issueReadMigration, /sort_name = 'most-supported'/u);
+  assert.match(issueReadMigration, /sort_name = 'ending-soon'/u);
+  assert.match(issueReadMigration, /cursor_id is null/u);
   assert.match(backendAction, /if \(action === "listComments"\)/u);
   assert.match(backendAction, /if \(action === "listAnnouncementComments"\)/u);
   assert.match(backendAction, /if \(action === "listNotifications"\)/u);
-  assert.match(backendAction, /cursor: notifications\.length > pageSize/u);
+  assert.match(backendAction, /rpc\("backend_list_notifications"/u);
+  assert.match(backendAction, /cursor_created_at: readCursorDate\(cursor, "createdAtMs", "created_at"\) \|\| null/u);
   assert.match(issuePages, /normalizeIssueCursor\(result\.data\.cursor\)/u);
   assert.match(issueComments, /normalizeCommentCursor\(result\.data\.cursor\)/u);
   assert.match(announcements, /normalizeAnnouncementCursor\(result\.data\.cursor\)/u);
@@ -298,7 +304,7 @@ test('personal notification writes and pushes are scoped to the recipient', asyn
   assert.match(atomicOutboxMigration, /'issue_author_uid', issue_record\.author_uid/u);
   assert.match(atomicOutboxMigration, /'issue\.status_changed'/u);
   assert.match(atomicOutboxMigration, /queue_announcement_comment_created/u);
-  assert.match(backendAction, /rpc\("backend_delete_issue"/u);
+  assert.match(backendAction, /rpc\("backend_delete_issue_with_upload_targets"/u);
   assert.match(securityMigration, /'issue\.deleted'/u);
   assert.match(securityMigration, /'author_uid', issue_record\.author_uid/u);
   assert.match(outboxWorker, /async function findIssueAuthorUid/u);
@@ -379,6 +385,7 @@ test('notification navigation verifies target access before routing', async () =
   const notificationBell = await read('src/components/NotificationBell.vue');
   const notificationsView = await read('src/views/NotificationsView.vue');
   const issueRead = await read('supabase/functions/backendAction/issue-read.ts');
+  const issueReadMigration = await read('supabase/migrations/202607080002_backend_issue_read_rpc.sql');
 
   assert.match(navigation, /await fetchIssueRecordById\(notification\.target_id\)/u);
   assert.match(navigation, /filter: issue\.category/u);
@@ -387,5 +394,8 @@ test('notification navigation verifies target access before routing', async () =
   assert.match(notificationBell, /return notification\.body_preview \|\| ''/u);
   assert.match(notificationsView, /return notification\.title/u);
   assert.match(notificationsView, /return notification\.body_preview \|\| ''/u);
-  assert.match(issueRead, /and\(author_uid\.eq\.\$\{auth\.uid\},status\.in\./u);
+  assert.match(issueRead, /review_required_categories: REVIEW_REQUIRED_CATEGORIES/u);
+  assert.match(issueRead, /rpc\("backend_get_issue"/u);
+  assert.match(issueReadMigration, /author_uid = actor_uid/u);
+  assert.match(issueReadMigration, /status in \('under-review', 'review-rejected'\)/u);
 });
