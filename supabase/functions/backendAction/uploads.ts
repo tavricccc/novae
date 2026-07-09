@@ -15,7 +15,7 @@ import { canReadIssue, selectIssue } from "./issue-shared.ts";
 import { issueIsPrivateToOwner, issueRequiresReview } from "../_shared/issue-categories.ts";
 
 const MARKDOWN_UPLOAD_ID_PATTERN = /srp-upload:\/\/([0-9a-fA-F-]{36})/gu;
-const PRIVATE_URL_LIFETIME_MS = 60 * 60 * 1000;
+const PRIVATE_URL_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 const PRIVATE_URL_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 const PUBLIC_URL_CACHE_MS = 365 * 24 * 60 * 60 * 1000;
 
@@ -379,7 +379,6 @@ export async function handleUploadAction(
     const { error: cacheError } = await supabase.schema("app_private").from("uploads").update({
       delivery_url: url,
       delivery_url_expires_at: expiresAt.toISOString(),
-      updated_at: new Date().toISOString(),
     }).eq("id", upload.id);
     if (cacheError) throw cacheError;
     return { expiresAtMs: expiresAt.getTime(), id: upload.id, url };

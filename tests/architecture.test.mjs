@@ -321,6 +321,45 @@ test('removed issue categories are cleaned and Notion backups are marked deleted
   assert.match(workflow, /Run maintenance cleanup/u);
 });
 
+test('transient database tables have explicit retention coverage', async () => {
+  const retentionMigration = await read('supabase/migrations/202607090006_database_retention_minimization.sql');
+  const uploads = await read('supabase/functions/backendAction/uploads.ts');
+
+  assert.match(retentionMigration, /alter table app_private\.notifications[\s\S]*now\(\) \+ interval '7 days'/u);
+  assert.match(retentionMigration, /alter table app_private\.realtime_events[\s\S]*now\(\) \+ interval '1 day'/u);
+  assert.match(retentionMigration, /alter table app_private\.idempotency_keys[\s\S]*now\(\) \+ interval '24 hours'/u);
+  assert.match(retentionMigration, /create or replace function app_api\.complete_outbox_event[\s\S]*expires_at = now\(\) \+ interval '1 day'/u);
+  assert.match(retentionMigration, /create or replace function app_api\.fail_outbox_event[\s\S]*expires_at = now\(\) \+ interval '3 days'/u);
+  assert.match(retentionMigration, /create or replace function app_api\.complete_idempotency_key[\s\S]*expires_at = now\(\) \+ interval '24 hours'/u);
+
+  for (const tableName of [
+    'realtime_events',
+    'notifications',
+    'outbox_events',
+    'push_delivery_logs',
+    'idempotency_keys',
+    'push_tokens',
+    'deletion_jobs',
+    'maintenance_runs',
+  ]) {
+    assert.match(
+      retentionMigration,
+      new RegExp(`(?:delete from|update) app_private\\.${tableName}`, 'u'),
+      `${tableName} must be handled by maintenance cleanup`,
+    );
+  }
+
+  assert.match(retentionMigration, /status = 'ready' and attached_target_id is null and updated_at < now\(\) - interval '48 hours'/u);
+  assert.match(retentionMigration, /status = 'failed' and updated_at < now\(\) - interval '24 hours'/u);
+  assert.match(retentionMigration, /delivery_url_expires_at < now\(\)/u);
+  assert.match(retentionMigration, /status = 'sent' and updated_at < now\(\) - interval '1 day'/u);
+  assert.match(retentionMigration, /status = 'failed' and updated_at < now\(\) - interval '3 days'/u);
+  assert.match(retentionMigration, /status = 'completed' and updated_at < now\(\) - interval '1 day'/u);
+
+  assert.match(uploads, /const PRIVATE_URL_LIFETIME_MS = 7 \* 24 \* 60 \* 60 \* 1000/u);
+  assert.doesNotMatch(uploads, /delivery_url_expires_at: expiresAt\.toISOString\(\),\s+updated_at:/u);
+});
+
 test('backend list actions use stable cursor pagination at the service boundary', async () => {
   const backendAction = [
     await read('supabase/functions/backendAction/utils.ts'),
