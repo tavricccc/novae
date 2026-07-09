@@ -70,6 +70,7 @@
 - 不因重構改變路由名稱、Supabase table/column/RPC、RLS、Edge Function action、Storage / Cloudinary path、Vercel 或 Supabase 部署設定。
 - 權限與身份驗證必須留在 Supabase RLS / Edge Functions；前端條件只負責顯示，不視為安全邊界。
 - 涉及 migrations、RLS 行為、通知語意、Notion 同步、outbox worker、刪除工作或維護排程時保持保守；高風險改善列入報告，不順手改動。
+- 不回改已套用或可能已部署的 Supabase migration；既有 migration 只能在確認尚未部署前修改。部署後的 schema、RPC、trigger、index 或資料修正一律新增後續 migration，避免 remote 只依版本判定為已套用而漏跑變更。
 
 ## 驗證流程
 
