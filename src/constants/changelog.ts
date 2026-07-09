@@ -2,13 +2,16 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
-    title: "修正介面元件顯示問題",
+    title: "修正介面元件與調整動畫效果",
     version: "v2.0.124",
     date: "2026-07-09",
-    time: "13:17",
+    time: "13:22",
     items: [
       {
         title: "修正分段切換器選取狀態的背景填充偏移問題。"
+      },
+      {
+        title: "調整手機底欄導覽列的滑動背景動畫，套用彈性滑動效果以提升介面操作回饋感。"
       }
     ]
   },
