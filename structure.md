@@ -70,6 +70,7 @@
 - supabase/migrations/202607090004_fix_announcement_like_ambiguity.sql：修正公告按讚資料庫函式欄位名稱歧義，讓按讚與取消讚穩定寫入。
 - supabase/migrations/202607090005_announcement_comment_author_notifications.sql：讓公告主留言通知公告作者，巢狀回覆則通知被回覆留言作者。
 - supabase/migrations/202607090006_database_retention_minimization.sql：縮短通知、Realtime 事件、outbox、冪等、推播紀錄、附件暫存與維護診斷資料保留時間，補齊 Realtime 事件與過期圖片簽名網址清理。
+- supabase/migrations/202607090007_remove_issue_result_updated_at.sql：簡化提案、留言與公告時間資料，調整提案列表排序時間規則，並移除提案更新時間、獨立結果更新時間、留言更新標記與公告重複時間欄位。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、統一 API envelope、入口限流、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/action-registry.ts：受控 action metadata 來源，集中 action 名稱、domain、handler、限流分級、冪等與 requestId 要求，供 gateway 與架構測試防止清單分散。
 - supabase/functions/backendAction/response.ts：受控 action 統一成功 / 錯誤 envelope helper，保留 requestId、錯誤代碼、公開錯誤訊息與 HTTP 狀態。

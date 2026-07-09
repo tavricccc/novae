@@ -89,7 +89,6 @@ export async function updateIssueResult(payload: JsonRecord, auth: AuthContext, 
   const { data, error } = await supabase.schema("app_api").rpc("backend_update_issue_result", {
     issue_id: issueId,
     result_content: resultContent || null,
-    result_updated_at: resultContent ? new Date().toISOString() : null,
     ...issuePolicyParams(auth),
   });
   if (error) throw error;

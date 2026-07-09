@@ -137,7 +137,6 @@ function issueTimeProperties(issue: Partial<Database["app_private"]["Tables"]["i
     "附議達標時間": dateProperty(issue.support_met_at),
     "回覆期限": dateProperty(issue.response_deadline_at),
     "結案時間": dateProperty(issue.closed_at),
-    "結果更新時間": dateProperty(issue.result_updated_at),
   };
 }
 
@@ -364,7 +363,7 @@ export async function syncIssueCreatedToNotion(
   const { data: issue } = await supabase
     .schema("app_private")
     .from("issues")
-    .select("title, content, category, status, author_name, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at, result_updated_at")
+    .select("title, content, category, status, author_name, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at")
     .eq("id", targetId)
     .maybeSingle();
 
@@ -410,7 +409,7 @@ export async function syncIssueStatusChangedToNotion(
   const { data: issue } = await supabase
     .schema("app_private")
     .from("issues")
-    .select("title, category, author_name, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at, result_updated_at")
+    .select("title, category, author_name, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at")
     .eq("id", targetId)
     .maybeSingle();
 
@@ -449,7 +448,7 @@ export async function syncIssueSupportToNotion(
   const { data: issue } = await supabase
     .schema("app_private")
     .from("issues")
-    .select("title, category, status, author_name, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at, result_updated_at")
+    .select("title, category, status, author_name, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at")
     .eq("id", targetId)
     .maybeSingle();
 
@@ -487,7 +486,7 @@ export async function syncIssueResultUpdatedToNotion(
   const { data: issue } = await supabase
     .schema("app_private")
     .from("issues")
-    .select("title, category, status, author_name, support_count, support_goal, result_content, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at, result_updated_at")
+    .select("title, category, status, author_name, support_count, support_goal, result_content, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at")
     .eq("id", targetId)
     .maybeSingle();
 

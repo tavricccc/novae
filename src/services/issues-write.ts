@@ -24,12 +24,10 @@ interface IssueResponseRecord {
   support_enabled: boolean;
   support_goal: number | null;
   created_at_ms: number | null;
-  updated_at_ms: number | null;
   support_deadline_at_ms: number | null;
   response_deadline_at_ms: number | null;
   review_approved_at_ms: number | null;
   result_content?: string | null;
-  result_updated_at_ms?: number | null;
   support_met_at_ms: number | null;
   review_rejection_reason?: string;
   currentUserSupported?: boolean;
@@ -61,12 +59,10 @@ function normalizeIssueResponse(issue: IssueResponseRecord): IssueRecord {
     support_enabled: issue.support_enabled,
     support_goal: issue.support_goal,
     created_at: dateFromMs(issue.created_at_ms),
-    updated_at: dateFromMs(issue.updated_at_ms),
     support_deadline_at: dateFromMs(issue.support_deadline_at_ms),
     response_deadline_at: dateFromMs(issue.response_deadline_at_ms),
     review_approved_at: dateFromMs(issue.review_approved_at_ms),
     result_content: issue.result_content ?? undefined,
-    result_updated_at: dateFromMs(issue.result_updated_at_ms),
     support_met_at: dateFromMs(issue.support_met_at_ms),
     review_rejection_reason: issue.review_rejection_reason,
     currentUserSupported: issue.currentUserSupported,
@@ -88,9 +84,7 @@ function normalizeDiscussionCommentResponse(comment: CommentResponseRecord): Dis
     author_uid: comment.author_uid,
     author_name: comment.author_name,
     author_photo_url: comment.author_photo_url,
-    is_admin_comment: comment.is_admin_comment,
     created_at: dateFromMs(comment.created_at_ms),
-    updated_at: dateFromMs(comment.updated_at_ms),
     replies: (comment.replies ?? []).map(normalizeDiscussionCommentResponse),
   };
 }

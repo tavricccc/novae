@@ -23,7 +23,6 @@ interface IssueRow {
   created_at: string;
   response_deadline_at: string | null;
   result_content: string | null;
-  result_updated_at: string | null;
   review_approved_at: string | null;
   review_rejection_reason: string | null;
   status: string;
@@ -34,7 +33,6 @@ interface IssueRow {
   support_met_at: string | null;
   title: string;
   title_search: string;
-  updated_at: string;
 }
 
 interface CommentRow {
@@ -45,9 +43,7 @@ interface CommentRow {
   author_name: string;
   author_photo_url: string | null;
   content: string;
-  is_admin_comment: boolean;
   created_at: string;
-  updated_at: string;
 }
 
 interface AnnouncementRow {
@@ -60,8 +56,6 @@ interface AnnouncementRow {
   like_count: number;
   comment_count: number;
   published_at: string;
-  created_at: string;
-  updated_at: string;
 }
 
 interface AnnouncementCommentRow {
@@ -72,9 +66,7 @@ interface AnnouncementCommentRow {
   author_name: string;
   author_photo_url: string | null;
   content: string;
-  is_admin_comment: boolean;
   created_at: string;
-  updated_at: string;
 }
 
 interface NotificationRow {
@@ -482,7 +474,6 @@ interface AppApiFunctions {
     issue_id: string;
     private_to_owner_categories: string[];
     result_content: string | null;
-    result_updated_at: string | null;
     review_required_categories: string[];
   }, Json>;
   backend_toggle_support: AppFunction<{

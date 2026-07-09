@@ -45,7 +45,7 @@ export function useIssueDisplay(issue: Ref<IssueRecord> | (() => IssueRecord)) {
   });
   const primaryTimeValue = computed(() => {
     const i = resolvedIssue.value;
-    if (isClosed.value) return i.closed_at ?? i.updated_at ?? i.created_at;
+    if (isClosed.value) return i.closed_at ?? i.created_at;
     return issueRequiresReview(i.category) && i.review_approved_at ? i.review_approved_at : i.created_at;
   });
   const primaryTimeValueLabel = computed(() => formatDate(primaryTimeValue.value));

@@ -18,13 +18,13 @@ export function getIssueStatusBucket(issue: Pick<IssueRecord, 'status'>): IssueS
 }
 
 export function getIssueLatestSortTime(
-  issue: Pick<IssueRecord, 'closed_at' | 'created_at' | 'status' | 'updated_at'>,
+  issue: Pick<IssueRecord, 'closed_at' | 'created_at' | 'review_approved_at' | 'status'>,
   statusBucket: IssueStatusBucket,
 ) {
   if (statusBucket === 'closed' || isClosedIssueStatus(issue.status)) {
-    return issue.closed_at?.getTime() ?? issue.updated_at?.getTime() ?? issue.created_at?.getTime() ?? 0;
+    return issue.closed_at?.getTime() ?? issue.created_at?.getTime() ?? 0;
   }
-  return issue.created_at?.getTime() ?? 0;
+  return issue.review_approved_at?.getTime() ?? issue.created_at?.getTime() ?? 0;
 }
 
 export function sortIssuesByOption(
@@ -80,7 +80,6 @@ export function getIssueOperationTimeItems(issue: IssueRecord): RawIssueTimeItem
     { label: '達標時間', shortLabel: '達標', value: issue.support_met_at },
     { label: '回覆期限', shortLabel: '回覆期限', value: issue.response_deadline_at },
     { label: '結案時間', shortLabel: '結案', value: issue.closed_at },
-    { label: '結果更新時間', shortLabel: '結果更新', value: issue.result_updated_at },
   ];
 
   return items.filter((item): item is RawIssueTimeItem => item.value instanceof Date);

@@ -88,7 +88,6 @@ export function normalizeIssueRecord(id: string, data: Record<string, unknown>):
     title: String(data.title ?? ''),
     content: String(data.content ?? ''),
     created_at: normalizeDate(data.created_at),
-    updated_at: normalizeDate(data.updated_at),
     closed_at: normalizeDate(data.closed_at),
     support_count: typeof data.support_count === 'number' ? data.support_count : 0,
     status: normalizeStatus(data.status),
@@ -105,7 +104,6 @@ export function normalizeIssueRecord(id: string, data: Record<string, unknown>):
     result_content: typeof data.result_content === 'string'
       ? data.result_content
       : undefined,
-    result_updated_at: normalizeDate(data.result_updated_at),
     support_met_at: normalizeDate(
       data.support_met_at
     ) ?? defaults.support_met_at,

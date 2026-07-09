@@ -32,7 +32,6 @@ export interface IssueRecord {
   title: string;
   content: string;
   created_at: Date | null;
-  updated_at: Date | null;
   closed_at: Date | null;
   support_count: number;
   status: IssueStatus;
@@ -43,7 +42,6 @@ export interface IssueRecord {
   response_deadline_at: Date | null;
   review_approved_at: Date | null;
   result_content?: string;
-  result_updated_at?: Date | null;
   support_met_at: Date | null;
   review_rejection_reason?: string;
   currentUserSupported?: boolean;
@@ -83,9 +81,7 @@ export interface DiscussionCommentRecord {
   author_uid: string;
   author_name: string;
   author_photo_url: string | null;
-  is_admin_comment: boolean;
   created_at: Date | null;
-  updated_at: Date | null;
   replies: DiscussionCommentRecord[];
 }
 
@@ -194,8 +190,6 @@ export interface AnnouncementRecord {
   author_uid: string;
   author_name: string;
   author_photo_url: string | null;
-  created_at: Date | null;
-  updated_at: Date | null;
   published_at: Date | null;
   like_count: number;
   comment_count: number;

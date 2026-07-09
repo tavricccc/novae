@@ -2,6 +2,23 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善提案時間顯示與排序",
+    version: "v2.0.129",
+    date: "2026-07-09",
+    time: "20:20",
+    items: [
+      {
+        title: "已結案提案統一依結案時間呈現與排序。"
+      },
+      {
+        title: "進行中提案依審核通過時間或提案時間排序，讓不同審核流程的排列更一致。"
+      },
+      {
+        title: "簡化提案、留言與公告的時間資訊，降低重複時間造成的閱讀負擔。"
+      }
+    ]
+  },
+  {
     title: "提升系統維護穩定性",
     version: "v2.0.128",
     date: "2026-07-09",
