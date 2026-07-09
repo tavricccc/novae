@@ -7,13 +7,18 @@
       aria-labelledby="status-dialog-title"
       tabindex="-1"
     >
-      <h3 id="status-dialog-title" class="dialog-title">更新提案狀態</h3>
+      <h3 id="status-dialog-title" class="dialog-title">
+        {{ step === 1 ? '更新提案狀態' : '填寫提案結果' }}
+      </h3>
       <p class="dialog-description">
-        選擇下一個狀態；結案時請填寫使用者看得到的處理結果。
+        {{ step === 1
+          ? '請選擇下一個狀態。'
+          : '結案時請填寫使用者看得到的處理結果。' }}
       </p>
 
       <div class="mt-5 space-y-4">
-        <div>
+        <!-- Step 1: Select Status -->
+        <div v-if="step === 1">
           <p class="field-label mb-2">下一個狀態</p>
           <div class="grid gap-2">
             <button
@@ -41,43 +46,42 @@
               </span>
             </button>
           </div>
+
+          <p
+            v-if="!requiresResult && issue.result_content"
+            class="mt-4 rounded-xl border border-warning/20 bg-warning-container/40 px-3 py-2 text-xs font-semibold leading-5 text-on-warning-container"
+          >
+            改為處理中會清除目前的提案結果說明。
+          </p>
         </div>
 
-        <div v-if="requiresResult" class="space-y-4 pt-4 border-t border-ink-100 dark:border-ink-800/60">
-          <div class="space-y-2">
-            <label class="field-label" for="closed-result-content">提案結果說明</label>
-            <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm transition-colors focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 dark:border-ink-800 dark:bg-ink-900">
-              <textarea
-                id="closed-result-content"
-                v-model="resultContent"
-                class="block min-h-36 w-full resize-none bg-transparent px-4 py-3 text-base leading-6 text-ink-800 outline-none placeholder:text-ink-400 disabled:cursor-not-allowed disabled:text-ink-500 dark:text-ink-100 dark:placeholder:text-ink-500 md:text-sm"
-                maxlength="2000"
-                placeholder="請輸入提案結果說明（例如實行方式、預計時程或無法辦理的原因）"
-                :disabled="saving"
-              ></textarea>
-              <div class="flex items-center justify-end border-t border-ink-100 bg-ink-50/50 px-4 py-2 text-xs font-medium text-ink-500 dark:border-ink-800 dark:bg-ink-950/30 dark:text-ink-400">
-                <span :class="{ 'text-error': resultContent.length > 1800 }">{{ resultContent.length }} / 2000</span>
-              </div>
+        <!-- Step 2: Fill Result -->
+        <div v-else-if="step === 2" class="space-y-2">
+          <label class="field-label" for="closed-result-content">提案結果說明</label>
+          <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm transition-colors focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 dark:border-ink-800 dark:bg-ink-900">
+            <textarea
+              id="closed-result-content"
+              v-model="resultContent"
+              class="block min-h-36 w-full resize-none bg-transparent px-4 py-3 text-base leading-6 text-ink-800 outline-none placeholder:text-ink-400 disabled:cursor-not-allowed disabled:text-ink-500 dark:text-ink-100 dark:placeholder:text-ink-500 md:text-sm"
+              maxlength="2000"
+              placeholder="請輸入提案結果說明（例如實行方式、預計時程或無法辦理的原因）"
+              :disabled="saving"
+            ></textarea>
+            <div class="flex items-center justify-end border-t border-ink-100 bg-ink-50/50 px-4 py-2 text-xs font-medium text-ink-500 dark:border-ink-800 dark:bg-ink-950/30 dark:text-ink-400">
+              <span :class="{ 'text-error': resultContent.length > 1800 }">{{ resultContent.length }} / 2000</span>
             </div>
           </div>
         </div>
-
-        <p
-          v-else-if="issue.result_content"
-          class="rounded-xl border border-warning/20 bg-warning-container/40 px-3 py-2 text-xs font-semibold leading-5 text-on-warning-container"
-        >
-          改為處理中會清除目前的提案結果說明。
-        </p>
       </div>
 
       <p v-if="errorMsg" class="mt-3 text-xs font-semibold text-error">{{ errorMsg }}</p>
 
       <div class="dialog-actions">
-        <button type="button" class="button-secondary" :disabled="saving" @click="handleClose">
-          取消
+        <button type="button" class="button-secondary" :disabled="saving" @click="handleSecondaryClick">
+          {{ step === 1 ? '取消' : '返回' }}
         </button>
-        <button type="button" class="button-primary" :disabled="saving" @click="save">
-          {{ saving ? '儲存中...' : saveLabel }}
+        <button type="button" class="button-primary" :disabled="saving" @click="handlePrimaryClick">
+          {{ primaryButtonLabel }}
         </button>
       </div>
     </section>
@@ -148,16 +152,45 @@ function initialStatus(): EditableStatus {
   return 'processing';
 }
 
+const step = ref(1);
 const nextStatus = ref<EditableStatus>(initialStatus());
 const resultContent = ref(props.issue.result_content ?? '');
 const saving = ref(false);
 const errorMsg = ref('');
 const requiresResult = computed(() => nextStatus.value === 'completed' || nextStatus.value === 'infeasible');
-const saveLabel = computed(() => requiresResult.value ? '儲存狀態與結果' : '改為處理中');
+
+const primaryButtonLabel = computed(() => {
+  if (saving.value) return '儲存中...';
+  if (step.value === 1) {
+    return nextStatus.value === 'processing' ? '確認' : '下一步';
+  }
+  return '儲存狀態與結果';
+});
 
 function handleClose() {
   if (saving.value) return;
   emit('close');
+}
+
+function handlePrimaryClick() {
+  if (step.value === 1) {
+    if (nextStatus.value === 'processing') {
+      save();
+    } else {
+      step.value = 2;
+    }
+  } else if (step.value === 2) {
+    save();
+  }
+}
+
+function handleSecondaryClick() {
+  if (step.value === 1) {
+    handleClose();
+  } else {
+    step.value = 1;
+    errorMsg.value = '';
+  }
 }
 
 async function save() {
@@ -194,6 +227,7 @@ watch(
   () => [props.open, props.issue.id, props.issue.status, props.initialAction] as const,
   () => {
     if (!props.open) return;
+    step.value = 1;
     nextStatus.value = initialStatus();
     if (!availableStatusOptions.value.some((option) => option.value === nextStatus.value)) {
       nextStatus.value = availableStatusOptions.value[0]?.value ?? 'completed';

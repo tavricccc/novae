@@ -7,14 +7,18 @@
       aria-labelledby="review-dialog-title"
       tabindex="-1"
     >
-      <h3 id="review-dialog-title" class="dialog-title">審核此提案</h3>
+      <h3 id="review-dialog-title" class="dialog-title">
+        {{ step === 1 ? '審核此提案' : '填寫未通過原因' }}
+      </h3>
       <p class="dialog-description">
-        請審查提案內容，決定是否通過審核。審核通過後，提案將對外公開並開放附議。
+        {{ step === 1
+          ? '請審查提案內容，決定是否通過審核。審核通過後，提案將對外公開並開放附議。'
+          : '請簡要說明未通過原因，此原因會發送通知給提案者。' }}
       </p>
 
       <div class="mt-5 space-y-4">
-        <!-- Moderation choice -->
-        <div>
+        <!-- Moderation choice (Step 1) -->
+        <div v-if="step === 1">
           <p class="field-label mb-2">審核結果</p>
           <div class="grid gap-2">
             <button
@@ -44,8 +48,8 @@
           </div>
         </div>
 
-        <!-- Rejection reason input (visible only when rejected) -->
-        <div v-if="reviewDecision === 'rejected'" class="space-y-2 pt-4 border-t border-ink-100 dark:border-ink-800/60">
+        <!-- Rejection reason input (Step 2) -->
+        <div v-else-if="step === 2" class="space-y-2">
           <label class="field-label" for="review-rejection-reason">不通過原因</label>
           <div class="overflow-hidden rounded-xl border border-ink-200 bg-white shadow-sm transition-colors focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/20 dark:border-ink-800 dark:bg-ink-900">
             <textarea
@@ -66,16 +70,16 @@
       <p v-if="errorMsg" class="mt-3 text-xs font-semibold text-error">{{ errorMsg }}</p>
 
       <div class="dialog-actions">
-        <button type="button" class="button-secondary" :disabled="saving" @click="handleClose">
-          取消
+        <button type="button" class="button-secondary" :disabled="saving" @click="handleSecondaryClick">
+          {{ step === 1 ? '取消' : '返回' }}
         </button>
         <button
           type="button"
           class="button-primary"
           :disabled="saving"
-          @click="submitReview"
+          @click="handlePrimaryClick"
         >
-          {{ saving ? '儲存中...' : '儲存審核結果' }}
+          {{ primaryButtonLabel }}
         </button>
       </div>
     </section>
@@ -83,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import DialogOverlay from '@/components/ui/DialogOverlay.vue';
 import { moderateIssueStatus } from '@/services/issues';
 import type { IssueRecord } from '@/types';
@@ -111,14 +115,44 @@ const reviewOptions = [
   },
 ];
 
+const step = ref(1);
 const reviewDecision = ref<'approved' | 'rejected'>('approved');
 const rejectionReason = ref(props.issue.review_rejection_reason ?? '');
 const saving = ref(false);
 const errorMsg = ref('');
 
+const primaryButtonLabel = computed(() => {
+  if (saving.value) return '儲存中...';
+  if (step.value === 1) {
+    return reviewDecision.value === 'approved' ? '確認' : '下一步';
+  }
+  return '儲存審核結果';
+});
+
 function handleClose() {
   if (saving.value) return;
   emit('close');
+}
+
+function handlePrimaryClick() {
+  if (step.value === 1) {
+    if (reviewDecision.value === 'approved') {
+      submitReview();
+    } else {
+      step.value = 2;
+    }
+  } else if (step.value === 2) {
+    submitReview();
+  }
+}
+
+function handleSecondaryClick() {
+  if (step.value === 1) {
+    handleClose();
+  } else {
+    step.value = 1;
+    errorMsg.value = '';
+  }
 }
 
 async function submitReview() {
@@ -146,4 +180,16 @@ async function submitReview() {
     saving.value = false;
   }
 }
+
+watch(
+  () => props.open,
+  (newOpen) => {
+    if (newOpen) {
+      step.value = 1;
+      reviewDecision.value = 'approved';
+      rejectionReason.value = props.issue.review_rejection_reason ?? '';
+      errorMsg.value = '';
+    }
+  }
+);
 </script>

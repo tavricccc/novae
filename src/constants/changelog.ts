@@ -2,6 +2,20 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "調整提案審核與狀態變更流程",
+    version: "v2.0.125",
+    date: "2026-07-09",
+    time: "13:26",
+    items: [
+      {
+        title: "改善提案審核對話框流程，選擇通過時直接確認，選擇不通過時引導至填寫原因頁面。"
+      },
+      {
+        title: "調整提案狀態變更對話框，改為處理中時直接完成，改為已完成或無法實行時提供結果輸入頁面。"
+      }
+    ]
+  },
+  {
     title: "修正介面元件顯示問題",
     version: "v2.0.124",
     date: "2026-07-09",
