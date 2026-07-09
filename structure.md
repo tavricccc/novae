@@ -67,6 +67,7 @@
 - supabase/migrations/202607090001_align_issue_list_sorting.sql：修正提案列表 RPC 的已結案排序，讓已結案分類依結案操作時間分頁與回傳。
 - supabase/migrations/202607090002_fix_most_supported_cursor.sql：修正提案列表依附議數排序時的 cursor 回傳與同分頁條件，避免附議數相同資料在載入更多時遺漏。
 - supabase/migrations/202607090003_harden_runtime_data_constraints.sql：補強推播 token 欄位格式約束，並在部署時驗證既有核心資料 constraint。
+- supabase/migrations/202607090004_fix_announcement_like_ambiguity.sql：修正公告按讚資料庫函式欄位名稱歧義，讓按讚與取消讚穩定寫入。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、統一 API envelope、入口限流、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/action-registry.ts：受控 action metadata 來源，集中 action 名稱、domain、handler、限流分級、冪等與 requestId 要求，供 gateway 與架構測試防止清單分散。
 - supabase/functions/backendAction/response.ts：受控 action 統一成功 / 錯誤 envelope helper，保留 requestId、錯誤代碼、公開錯誤訊息與 HTTP 狀態。

@@ -21,30 +21,29 @@
           <span class="min-w-0 truncate font-normal text-ink-400 dark:text-ink-500">{{ dateLabel }}</span>
         </div>
         <div class="flex shrink-0 items-center justify-end gap-1.5" @click.stop="stopRowActionClick">
-          <!-- Likes button -->
           <button
             type="button"
-            class="button-toolbar flex h-10 min-w-10 items-center justify-center gap-1 rounded-full px-2.5"
-            :class="announcement.currentUserLiked ? 'text-red-600 dark:text-red-300' : ''"
+            class="button-toolbar h-10 w-10 rounded-full p-0"
+            title="查看留言"
+            aria-label="查看留言"
+            @click.stop="emit('openComments', announcement)"
+          >
+            <AppIcon name="comment" />
+          </button>
+
+          <button
+            type="button"
+            :class="[
+              announcement.currentUserLiked ? 'button-icon-pill-filled' : 'button-icon-pill',
+              '!h-8 !gap-1 !px-2.5 text-xs',
+            ]"
             :disabled="liking"
             :title="announcement.currentUserLiked ? '取消讚' : '按讚'"
             :aria-label="announcement.currentUserLiked ? '取消讚' : '按讚'"
             @click.stop="emit('toggleLike', announcement)"
           >
             <AppIcon name="heart" :filled="announcement.currentUserLiked" />
-            <span class="text-xs font-semibold tabular-nums">{{ announcement.like_count }}</span>
-          </button>
-
-          <!-- comments button -->
-          <button
-            type="button"
-            class="button-toolbar flex h-10 min-w-10 items-center justify-center gap-1 rounded-full px-2.5"
-            title="查看留言"
-            aria-label="查看留言"
-            @click.stop="emit('openComments', announcement)"
-          >
-            <AppIcon name="comment" />
-            <span class="text-xs font-semibold tabular-nums">{{ announcement.comment_count }}</span>
+            <span class="text-sm font-semibold leading-none tabular-nums">{{ announcement.like_count }}</span>
           </button>
 
           <CompactActionMenu
@@ -97,31 +96,30 @@
         {{ dateLabel }}
       </div>
 
-      <div class="flex items-center gap-1 w-36 shrink-0 pr-2" @click.stop="stopRowActionClick">
-        <!-- Likes button -->
+      <div class="flex items-center gap-1 w-28 shrink-0 pr-2" @click.stop="stopRowActionClick">
         <button
           type="button"
-          class="button-toolbar flex h-7 items-center justify-center gap-1 rounded-full px-2"
-          :class="announcement.currentUserLiked ? 'text-red-600 dark:text-red-300' : ''"
+          :class="[
+            announcement.currentUserLiked ? 'button-icon-pill-filled' : 'button-icon-pill',
+            '!h-8 !gap-1 !px-2.5 text-xs',
+          ]"
           :disabled="liking"
           :title="announcement.currentUserLiked ? '取消讚' : '按讚'"
           :aria-label="announcement.currentUserLiked ? '取消讚' : '按讚'"
           @click.stop="emit('toggleLike', announcement)"
         >
           <AppIcon name="heart" :filled="announcement.currentUserLiked" />
-          <span class="text-xs font-semibold tabular-nums">{{ announcement.like_count }}</span>
+          <span class="text-sm font-semibold leading-none tabular-nums">{{ announcement.like_count }}</span>
         </button>
 
-        <!-- Comments button -->
         <button
           type="button"
-          class="button-toolbar flex h-7 items-center justify-center gap-1 rounded-full px-2"
+          class="button-toolbar h-7 w-7 rounded-full p-0"
           title="查看留言"
           aria-label="查看留言"
           @click="emit('openComments', announcement)"
         >
           <AppIcon name="comment" />
-          <span class="text-xs font-semibold tabular-nums">{{ announcement.comment_count }}</span>
         </button>
       </div>
 
@@ -165,7 +163,7 @@ const dateLabel = computed(() => formatDateOnly(props.announcement.published_at)
 const stopRowActionClick = () => undefined;
 
 const tableCols = computed(() => {
-  const cols = ['6rem', '8rem', '1fr', '8rem', '9rem'];
+  const cols = ['6rem', '8rem', '1fr', '8rem', '7rem'];
   if (props.canManage) cols.push('2.5rem');
   return cols.join(' ');
 });

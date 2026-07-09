@@ -140,6 +140,7 @@ test('backendAction covers frontend actions and Cloudinary direct upload', async
   const http = await read('supabase/functions/_shared/http.ts');
   const uploads = await read('src/services/uploads.ts');
   const announcementsService = await read('src/services/announcements.ts');
+  const announcementLikeFixMigration = await read('supabase/migrations/202607090004_fix_announcement_like_ambiguity.sql');
   const backendActionService = await read('src/services/backend-action.ts');
   const supabaseAuthService = await read('src/services/supabase-auth.ts');
   const functionErrorService = await read('src/services/supabase-function-error.ts');
@@ -190,6 +191,8 @@ test('backendAction covers frontend actions and Cloudinary direct upload', async
   assert.match(backendActionService, /readSupabaseFunctionError/u);
   assert.match(backendActionService, /BackendActionEnvelope/u);
   assert.match(announcementsService, /setAnnouncementLike[\s\S]*requestId: createRequestId\(\)/u);
+  assert.match(announcementLikeFixMigration, /on conflict on constraint announcement_likes_pkey/u);
+  assert.match(announcementLikeFixMigration, /announcement_likes\.uid = backend_set_announcement_like\.actor_uid/u);
   assert.match(supabaseAuthService, /Authorization: `Bearer \$\{token\.token\}`/u);
   assert.match(functionErrorService, /response\.clone\(\)\.json/u);
   assert.match(firebaseAuth, /accounts:lookup/u);
