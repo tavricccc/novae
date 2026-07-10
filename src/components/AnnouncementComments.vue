@@ -7,6 +7,7 @@
     :error="error"
     :loaded="loaded"
     :loading="loading"
+    :focus-comment-id="focusCommentId"
     :has-more="hasMore"
     :loading-more="loadingMore"
     :on-load-more="loadMoreComments"
@@ -28,8 +29,10 @@ import type { DiscussionCommentRecord } from '@/types';
 const props = withDefaults(defineProps<{
   announcementId: string;
   compactHeader?: boolean;
+  focusCommentId?: string;
 }>(), {
   compactHeader: false,
+  focusCommentId: '',
 });
 
 const emit = defineEmits<{

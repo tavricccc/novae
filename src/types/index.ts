@@ -171,6 +171,7 @@ export interface NotificationRecord {
   type: NotificationType;
   target_type: NotificationTargetType;
   target_id: string;
+  comment_id: string | null;
   title: string;
   actor_uid: string | null;
   actor_name: string | null;

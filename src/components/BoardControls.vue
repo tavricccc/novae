@@ -194,7 +194,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import AppIcon from '@/components/ui/AppIcon.vue';
 import PillSegmentedControl from '@/components/ui/PillSegmentedControl.vue';
 import { ISSUE_FILTER_OPTIONS } from '@/constants/categories';
@@ -221,6 +221,7 @@ const issueSortOptions = [
   { value: 'ending-soon', label: '即將截止' },
 ] as const;
 
+const route = useRoute();
 const router = useRouter();
 const visibleSortOptions = computed(() =>
   props.statusTab === 'closed'
@@ -279,6 +280,7 @@ async function handleCategoryChange(value: string) {
   await router.push({
     name: 'issues',
     params: { filter: value },
+    query: route.query,
   });
 }
 

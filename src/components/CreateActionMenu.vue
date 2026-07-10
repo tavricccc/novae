@@ -105,6 +105,7 @@ type CreateActionSelection =
 const props = defineProps<{
   canCreateAnnouncement?: boolean;
   defaultCategory: IssueCategory;
+  defaultKind?: CreateActionSelection['kind'];
 }>();
 
 const emit = defineEmits<{
@@ -123,10 +124,7 @@ const { dialogRef } = useDialogFocus(menuOpen, {
 });
 
 function openMenu() {
-  selectedAction.value = {
-    kind: 'issue',
-    category: props.defaultCategory,
-  };
+  selectedAction.value = getDefaultAction();
   menuOpen.value = true;
 }
 
@@ -145,6 +143,17 @@ function selectAnnouncement() {
   selectedAction.value = { kind: 'announcement' };
 }
 
+function getDefaultAction(): CreateActionSelection {
+  if (props.defaultKind === 'announcement' && props.canCreateAnnouncement) {
+    return { kind: 'announcement' };
+  }
+
+  return {
+    kind: 'issue',
+    category: props.defaultCategory,
+  };
+}
+
 function confirmSelection() {
   const action = selectedAction.value;
   menuOpen.value = false;
@@ -156,13 +165,10 @@ function confirmSelection() {
 }
 
 watch(
-  () => props.defaultCategory,
-  (category) => {
+  () => [props.defaultCategory, props.defaultKind, props.canCreateAnnouncement] as const,
+  () => {
     if (!menuOpen.value) {
-      selectedAction.value = {
-        kind: 'issue',
-        category,
-      };
+      selectedAction.value = getDefaultAction();
     }
   },
 );

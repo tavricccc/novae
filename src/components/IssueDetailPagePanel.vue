@@ -61,6 +61,7 @@
         v-if="commentsEnabled"
         :can-compose="commentsEnabled"
         :compact-header="compactHeader"
+        :focus-comment-id="focusCommentId"
         :issue-id="issue.id"
         class="h-full"
         @content-unavailable="emit('contentUnavailable', $event)"
@@ -131,11 +132,13 @@ const props = withDefaults(
   defineProps<{
     issue: IssueRecord;
     currentUserSupported: boolean;
+    focusCommentId?: string;
     supportCount: number;
     supportClosed: boolean;
     initialTab?: 'details' | 'comments';
   }>(),
   {
+    focusCommentId: '',
     initialTab: 'details',
   }
 );

@@ -26,7 +26,7 @@
       </span>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto py-2 pr-1">
+    <div ref="scrollContainerRef" class="min-h-0 flex-1 overflow-y-auto py-2 pr-1">
       <SkeletonCommentList v-if="visibleLoading" />
 
       <EmptyStatePanel
@@ -54,6 +54,7 @@
           :can-delete="canDeleteComment(comment)"
           :can-delete-reply="canDeleteComment"
           :can-reply="canCompose"
+          :focus-comment-id="focusCommentId"
           :deleting="deletingId === comment.id"
           :deleting-id="deletingId"
           @delete="requestDeleteComment(comment.id)"
@@ -102,7 +103,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRef } from 'vue';
+import { computed, nextTick, ref, toRef, watch } from 'vue';
 import CommentComposer from '@/components/CommentComposer.vue';
 import CommentItem from '@/components/CommentItem.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
@@ -127,6 +128,7 @@ const props = withDefaults(defineProps<{
   submitError: string;
   submitting: boolean;
   targetId: string;
+  focusCommentId?: string;
   onDeleteComment: (commentId: string) => Promise<void>;
   onLoadMore?: () => Promise<void>;
   onRetry: () => Promise<void>;
@@ -136,6 +138,7 @@ const props = withDefaults(defineProps<{
   canCompose: true,
   compactHeader: false,
   disabledComposerLabel: '目前不開放留言',
+  focusCommentId: '',
   hasMore: false,
   loadingMore: false,
   onLoadMore: async () => undefined,
@@ -144,6 +147,8 @@ const props = withDefaults(defineProps<{
 const isComposerOpen = ref(false);
 const replyingToCommentId = ref('');
 const commentPendingDelete = ref('');
+const scrollContainerRef = ref<HTMLElement | null>(null);
+let focusInProgress = false;
 const { visibleLoading } = useMinimumLoading(toRef(props, 'loading'));
 const infiniteScrollDisabled = computed(() => props.loading || props.loadingMore || !props.hasMore);
 const { sentinel: loadMoreSentinel } = useInfiniteScroll({
@@ -196,4 +201,47 @@ async function handleSubmitComment(payload: { content: string; parentCommentId: 
     replyingToCommentId.value = '';
   }
 }
+
+function containsComment(comments: DiscussionCommentRecord[], commentId: string) {
+  return comments.some((comment) =>
+    comment.id === commentId || comment.replies.some((reply) => reply.id === commentId)
+  );
+}
+
+async function focusTargetComment() {
+  const commentId = props.focusCommentId?.trim() ?? '';
+  if (!commentId || props.loading || focusInProgress) return;
+
+  if (!containsComment(props.comments, commentId)) {
+    if (props.hasMore && !props.loadingMore) {
+      focusInProgress = true;
+      try {
+        await props.onLoadMore();
+      } finally {
+        focusInProgress = false;
+      }
+    }
+    return;
+  }
+
+  await nextTick();
+  const target = Array.from(scrollContainerRef.value?.querySelectorAll<HTMLElement>('[data-comment-id]') ?? [])
+    .find((element) => element.dataset.commentId === commentId);
+  target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+watch(
+  () => [
+    props.focusCommentId,
+    props.loaded,
+    props.loading,
+    props.loadingMore,
+    props.comments.length,
+    props.comments.map((comment) => `${comment.id}:${comment.replies.length}`).join('|'),
+  ] as const,
+  () => {
+    void focusTargetComment();
+  },
+  { immediate: true },
+);
 </script>

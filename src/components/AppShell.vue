@@ -89,6 +89,7 @@
         <CreateActionMenu
           :can-create-announcement="isAdmin"
           :default-category="defaultCreateCategory"
+          :default-kind="defaultCreateKind"
           @create-announcement="handleCreateAnnouncement"
           @create-issue="handleCreateIssue"
         >
@@ -193,6 +194,7 @@ const displayPhotoUrl = computed(() => customPhotoUrl.value || user.value?.photo
 const defaultCreateCategory = computed<IssueCategory>(() =>
   isIssueCategory(activeFilter.value) ? activeFilter.value : DEFAULT_ISSUE_CATEGORY
 );
+const defaultCreateKind = computed(() => isAnnouncementRouteActive.value ? 'announcement' : 'issue');
 const mobileRouteNavItems = computed(() => [
   {
     icon: 'comment' as const,

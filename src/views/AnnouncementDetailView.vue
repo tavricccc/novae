@@ -19,6 +19,7 @@
       :announcement="announcement"
       :can-manage="isAdmin"
       :initial-tab="initialTab"
+      :focus-comment-id="focusCommentId"
       :liking="liking"
       @back="goBackToAnnouncements"
       @content-unavailable="handleAnnouncementUnavailable"
@@ -97,6 +98,10 @@ let realtimeRefreshTimer = 0;
 const sessionLoading = computed(() => loading.value || !initialized.value);
 const canLoadAnnouncement = computed(() => initialized.value && isAllowedUser.value);
 const initialTab = computed(() => route.query.tab === 'comments' ? 'comments' : 'details');
+const focusCommentId = computed(() => {
+  const value = route.query.comment;
+  return typeof value === 'string' ? value : '';
+});
 const {
   hasProblem: sessionLoadingHasProblem,
   isOnline: sessionOnline,

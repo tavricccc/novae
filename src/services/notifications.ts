@@ -132,6 +132,7 @@ function normalizeNotificationRecord(
     type: normalizeNotificationType(data.type),
     target_type: normalizeTargetType(data.target_type),
     target_id: String(data.target_id ?? ''),
+    comment_id: normalizeNullableString(data.comment_id),
     title: String(data.title ?? ''),
     actor_uid: normalizeNullableString(data.actor_uid),
     actor_name: normalizeNullableString(data.actor_name),

@@ -2,6 +2,7 @@ import { computed, onScopeDispose, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { normalizeIssueRouteFilterParam } from '@/constants/categories';
 import { getDerivedIssueStatus } from '@/lib/issue-status';
+import { getIssueStatusBucket } from '@/lib/issue-timeline';
 import { normalizeRouteParam } from '@/lib/route';
 import { useToast } from '@/composables/useToast';
 import { fetchIssueRecordById } from '@/services/issues';
@@ -30,10 +31,19 @@ export function useIssueRouteDetail(
     return !routeIssue.value.support_enabled || getDerivedIssueStatus(routeIssue.value) !== 'pending';
   });
 
-  function issueListRoute() {
+  function issueListRoute(issue?: IssueRecord | null) {
+    const query = { ...route.query };
+    delete query.tab;
+    delete query.comment;
+    if (issue && getIssueStatusBucket(issue) === 'closed') {
+      query.status = 'closed';
+    } else if (issue) {
+      delete query.status;
+    }
     return {
       name: 'issues',
       params: { filter: normalizeIssueRouteFilterParam(route.params.filter) },
+      query,
       hash: route.hash,
     };
   }
@@ -46,10 +56,11 @@ export function useIssueRouteDetail(
   }
 
   function closeRouteIssue() {
+    const currentIssue = routeIssue.value;
     requestId += 1;
     routeIssue.value = null;
     routeIssueLoading.value = false;
-    router.replace(issueListRoute());
+    router.replace(issueListRoute(currentIssue));
   }
 
   function prefillRouteIssue(issue: IssueRecord) {

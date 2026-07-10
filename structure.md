@@ -73,6 +73,7 @@
 - supabase/migrations/202607090007_remove_issue_result_updated_at.sql：簡化提案、留言與公告時間資料，調整提案列表排序時間規則，並移除提案更新時間、獨立結果更新時間、留言更新標記與公告重複時間欄位。
 - supabase/migrations/202607090008_fix_removed_time_rpc_regressions.sql：修正時間欄位簡化後的管理統計與我的提案讀取 RPC，避免已移除欄位或排序參照造成讀取失敗。
 - supabase/migrations/202607090009_fix_push_token_conflict_target.sql：修正推播 token 註冊 RPC 的唯一鍵衝突目標，避免欄位與參數名稱歧義造成通知設定失敗。
+- supabase/migrations/202607100001_notification_comment_targets.sql：補齊通知對應留言目標欄位，讓提案與公告留言通知可導向指定留言與回覆。
 - supabase/functions/backendAction/index.ts：前端受控 action HTTP 入口，集中 CORS、Firebase 驗證、使用者角色查詢、healthcheck、統一 API envelope、入口限流、action 分派與冪等保護，不直接承載各領域資料流程。
 - supabase/functions/backendAction/action-registry.ts：受控 action metadata 來源，集中 action 名稱、domain、handler、限流分級、冪等與 requestId 要求，供 gateway 與架構測試防止清單分散。
 - supabase/functions/backendAction/response.ts：受控 action 統一成功 / 錯誤 envelope helper，保留 requestId、錯誤代碼、公開錯誤訊息與 HTTP 狀態。

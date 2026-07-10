@@ -63,6 +63,13 @@ function isIssueUpdateNotificationType(type: string) {
     || type === "support_goal_met";
 }
 
+function commentIdForEvent(event: OutboxEvent) {
+  if (event.event_type !== "issue.comment_created" && event.event_type !== "announcement.comment_created") {
+    return null;
+  }
+  return asString(event.payload.comment_id) || asString(event.payload.id) || null;
+}
+
 function notificationForEvent(event: OutboxEvent): Record<string, unknown> | null {
   const title = asString(event.payload.title, event.event_type);
   if (event.event_type === "issue.created") {
@@ -96,6 +103,7 @@ function notificationForEvent(event: OutboxEvent): Record<string, unknown> | nul
       type: "issue_comment_created",
       target_type: "issue",
       target_id: event.target_id,
+      comment_id: commentIdForEvent(event),
       title: `來自 ${authorName} 的留言`,
       actor_uid: event.actor_uid,
       actor_name: asString(event.payload.author_name),
@@ -164,6 +172,7 @@ function notificationForEvent(event: OutboxEvent): Record<string, unknown> | nul
       type: "announcement_comment_created",
       target_type: "announcement",
       target_id: event.target_id,
+      comment_id: commentIdForEvent(event),
       title: `來自 ${authorName} 的留言`,
       actor_uid: event.actor_uid,
       actor_name: asString(event.payload.author_name),
@@ -373,11 +382,13 @@ async function sendPushes(
   const notificationType = asString(notification.type);
   const targetType = asString(notification.target_type);
   const targetId = asString(notification.target_id);
+  const commentId = asString(notification.comment_id);
   const category = asString(notification.issue_category);
   const isComment = isCommentNotificationType(notificationType);
+  const commentQuery = isComment && commentId ? `&comment=${encodeURIComponent(commentId)}` : "";
   const link = targetType === "announcement"
-    ? `/announcements/${encodeURIComponent(targetId)}${isComment ? "?tab=comments" : ""}`
-    : `/issues/${encodeURIComponent(category || "public-issues")}/${encodeURIComponent(targetId)}${isComment ? "?tab=comments" : ""}`;
+    ? `/announcements/${encodeURIComponent(targetId)}${isComment ? `?tab=comments${commentQuery}` : ""}`
+    : `/issues/${encodeURIComponent(category || "public-issues")}/${encodeURIComponent(targetId)}${isComment ? `?tab=comments${commentQuery}` : ""}`;
   const recipientUids = [...new Set(tokens.map((row) => asString(row.uid)).filter(Boolean))];
   const preferences = new Map<string, { comments: boolean; issueUpdates: boolean }>();
   if (recipientUids.length > 0) {
@@ -411,6 +422,7 @@ async function sendPushes(
         token: row.token,
         data: {
           body,
+          comment_id: commentId,
           issue_category: category,
           link,
           target_id: targetId,

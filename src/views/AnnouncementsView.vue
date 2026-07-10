@@ -8,6 +8,7 @@
           v-if="isAdmin"
           :can-create-announcement="isAdmin"
           :default-category="DEFAULT_ISSUE_CATEGORY"
+          default-kind="announcement"
           @create-announcement="openEditor(null)"
           @create-issue="handleCreateIssue"
         >

@@ -223,6 +223,10 @@ const defaultComposerCategory = computed(() =>
   activeFilter.value === 'my-proposals' ? DEFAULT_ISSUE_CATEGORY : activeFilter.value
 );
 
+function issueStatusQuery() {
+  return statusTab.value === 'closed' ? { status: 'closed' } : {};
+}
+
 async function openIssueDetails(payload: IssueDetailsOpenPayload) {
   await router.push({
     name: 'issue-detail',
@@ -230,7 +234,10 @@ async function openIssueDetails(payload: IssueDetailsOpenPayload) {
       filter: activeFilter.value,
       issueId: payload.issue.id,
     },
-    query: payload.initialTab === 'comments' ? { tab: 'comments' } : undefined,
+    query: {
+      ...issueStatusQuery(),
+      ...(payload.initialTab === 'comments' ? { tab: 'comments' } : {}),
+    },
   });
 }
 
@@ -268,6 +275,28 @@ watch(
   },
   { immediate: true },
 );
+
+watch(
+  () => route.query.status,
+  (status) => {
+    const nextStatus = status === 'closed' ? 'closed' : 'active';
+    if (statusTab.value !== nextStatus) {
+      statusTab.value = nextStatus;
+    }
+  },
+  { immediate: true },
+);
+
+watch(statusTab, (tab) => {
+  if (route.name !== 'issues') return;
+  const query = { ...route.query };
+  if (tab === 'closed') {
+    query.status = 'closed';
+  } else {
+    delete query.status;
+  }
+  void router.replace({ query });
+});
 
 watch(composerMessage, (message) => {
   if (message) {

@@ -1,10 +1,12 @@
 <template>
   <article
+    :data-comment-id="comment.id"
     class="group relative px-0 transition-colors"
     :class="[
       isReply ? 'py-2' : 'py-2.5',
       !isReply && hasReplies ? 'comment-with-replies' : '',
       !isReply && hasReplies && repliesExpanded ? 'comment-with-replies-expanded' : '',
+      isFocused ? 'comment-focus-ring' : '',
     ]"
   >
     <div class="flex items-start gap-2.5">
@@ -87,6 +89,7 @@
             :can-reply="false"
             :deleting="deletingId === reply.id"
             :deleting-id="deletingId"
+            :focus-comment-id="focusCommentId"
             is-reply
             @delete="emit('delete-reply', reply.id)"
           />
@@ -97,7 +100,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import AuthorAvatar from '@/components/AuthorAvatar.vue';
 import CompactActionMenu from '@/components/CompactActionMenu.vue';
 import MarkdownMediaContent from '@/components/MarkdownMediaContent.vue';
@@ -112,6 +115,7 @@ const props = defineProps<{
   comment: DiscussionCommentRecord;
   deleting: boolean;
   deletingId?: string;
+  focusCommentId?: string;
   isReply?: boolean;
 }>();
 
@@ -123,9 +127,25 @@ const emit = defineEmits<{
 
 const repliesExpanded = ref(false);
 const hasReplies = computed(() => !props.isReply && props.comment.replies.length > 0);
+const isFocused = computed(() => props.focusCommentId === props.comment.id);
+const shouldExpandForFocusedReply = computed(() =>
+  !props.isReply
+  && Boolean(props.focusCommentId)
+  && props.comment.replies.some((reply) => reply.id === props.focusCommentId)
+);
 const repliesToggleLabel = computed(() => (
   repliesExpanded.value ? '隱藏回覆' : `${props.comment.replies.length} 則回覆`
 ));
+
+watch(
+  shouldExpandForFocusedReply,
+  (shouldExpand) => {
+    if (shouldExpand) {
+      repliesExpanded.value = true;
+    }
+  },
+  { immediate: true },
+);
 </script>
 
 <style scoped>
@@ -181,5 +201,11 @@ const repliesToggleLabel = computed(() => (
 
 :global(.dark) .comment-with-replies::before {
   border-color: rgb(30 41 59);
+}
+
+.comment-focus-ring {
+  border-radius: 0.75rem;
+  background: rgb(var(--color-secondary) / 0.10);
+  box-shadow: 0 0 0 2px rgb(var(--color-secondary) / 0.32);
 }
 </style>

@@ -21,6 +21,7 @@
       :support-count="routeIssue.support_count"
       :support-closed="routeIssueSupportClosed"
       :initial-tab="initialTab"
+      :focus-comment-id="focusCommentId"
       @back="goBackToIssueList"
       @content-unavailable="handleRouteIssueUnavailable"
       @delete="openDeleteDialog"
@@ -93,6 +94,10 @@ const {
 } = useDeleteIssue(routeIssueId);
 
 const initialTab = computed(() => route.query.tab === 'comments' ? 'comments' : 'details');
+const focusCommentId = computed(() => {
+  const value = route.query.comment;
+  return typeof value === 'string' ? value : '';
+});
 
 function goBackToIssueList() {
   closeRouteIssue();

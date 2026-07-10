@@ -8,6 +8,7 @@
     :error="error"
     :loaded="loaded"
     :loading="loading"
+    :focus-comment-id="focusCommentId"
     :has-more="hasMore"
     :loading-more="loadingMore"
     :on-load-more="loadMoreComments"
@@ -29,12 +30,14 @@ import type { DiscussionCommentRecord } from '@/types';
 const props = withDefaults(
   defineProps<{
     canCompose?: boolean;
+    focusCommentId?: string;
     issueId: string;
     compactHeader?: boolean;
   }>(),
   {
     canCompose: true,
     compactHeader: false,
+    focusCommentId: '',
   },
 );
 

@@ -76,6 +76,7 @@ interface NotificationRow {
   type: string;
   target_type: "announcement" | "issue";
   target_id: string;
+  comment_id: string | null;
   title: string;
   actor_uid: string | null;
   actor_name: string | null;

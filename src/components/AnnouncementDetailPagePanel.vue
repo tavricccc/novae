@@ -35,6 +35,7 @@
       <AnnouncementComments
         :announcement-id="announcement.id"
         :compact-header="compactHeader"
+        :focus-comment-id="focusCommentId"
         class="h-full"
         @comment-count-changed="emit('commentCountChanged', $event)"
         @content-unavailable="emit('contentUnavailable', $event)"
@@ -50,12 +51,16 @@ import AnnouncementDetailActions from '@/components/AnnouncementDetailActions.vu
 import AnnouncementDetailContent from '@/components/AnnouncementDetailContent.vue';
 import DetailPageShell from '@/components/ui/DetailPageShell.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   announcement: AnnouncementRecord | null;
   canManage: boolean;
+  focusCommentId?: string;
   initialTab?: 'details' | 'comments';
   liking: boolean;
-}>();
+}>(), {
+  focusCommentId: '',
+  initialTab: 'details',
+});
 
 const emit = defineEmits<{
   back: [];

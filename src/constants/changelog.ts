@@ -2,6 +2,31 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善通知導向體驗",
+    version: "v2.0.133",
+    date: "2026-07-10",
+    time: "01:07",
+    items: [
+      {
+        title: "修正從已結案提案返回列表時未保留已結案分頁的問題。"
+      },
+      {
+        title: "改善留言通知開啟後的定位效果，支援自動展開回覆並移動到對應留言。"
+      }
+    ]
+  },
+  {
+    title: "改善公告發布體驗",
+    version: "v2.0.132",
+    date: "2026-07-10",
+    time: "01:02",
+    items: [
+      {
+        title: "調整公告頁新增選單預設選項，減少發布公告前的額外切換。"
+      }
+    ]
+  },
+  {
     title: "修正推播通知設定問題",
     version: "v2.0.131",
     date: "2026-07-10",
