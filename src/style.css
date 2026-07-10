@@ -126,11 +126,9 @@
     -webkit-tap-highlight-color: transparent !important;
   }
 
-  a,
-  button,
-  [role="button"],
-  .cursor-pointer,
-  .app-bottom-nav__item {
+  *,
+  *::before,
+  *::after {
     -webkit-tap-highlight-color: transparent !important;
   }
 

@@ -11,7 +11,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
         title: "修正 Google 登入安全設定，解決登入流程遭安全政策阻擋的問題。"
       },
       {
-        title: "修正行動裝置點擊按鈕時無法正常顯示點擊回饋樣式（active 狀態）的問題。"
+        title: "修正行動裝置點擊按鈕或元件時可能出現藍色閃爍高亮的問題，並完善點擊回饋樣式。"
       }
     ]
   },
