@@ -73,7 +73,7 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
   autoTarget?: MaybeRefOrGetter<string>,
 ) {
   const { isAdmin, user, roleLoading } = useSession();
-  const { showToast } = useToast();
+  const { showProgressToast, showToast } = useToast();
   const { isOnline } = useNetworkStatus();
 
   const comments = ref<TComment[]>([]) as Ref<TComment[]>;
@@ -363,6 +363,7 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
     }
 
     isSubmitting.value = true;
+    const progressToast = showProgressToast(parentCommentId ? '正在送出回覆...' : '正在送出留言...');
     try {
       const result = await adapters.create(id, content, parentCommentId);
       ignoredRealtimeCommentIds.add(result.comment.id);
@@ -374,12 +375,13 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
       if (typeof result.commentCount === 'number') {
         adapters.onCommentCountChanged?.({ targetId: id, commentCount: result.commentCount });
       }
+      progressToast.succeed(parentCommentId ? '回覆已送出。' : '留言已送出。');
       return true;
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : '留言送出失敗。';
       if (adapters.validateSubmit) submitError.value = message;
       else error.value = message;
-      showToast(message, 'error');
+      progressToast.fail(message);
       if (isContentUnavailableError(caught)) {
         adapters.onContentUnavailable?.(id);
       }
@@ -393,6 +395,7 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
     deletingId.value = commentId;
     submitError.value = '';
     error.value = '';
+    const progressToast = showProgressToast('正在刪除留言...');
     try {
       const result = await adapters.remove(commentId);
       ignoredRealtimeCommentIds.add(commentId);
@@ -408,12 +411,12 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
           commentCount: result.commentCount,
         });
       }
-      showToast(adapters.deletedToast ?? '留言已刪除。', 'success');
+      progressToast.succeed(adapters.deletedToast ?? '留言已刪除。');
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : '留言刪除失敗。';
       if (adapters.validateSubmit) submitError.value = message;
       else error.value = message;
-      showToast(message, 'error');
+      progressToast.fail(message);
     } finally {
       deletingId.value = '';
     }

@@ -1,6 +1,8 @@
 <template>
-  <span class="inline-flex items-center justify-center gap-2">
-    <LoadingSpinner v-if="busy" :size="spinnerSize" class="shrink-0" />
+  <span class="busy-button-content relative inline-flex items-center justify-center gap-2" :class="{ 'is-busy': busy }">
+    <span v-if="busy" class="busy-button-spinner grid place-items-center rounded-full" aria-hidden="true">
+      <LoadingSpinner :size="spinnerSize" class="shrink-0" />
+    </span>
     <template v-if="busy">
       {{ busyLabel || label || '處理中...' }}
     </template>
@@ -25,3 +27,27 @@ withDefaults(defineProps<{
   spinnerSize: 4,
 });
 </script>
+
+<style scoped>
+.busy-button-content.is-busy {
+  animation: busy-content-pulse 1.4s ease-in-out infinite;
+}
+
+.busy-button-spinner {
+  box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 24%, transparent);
+  animation: busy-spinner-ring 1.4s ease-out infinite;
+}
+
+@keyframes busy-content-pulse {
+  50% { opacity: 0.72; }
+}
+
+@keyframes busy-spinner-ring {
+  60%, 100% { box-shadow: 0 0 0 0.3rem transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .busy-button-content.is-busy,
+  .busy-button-spinner { animation: none; }
+}
+</style>

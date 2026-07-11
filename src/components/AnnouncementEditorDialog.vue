@@ -98,7 +98,11 @@
               class="button-primary flex-1 px-5 text-sm font-semibold sm:flex-none"
               :disabled="submitting || uploading || !title.trim() || (!content.trim() && editorImages.length === 0)"
             >
-              <BusyButtonContent :busy="submitting" label="儲存公告" busy-label="儲存中..." />
+              <BusyButtonContent
+                :busy="submitting"
+                :label="announcement ? '更新公告' : '發布公告'"
+                :busy-label="announcement ? '更新中...' : '發布中...'"
+              />
             </button>
           </div>
         </div>

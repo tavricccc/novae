@@ -14,7 +14,7 @@ interface IssueComposerFormOptions {
 
 export function useIssueComposerForm(open: Ref<boolean>, options: IssueComposerFormOptions) {
   const { user } = useSession();
-  const { showToast } = useToast();
+  const { showProgressToast, showToast } = useToast();
   const form = reactive({
     title: '',
     content: '',
@@ -90,11 +90,14 @@ export function useIssueComposerForm(open: Ref<boolean>, options: IssueComposerF
     }
 
     submitting.value = true;
+    const progressToast = showProgressToast('正在送出提案...');
     let uploadedImages: Awaited<ReturnType<typeof uploadImagesAndBuildContent>>['uploadedImages'] = [];
 
     try {
+      if (imageUrls.value.length > 0) progressToast.update('正在上傳圖片...');
       const uploadResult = await uploadImagesAndBuildContent();
       uploadedImages = uploadResult.uploadedImages;
+      progressToast.update('正在建立提案...');
 
       const issue = await createIssue({
         title: form.title,
@@ -105,12 +108,13 @@ export function useIssueComposerForm(open: Ref<boolean>, options: IssueComposerF
       resetForm();
       options.onSubmitted(issue);
       options.onClose();
+      progressToast.succeed('提案已送出。');
     } catch (caught) {
       if (uploadedImages.length) {
         await deleteUploadedImages(uploadedImages);
       }
       error.value = caught instanceof Error ? caught.message : '送出失敗，請稍後再試。';
-      showToast(error.value, 'error');
+      progressToast.fail(error.value);
     } finally {
       submitting.value = false;
     }

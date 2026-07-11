@@ -87,7 +87,7 @@
           <BusyButtonContent
             :busy="saving"
             :label="idlePrimaryLabel"
-            busy-label="儲存中..."
+            busy-label="處理中..."
           />
         </button>
       </div>
@@ -177,7 +177,7 @@ const idlePrimaryLabel = computed(() => {
   if (step.value === 1) {
     return nextStatus.value === 'processing' ? '確認' : '下一步';
   }
-  return '儲存狀態與結果';
+  return '確認狀態與結果';
 });
 
 function handleClose() {

@@ -27,7 +27,7 @@ import {
 export function useAnnouncementManagement() {
   const router = useRouter();
   const { initialized, isAdmin, isAllowedUser, loading: authLoading, roleLoading, user } = useSession();
-  const { showToast } = useToast();
+  const { showProgressToast, showToast } = useToast();
   const { isOnline } = useNetworkStatus();
   const sortOption = ref<AnnouncementSortOption>('latest');
   const announcementCacheScope = computed(() => [
@@ -86,8 +86,10 @@ export function useAnnouncementManagement() {
   }
 
   async function handleSave(payload: { title: string; content: string; uploadedImages: UploadedImage[] }) {
+    const isEditing = Boolean(editingAnnouncement.value);
     saving.value = true;
     editorError.value = '';
+    const progressToast = showProgressToast(isEditing ? '正在更新公告...' : '正在發布公告...');
     try {
       if (editingAnnouncement.value) {
         await updateAnnouncement(editingAnnouncement.value.id, payload);
@@ -96,11 +98,11 @@ export function useAnnouncementManagement() {
       }
       await refreshAnnouncementList();
       editorOpen.value = false;
-      showToast('公告已儲存。', 'success');
+      progressToast.succeed(isEditing ? '公告已更新。' : '公告已發布。');
     } catch (caught) {
       await Promise.allSettled(payload.uploadedImages.map((image) => deleteUploadedImage(image.storagePath)));
-      editorError.value = caught instanceof Error ? caught.message : '公告儲存失敗。';
-      showToast(editorError.value, 'error');
+      editorError.value = caught instanceof Error ? caught.message : isEditing ? '公告更新失敗。' : '公告發布失敗。';
+      progressToast.fail(editorError.value);
     } finally {
       saving.value = false;
     }
@@ -120,13 +122,14 @@ export function useAnnouncementManagement() {
     if (!announcement) return;
 
     deleting.value = true;
+    const progressToast = showProgressToast('正在刪除公告...');
     try {
       await deleteAnnouncement(announcement.id);
       removeAnnouncement(announcement.id);
       deletePendingAnnouncement.value = null;
-      showToast('公告已刪除。', 'success');
+      progressToast.succeed('公告已刪除。');
     } catch (caught) {
-      showToast(caught instanceof Error ? caught.message : '公告刪除失敗。', 'error');
+      progressToast.fail(caught instanceof Error ? caught.message : '公告刪除失敗。');
     } finally {
       deleting.value = false;
     }

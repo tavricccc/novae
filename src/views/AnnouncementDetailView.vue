@@ -92,7 +92,7 @@ const route = useRoute();
 const router = useRouter();
 const { initialized, isAdmin, isAllowedUser, loading, roleLoading, user } = useSession();
 const { copyShareUrl } = useShareUrl();
-const { showToast } = useToast();
+const { showProgressToast, showToast } = useToast();
 const { isOnline } = useNetworkStatus();
 
 const announcement = ref<AnnouncementRecord | null>(null);
@@ -164,6 +164,7 @@ async function handleSave(payload: { title: string; content: string; uploadedIma
 
   saving.value = true;
   editorError.value = '';
+  const progressToast = showProgressToast('正在更新公告...');
   try {
     const updatedAnnouncement = await updateAnnouncement(announcement.value.id, payload);
     announcement.value = {
@@ -173,11 +174,11 @@ async function handleSave(payload: { title: string; content: string; uploadedIma
       comment_count: announcement.value.comment_count,
     };
     editorOpen.value = false;
-    showToast('公告已儲存。', 'success');
+    progressToast.succeed('公告已更新。');
   } catch (caught) {
     await Promise.allSettled(payload.uploadedImages.map((image) => deleteUploadedImage(image.storagePath)));
-    editorError.value = caught instanceof Error ? caught.message : '公告儲存失敗。';
-    showToast(editorError.value, 'error');
+    editorError.value = caught instanceof Error ? caught.message : '公告更新失敗。';
+    progressToast.fail(editorError.value);
   } finally {
     saving.value = false;
   }
@@ -196,13 +197,14 @@ async function confirmDelete() {
   if (!announcement.value) return;
 
   deleting.value = true;
+  const progressToast = showProgressToast('正在刪除公告...');
   try {
     await deleteAnnouncement(announcement.value.id);
     deleteDialogOpen.value = false;
-    showToast('公告已刪除。', 'success');
+    progressToast.succeed('公告已刪除。');
     goBackToAnnouncements();
   } catch (caught) {
-    showToast(caught instanceof Error ? caught.message : '公告刪除失敗。', 'error');
+    progressToast.fail(caught instanceof Error ? caught.message : '公告刪除失敗。');
   } finally {
     deleting.value = false;
   }

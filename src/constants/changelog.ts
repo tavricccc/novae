@@ -2,6 +2,16 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善操作進度提示",
+    version: "v2.0.156",
+    date: "2026-07-11",
+    time: "15:12",
+    items: [
+      { title: "新增提案、公告與留言操作的即時進度提示，完成後會原地顯示結果。" },
+      { title: "改善通知提示與按鈕載入動畫，提升操作狀態的辨識度。" }
+    ]
+  },
+  {
     title: "修正字型顯示與提升載入穩定性",
     version: "v2.0.155",
     date: "2026-07-11",
