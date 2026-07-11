@@ -1,0 +1,329 @@
+{
+  "meta": {
+    "title": "Novae · Let every new star be seen",
+    "description": "Novae helps every student proposal be seen—and turn into real campus change."
+  },
+  "skip": "Skip to content",
+  "nav": {
+    "home": "Home",
+    "docs": "Docs"
+  },
+  "brand": {
+    "tagline": "Ideas that form a constellation"
+  },
+  "hero": {
+    "eyebrow": "Every voice can become the start of change",
+    "title": "Let every new star on campus <em>be seen.</em>",
+    "lede": "Forms vanish. Posts scroll away. Novae keeps proposals, support, review, and responses on one traceable path—so students know where things stand and schools know what is next.",
+    "ctaPrimary": "Explore the project",
+    "ctaDocs": "Read the documentation",
+    "facts": [
+      { "label": "Propose", "text": "Make ideas visible" },
+      { "label": "Gather", "text": "Find people who care" },
+      { "label": "Respond", "text": "Follow the response" },
+      { "label": "Protect", "text": "Respect sensitive voices" }
+    ]
+  },
+  "trust": ["Student voice", "Shared participation", "Visible progress", "Privacy by care"],
+  "story": {
+    "number": "00 / OUR NAME",
+    "title": "One new star begins.<br><em>A constellation creates change.</em>",
+    "body": "Novae is the plural of nova: new stars that suddenly brighten the night sky. Every student proposal can be one of those stars. Seen and supported together, they form a constellation capable of changing a school."
+  },
+  "features": {
+    "number": "01 / CAPABILITIES",
+    "title": "More than<br><em>another form.</em>",
+    "lede": "Privacy rules, support thresholds, review status, announcements, and notifications live in one configurable system—so students and staff share the same record.",
+    "cards": [
+      {
+        "icon": "shield-lock",
+        "title": "Privacy by context",
+        "body": "Each category decides who can read and whether authors appear. Shared links never bypass login or server-side access rules."
+      },
+      {
+        "icon": "trending-up",
+        "title": "Support when it matters",
+        "body": "Enable goals and deadlines for public campaigns; turn support off for facility reports or private cases. Cancel anytime and see live progress."
+      },
+      {
+        "icon": "login-2",
+        "title": "School-domain Google login",
+        "body": "Sign in with a verified Google account on the allowed domain. Admin roles sync server-side—the browser is never the authority."
+      },
+      {
+        "icon": "git-branch",
+        "title": "A clear status lifecycle",
+        "body": "Under review, rejected, processing, completed, or infeasible—with response targets and written outcomes on one timeline."
+      },
+      {
+        "icon": "lock-heart",
+        "title": "Public ideas, private cases",
+        "body": "Campus-wide ideas can gather support, while sensitive rights cases stay visible only to the student and responsible staff."
+      },
+      {
+        "icon": "bell",
+        "title": "Notifications re-check access",
+        "body": "In-app and Web Push cover comments, reviews, and announcements. Opening a notification re-checks access so private content stays closed."
+      },
+      {
+        "icon": "speakerphone",
+        "title": "Announcements that broadcast",
+        "body": "Admins publish and edit; school users can read, like, and comment—with optional push delivery."
+      },
+      {
+        "icon": "chart-dots",
+        "title": "A shared view for response teams",
+        "body": "Pending work, approaching deadlines, and participation appear together so nothing quietly disappears."
+      }
+    ]
+  },
+  "workflow": {
+    "number": "02 / WORKFLOW",
+    "title": "From a voice to <em>a traceable outcome.</em>",
+    "lede": "Students know what happens next. Administrators know what needs attention. The exact path still depends on each category's configuration.",
+    "steps": [
+      { "n": "01", "title": "Submit", "body": "Choose a topic, understand who can see it, and clearly describe the change you want." },
+      { "n": "02", "title": "Review", "body": "When review is required, admins approve publication or record a concrete rejection reason." },
+      { "n": "03", "title": "Participate", "body": "Authorized users may support (when enabled), comment, and follow progress." },
+      { "n": "04", "title": "Process", "body": "Admins update status and response targets, notifying authors and related users." },
+      { "n": "05", "title": "Resolve", "body": "Close as completed or infeasible with a written outcome students can revisit." }
+    ],
+    "statuses": [
+      { "title": "Under review", "body": "Awaiting publish decision" },
+      { "title": "Rejected", "body": "Author sees the reason" },
+      { "title": "Processing", "body": "Response deadline tracked" },
+      { "title": "Completed", "body": "Outcome recorded" },
+      { "title": "Infeasible", "body": "Why it cannot proceed" }
+    ]
+  },
+  "config": {
+    "number": "03 / CATEGORY RULES",
+    "title": "One platform.<br><em>Different rules per topic.</em>",
+    "lede": "You do not need a second system for private cases. Configure visibility, authorship, and support—then retune as your school evolves.",
+    "points": [
+      "Public campaigns: school-visible with optional support goals",
+      "Reviewed then public: internal gate before campus participation",
+      "Private cases: author and admin only, support off"
+    ],
+    "cta": "Read category configuration",
+    "access": [
+      {
+        "code": "school",
+        "title": "School-wide",
+        "body": "Signed-in school users can browse by list and status rules."
+      },
+      {
+        "code": "reviewed-school",
+        "title": "Reviewed, then public",
+        "body": "Author and admins until approved; then campus visibility."
+      },
+      {
+        "code": "owner-admin",
+        "title": "Owner & admin",
+        "body": "Sensitive rights cases stay off the public board."
+      }
+    ],
+    "console": {
+      "tabs": [
+        { "key": "public", "label": "Public campaign" },
+        { "key": "private", "label": "Private case" },
+        { "key": "facility", "label": "Facility report" }
+      ],
+      "snippets": {
+        "public": "readAccess: school\nauthorVisible: true\nsupport:\n  enabled: true\n  goal: 50\n  deadlineDays: 14",
+        "private": "readAccess: owner-admin\nauthorVisible: false\nsupport:\n  enabled: false",
+        "facility": "readAccess: school\nauthorVisible: true\nsupport:\n  enabled: false"
+      },
+      "results": {
+        "public": { "title": "Campus can support", "body": "Hitting the goal starts the configured process with live progress." },
+        "private": { "title": "Off the public list", "body": "Only author and admins can read; admins still retain the author link." },
+        "facility": { "title": "Fast reports, no petition", "body": "Support off—focus on status and site photos." }
+      }
+    }
+  },
+  "experience": {
+    "number": "04 / REAL INTERFACE",
+    "title": "One workflow.<br><em>Clear on every screen.</em>",
+    "lede": "Desktop keeps complete columns and efficient controls. Mobile reprioritizes information and provides bottom navigation with a create entry."
+  },
+  "architecture": {
+    "number": "05 / TRUST BOUNDARY",
+    "title": "Access is not in the browser.<br><em>It is in server rules.</em>",
+    "lede": "The UI is the experience layer. Who can read and who can manage is decided by server-side rules and category config—shared links cannot bypass them.",
+    "nodes": [
+      { "small": "01", "title": "School identity", "em": "Verified Google domain" },
+      { "small": "02", "title": "Category rules", "em": "Visibility · support · author" },
+      { "small": "03", "title": "Server authorization", "em": "Rechecked on every access" },
+      { "small": "04", "title": "Notifications", "em": "Access revalidated on open" }
+    ],
+    "note": "Novae is self-hosted open source, not a managed SaaS. Adopters own secrets, privacy notices, and incident response.",
+    "cta": "Read the security model"
+  },
+  "pwa": {
+    "number": "06 / PWA EXPERIENCE",
+    "title": "Open like a website.<br><em>Keep it like an app.</em>",
+    "lede": "No app store required. Supported browsers offer installation at the right moment, then launch from the home screen. Push still needs a separate permission.",
+    "cards": [
+      {
+        "icon": "device-mobile-down",
+        "title": "A considerate install prompt",
+        "body": "Shown only when supported, with a clear option to decide later."
+      },
+      {
+        "icon": "devices",
+        "title": "Made for mobile and desktop",
+        "body": "Full tables on desktop; bottom navigation, reprioritized rows, and a center create action on mobile."
+      },
+      {
+        "icon": "refresh",
+        "title": "Updates without disruption",
+        "body": "A clear prompt when an update is ready; the latest version takes over after reopening."
+      },
+      {
+        "icon": "bell-ringing",
+        "title": "Notifications stay in your control",
+        "body": "Device notifications can be enabled or disabled anytime. Important updates remain in-app without push."
+      }
+    ]
+  },
+  "roles": {
+    "number": "07 / WHO USES IT",
+    "title": "Students speak.<br><em>Teams can respond.</em>",
+    "lede": "Roles shape the experience and the permission boundary. Hiding a button is UX only—authorization always lives on the server.",
+    "cards": [
+      {
+        "title": "School users",
+        "items": ["Browse permitted proposals and announcements", "Create proposals, comment, and support", "Manage their own content and notifications"]
+      },
+      {
+        "title": "Administrators",
+        "items": ["Review and update status", "Publish announcements and moderate content", "Use the admin dashboard to prioritize work"]
+      },
+      {
+        "title": "Operators",
+        "items": ["Configure categories, domain, and limits", "Own secrets and cloud resources", "Handle ops, backups, and incidents"]
+      }
+    ],
+    "more": [
+      { "title": "Board & search", "body": "Browse by category, status, and title. My proposals keeps what you can still read." },
+      { "title": "Discussion in context", "body": "Questions and replies stay beside the proposal—not scattered across chats." },
+      { "title": "Photos of the site", "body": "Facility and routing issues become clear at a glance." },
+      { "title": "Open to reshape", "body": "MIT licensed. Fork it and build participation with your own rules." }
+    ]
+  },
+  "fit": {
+    "number": "08 / FIT",
+    "title": "Know whether<br><em>it fits your campus.</em>",
+    "lede": "Novae is a self-hosted application, not a managed service. Adopters own cloud resources, secrets, privacy notices, admin appointment, and incident response.",
+    "yesTitle": "A good fit",
+    "noTitle": "Not a fit",
+    "yes": [
+      "Student governments needing public proposals and support",
+      "Mixing public issues with private rights cases",
+      "Tuning category rules through configuration",
+      "Small teams running one school on managed cloud"
+    ],
+    "no": [
+      "No external cloud or fully air-gapped hosting",
+      "E-signatures, statutory appeals, or formal document exchange",
+      "Multi-tenant billing or cross-school SaaS isolation",
+      "No one to own secrets, billing, and security events"
+    ],
+    "footnote": "The repo includes build, test, and delivery workflows—not an SLA or compliance certification—and does not promise a stable public API. Prepare a response team, clear privacy notices, and ongoing maintenance before adopting."
+  },
+  "cta": {
+    "eyebrow": "MIT LICENSE · SELF-HOST · MAKE IT YOURS",
+    "title": "Turn campus voices<br><em>into visible progress.</em>",
+    "body": "Start with the documentation, or fork the project and build a participation platform with your own category rules.",
+    "github": "View on GitHub",
+    "deploy": "Deployment guide",
+    "config": "Category config"
+  },
+  "footer": {
+    "tagline": "Open source for transparent, traceable campus participation.",
+    "github": "GitHub",
+    "docs": "Docs",
+    "license": "MIT License"
+  },
+  "links": {
+    "github": "https://github.com/tavricccc/novae",
+    "docsHome": "./docs/en/",
+    "docsDeploy": "./docs/en/deployment-guide.html",
+    "docsConfig": "./docs/en/configuration.html",
+    "docsSecurity": "./docs/en/security.html",
+    "license": "https://github.com/tavricccc/novae/blob/main/LICENSE"
+  },
+  "demo": {
+    "ui": {
+      "proposals": "Proposals",
+      "announcements": "Announcements",
+      "myProposals": "My proposals",
+      "active": "Active",
+      "closed": "Closed",
+      "publicIssues": "Public issues",
+      "status": "Status",
+      "author": "Author",
+      "title": "Title",
+      "time": "Time",
+      "progress": "Progress",
+      "actions": "Actions",
+      "admin": "Admin",
+      "support": "support",
+      "news": "News",
+      "alerts": "Alerts",
+      "mine": "Mine",
+      "daysLeft": "{n} days left",
+      "goalReached": "Goal reached"
+    },
+    "issues": [
+      {
+        "status": "processing",
+        "statusLabel": "Processing",
+        "avatar": "Lin",
+        "author": "Yu-Ching Lin",
+        "title": "Extend library hours during finals",
+        "time": "Jul 8, 4:20 PM",
+        "count": 38,
+        "goal": 50,
+        "days": 4,
+        "supported": true
+      },
+      {
+        "status": "processing",
+        "statusLabel": "Processing",
+        "avatar": "Chen",
+        "author": "Yu-An Chen",
+        "title": "Improve water dispenser signage",
+        "time": "Jul 9, 10:15 AM",
+        "count": 22,
+        "goal": 50,
+        "days": 8,
+        "supported": false
+      },
+      {
+        "status": "pending",
+        "statusLabel": "Pending",
+        "avatar": "Wang",
+        "author": "Pin-Han Wang",
+        "title": "Add charging outlets in dorm common areas",
+        "time": "Jul 10, 2:36 PM",
+        "count": 50,
+        "goal": 50,
+        "days": 0,
+        "supported": true
+      },
+      {
+        "status": "review",
+        "statusLabel": "In review",
+        "avatar": "A",
+        "author": "Anonymous",
+        "title": "Add a safe late-night campus shuttle route",
+        "time": "Jul 11, 9:41 AM",
+        "count": 0,
+        "goal": 50,
+        "days": 14,
+        "supported": false
+      }
+    ]
+  }
+}

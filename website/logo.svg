@@ -1,0 +1,10 @@
+<svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brand-mark-gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b47e24"/>
+      <stop offset="0.55" stop-color="#e2be6e"/>
+      <stop offset="1" stop-color="#966616"/>
+    </linearGradient>
+  </defs>
+  <path d="M 10 79 C 18 65, 23 43, 26 23 C 29 14, 37 14, 41 23 C 50 44, 60 63, 72 80 C 77 87, 85 85, 86 75 C 88 55, 91 34, 98 21 C 102 14, 109 16, 110 26" stroke="url(#brand-mark-gold)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

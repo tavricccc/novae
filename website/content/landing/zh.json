@@ -1,0 +1,329 @@
+{
+  "meta": {
+    "title": "Novae｜讓校園裡的每顆新星被看見",
+    "description": "Novae 讓每一個學生的提案與倡議，如新星般被看見，匯聚成改變校園的力量。"
+  },
+  "skip": "跳到主要內容",
+  "nav": {
+    "home": "首頁",
+    "docs": "文件"
+  },
+  "brand": {
+    "tagline": "讓改變匯聚成星系"
+  },
+  "hero": {
+    "eyebrow": "每一個聲音，都可能成為改變的起點",
+    "title": "讓校園裡的每顆新星，<em>被看見。</em>",
+    "lede": "表單會消失，貼文會被刷掉。Novae 把提案、附議、審核與回覆放進同一條可追蹤的線——學生知道走到哪，學校知道下一步。",
+    "ctaPrimary": "查看開源專案",
+    "ctaDocs": "閱讀完整文件",
+    "facts": [
+      { "label": "提出", "text": "讓想法被看見" },
+      { "label": "匯聚", "text": "找到在意的人" },
+      { "label": "回應", "text": "看見學校進度" },
+      { "label": "守護", "text": "尊重敏感聲音" }
+    ]
+  },
+  "trust": ["學生發聲", "共同參與", "透明進度", "隱私尊重"],
+  "story": {
+    "number": "00 / 名字的故事",
+    "title": "一顆新星是開始，<br><em>一片星系是改變。</em>",
+    "body": "Novae 源自 Nova（新星）的複數形。每一個學生的提案與倡議，都像夜空中突然亮起的新星；當彼此看見、互相支持，便能匯聚成改變學校的星系。"
+  },
+  "features": {
+    "number": "01 / 平台能力",
+    "title": "不只是一張<br><em>線上表單。</em>",
+    "lede": "隱私規則、附議門檻、審核狀態、公告與通知——同一套流程，依分類可調。學生與管理單位看到同一份紀錄。",
+    "cards": [
+      {
+        "icon": "shield-lock",
+        "title": "依情境保護隱私",
+        "body": "每個分類可決定誰能讀、是否顯示作者。分享連結也繞不過登入與後端權限。"
+      },
+      {
+        "icon": "trending-up",
+        "title": "附議可開可關",
+        "body": "需要民意時設門檻與期限；設備回報或私密案件可關閉附議，並支援取消與即時進度。"
+      },
+      {
+        "icon": "login-2",
+        "title": "限定校內 Google 登入",
+        "body": "僅已驗證且符合允許網域的帳號可登入。管理員角色由後端同步，前端不可偽造。"
+      },
+      {
+        "icon": "git-branch",
+        "title": "清楚的狀態生命週期",
+        "body": "待審核、未通過、處理中、已完成、不可行——回覆期限與結果說明都留在同一條線上。"
+      },
+      {
+        "icon": "lock-heart",
+        "title": "公開倡議與私密案件",
+        "body": "全校議題可以累積支持；敏感權益案件只讓當事人與負責人看見。"
+      },
+      {
+        "icon": "bell",
+        "title": "通知會再檢查權限",
+        "body": "站內通知與 Web Push 涵蓋留言、審核與公告。點開時重新確認權限，私密內容不會因連結而外洩。"
+      },
+      {
+        "icon": "speakerphone",
+        "title": "公告能廣播也能討論",
+        "body": "管理員發布與編輯公告；校內使用者可閱讀、按讚與留言，並可推播觸達。"
+      },
+      {
+        "icon": "chart-dots",
+        "title": "管理團隊看得見全貌",
+        "body": "待處理、即將到期與參與情況集中呈現，減少議題被遺漏。"
+      }
+    ]
+  },
+  "workflow": {
+    "number": "02 / 使用流程",
+    "title": "從聲音，到<em>可追蹤的結果。</em>",
+    "lede": "學生知道現在走到哪；管理員知道下一個該處理什麼。實際路徑仍取決於該分類的設定。",
+    "steps": [
+      { "n": "01", "title": "提出", "body": "選對主題，確認誰能看見，清楚寫下想改變的事。" },
+      { "n": "02", "title": "審核", "body": "若需要審核，管理員決定是否公開，並可留下未通過原因。" },
+      { "n": "03", "title": "參與", "body": "有權使用者可附議（若啟用）、留言與追蹤進度。" },
+      { "n": "04", "title": "處理", "body": "管理單位更新狀態與回覆期限，通知作者與相關使用者。" },
+      { "n": "05", "title": "結案", "body": "以已完成或不可行附上結果說明，留下可查的正式回覆。" }
+    ],
+    "statuses": [
+      { "title": "待審核", "body": "需管理員判斷是否公開" },
+      { "title": "審核未過", "body": "作者可看原因" },
+      { "title": "處理中", "body": "可追蹤回覆期限" },
+      { "title": "已完成", "body": "附上結果說明" },
+      { "title": "不可行", "body": "說明無法執行原因" }
+    ]
+  },
+  "config": {
+    "number": "03 / 分類規則",
+    "title": "同一套平台，<br><em>每種議題不同規則。</em>",
+    "lede": "不必為隱私案件另建系統。用設定決定可見範圍、作者顯示與附議——部署後仍可依學校節奏調整。",
+    "points": [
+      "公開倡議：校內可見，可開附議門檻",
+      "審核後公開：先內部把關，再給全校參與",
+      "私密案件：僅作者與管理員，可關閉附議"
+    ],
+    "cta": "查看分類設定文件",
+    "access": [
+      {
+        "code": "school",
+        "title": "校內公開",
+        "body": "已登入的校內使用者可依列表與狀態瀏覽。"
+      },
+      {
+        "code": "reviewed-school",
+        "title": "審核後公開",
+        "body": "核准前僅作者與管理員；通過後進入校內視野。"
+      },
+      {
+        "code": "owner-admin",
+        "title": "僅當事人",
+        "body": "敏感權益與個人處境，不進全校列表。"
+      }
+    ],
+    "console": {
+      "tabs": [
+        { "key": "public", "label": "公開倡議" },
+        { "key": "private", "label": "私密案件" },
+        { "key": "facility", "label": "設備回報" }
+      ],
+      "snippets": {
+        "public": "readAccess: school\nauthorVisible: true\nsupport:\n  enabled: true\n  goal: 50\n  deadlineDays: 14",
+        "private": "readAccess: owner-admin\nauthorVisible: false\nsupport:\n  enabled: false",
+        "facility": "readAccess: school\nauthorVisible: true\nsupport:\n  enabled: false"
+      },
+      "results": {
+        "public": { "title": "全校可附議", "body": "達標後進入處理流程，進度即時可見。" },
+        "private": { "title": "不進公開列表", "body": "僅作者與管理員可讀；管理端仍保留作者關聯。" },
+        "facility": { "title": "快速回報、不需連署", "body": "關閉附議，專心狀態與現場圖片。" }
+      }
+    }
+  },
+  "experience": {
+    "number": "04 / 實際介面",
+    "title": "同一套流程，<br><em>每個螢幕都清楚。</em>",
+    "lede": "桌機保留完整欄位與管理效率；手機重排資訊優先順序，並提供底部導覽與新增入口。"
+  },
+  "architecture": {
+    "number": "05 / 信任邊界",
+    "title": "權限不在瀏覽器，<br><em>而在後端規則。</em>",
+    "lede": "前端只是體驗層。誰能讀、誰能管，由伺服器端規則與分類設定共同決定——分享連結也無法繞過。",
+    "nodes": [
+      { "small": "01", "title": "校內身分", "em": "Google 網域驗證" },
+      { "small": "02", "title": "分類規則", "em": "可見性 · 附議 · 作者" },
+      { "small": "03", "title": "後端授權", "em": "每次讀寫再檢查" },
+      { "small": "04", "title": "通知與推播", "em": "開啟時重驗權限" }
+    ],
+    "note": "Novae 是自行部署的開源軟體，不是代管 SaaS。金鑰、隱私告知與事故處理由採用者負責。",
+    "cta": "閱讀安全模型"
+  },
+  "pwa": {
+    "number": "06 / PWA 體驗",
+    "title": "像網站一樣開啟，<br><em>像 App 一樣常駐。</em>",
+    "lede": "不必經過應用商店。支援的瀏覽器會在適當時機提示安裝；完成後可從主畫面啟動。推播仍需另行授權。",
+    "cards": [
+      {
+        "icon": "device-mobile-down",
+        "title": "安裝提示不打擾",
+        "body": "只有裝置與瀏覽器支援時才顯示，使用者可以稍後再決定。"
+      },
+      {
+        "icon": "devices",
+        "title": "手機與桌機都適配",
+        "body": "桌機完整表格；手機底部導覽、重排資訊與中央新增入口。"
+      },
+      {
+        "icon": "refresh",
+        "title": "更新不打斷使用",
+        "body": "有新版本時清楚提醒，重新開啟後自動接手。"
+      },
+      {
+        "icon": "bell-ringing",
+        "title": "通知由你決定",
+        "body": "可隨時開關裝置通知；即使不接收推播，重要更新仍留在站內。"
+      }
+    ]
+  },
+  "roles": {
+    "number": "07 / 誰在使用",
+    "title": "學生發聲，<br><em>單位能回應。</em>",
+    "lede": "角色決定體驗與權限邊界；畫面是否隱藏按鈕只是 UX，真正授權永遠在後端。",
+    "cards": [
+      {
+        "title": "校內使用者",
+        "items": ["瀏覽有權限的提案與公告", "新增提案、留言與附議", "管理自己的內容與通知"]
+      },
+      {
+        "title": "管理員",
+        "items": ["審核與調整狀態", "發布公告、處理內容", "查看管理儀表板與優先順序"]
+      },
+      {
+        "title": "部署者",
+        "items": ["設定分類、網域與限流", "管理金鑰與雲端資源", "負責維運、備份與事故"]
+      }
+    ],
+    "more": [
+      { "title": "看板與搜尋", "body": "依分類、狀態與標題排序；「我的提案」集中仍可讀的內容。" },
+      { "title": "議題旁討論", "body": "補充、提問與回覆留在提案旁邊，不散落群組與私訊。" },
+      { "title": "現場圖片", "body": "設備與動線問題可附圖，閱讀者一眼看懂。" },
+      { "title": "開源可改造", "body": "MIT 授權。Fork 後用自己的分類規則打造參與平台。" }
+    ]
+  },
+  "fit": {
+    "number": "08 / 適用範圍",
+    "title": "清楚知道<br><em>適不適合你。</em>",
+    "lede": "Novae 是可自行部署的應用程式，不是代管服務。採用者負責雲端資源、金鑰、隱私告知、管理員任命與事故處理。",
+    "yesTitle": "適合",
+    "noTitle": "不適合",
+    "yes": [
+      "學生會、系學會需要公開提案與附議",
+      "同時處理公開議題與私密權益案件",
+      "希望用設定快速調整分類規則",
+      "小型團隊以託管服務維運單一學校"
+    ],
+    "no": [
+      "禁止外部雲端或要求完全離線自架",
+      "需要電子簽章、法定申訴或公文交換",
+      "多租戶計費或跨校組織隔離的 SaaS",
+      "無人能持續管理金鑰、帳單與安全事件"
+    ],
+    "footnote": "專案具備建置、測試與部署工作流，但不是 SLA 或合規認證；目前也不承諾穩定公開 API。導入前請準備回應團隊、隱私告知與持續維護安排。"
+  },
+  "cta": {
+    "eyebrow": "MIT LICENSE · 自己部署 · 自由改造",
+    "title": "把校園的聲音，<br><em>變成真正的進度。</em>",
+    "body": "從文件開始了解，或直接 fork 專案，用你自己的分類規則建立學生參與平台。",
+    "github": "前往 GitHub",
+    "deploy": "部署指南",
+    "config": "分類設定"
+  },
+  "footer": {
+    "tagline": "為更透明、可追蹤的校園參與而開源。",
+    "github": "GitHub",
+    "docs": "Docs",
+    "license": "MIT License"
+  },
+  "links": {
+    "github": "https://github.com/tavricccc/novae",
+    "docsHome": "./docs/",
+    "docsDeploy": "./docs/deployment-guide.html",
+    "docsConfig": "./docs/configuration.html",
+    "docsSecurity": "./docs/security.html",
+    "license": "https://github.com/tavricccc/novae/blob/main/LICENSE"
+  },
+  "demo": {
+    "ui": {
+      "proposals": "提案",
+      "announcements": "公告",
+      "myProposals": "我的提案",
+      "active": "進行中",
+      "closed": "已結案",
+      "publicIssues": "公共議題",
+      "status": "狀態",
+      "author": "作者",
+      "title": "標題",
+      "time": "時間",
+      "progress": "進度",
+      "actions": "操作",
+      "admin": "管理",
+      "support": "附議",
+      "news": "公告",
+      "alerts": "通知",
+      "mine": "我的",
+      "daysLeft": "剩 {n} 天",
+      "goalReached": "已達標"
+    },
+    "issues": [
+      {
+        "status": "processing",
+        "statusLabel": "處理中",
+        "avatar": "林",
+        "author": "林予晴",
+        "title": "延長期末考週圖書館開放時間",
+        "time": "7月8日 下午04:20",
+        "count": 38,
+        "goal": 50,
+        "days": 4,
+        "supported": true
+      },
+      {
+        "status": "processing",
+        "statusLabel": "處理中",
+        "avatar": "陳",
+        "author": "陳宇安",
+        "title": "改善教學大樓飲水機標示",
+        "time": "7月9日 上午10:15",
+        "count": 22,
+        "goal": 50,
+        "days": 8,
+        "supported": false
+      },
+      {
+        "status": "pending",
+        "statusLabel": "未回覆",
+        "avatar": "王",
+        "author": "王品涵",
+        "title": "增加宿舍公共區域充電插座",
+        "time": "7月10日 下午02:36",
+        "count": 50,
+        "goal": 50,
+        "days": 0,
+        "supported": true
+      },
+      {
+        "status": "review",
+        "statusLabel": "待審核",
+        "avatar": "匿",
+        "author": "匿名使用者",
+        "title": "增設夜間安心返宿接駁路線",
+        "time": "7月11日 上午09:41",
+        "count": 0,
+        "goal": 50,
+        "days": 14,
+        "supported": false
+      }
+    ]
+  }
+}

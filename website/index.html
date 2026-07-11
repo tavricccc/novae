@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="Novae 讓每一個學生的提案與倡議，如新星般被看見，匯聚成改變校園的力量。" />
+    <meta property="og:title" content="Novae｜讓校園裡的每顆新星被看見" />
+    <meta property="og:description" content="從提出想法、凝聚支持到看見回應，讓校園改變有清楚的下一步。" />
+    <meta property="og:type" content="website" />
+    <title>Novae｜讓校園裡的每顆新星被看見</title>
+    <!-- Critical paint + prevent EN users from seeing ZH flash -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('novae-site-language');
+          var lang =
+            stored === 'zh' || stored === 'en'
+              ? stored
+              : navigator.language.toLowerCase().indexOf('zh') === 0
+                ? 'zh'
+                : 'en';
+          document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+          document.documentElement.dataset.lang = lang;
+          if (lang === 'en') document.documentElement.classList.add('lang-boot-hide');
+        } catch (e) {}
+      })();
+    </script>
+    <style>
+      html{background:#fff;color:#171715}
+      @media(prefers-color-scheme:dark){html{background:#0c0c0a;color:#f7f7f5}}
+      body{margin:0;min-height:100vh}
+      /* Only hide when preferred language is EN (HTML defaults to ZH copy) */
+      html.lang-boot-hide body{opacity:0}
+      html.is-ready body{opacity:1;transition:opacity .14s ease}
+      @media(prefers-reduced-motion:reduce){
+        html.is-ready body{transition:none}
+      }
+      @view-transition{navigation:auto}
+      ::view-transition-old(root),
+      ::view-transition-new(root){animation-duration:.16s;animation-timing-function:ease}
+      @media(prefers-reduced-motion:reduce){@view-transition{navigation:none}}
+    </style>
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main" data-i18n="skip">跳到主要內容</a>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Novae">
+        <span class="brand-mark" aria-hidden="true"><img src="./logo.svg" alt="" /></span>
+        <span><strong>Novae</strong><small data-i18n="brand.tagline">讓改變匯聚成星系</small></span>
+      </a>
+      <nav aria-label="primary">
+        <a href="#top" class="is-active" data-i18n="nav.home">首頁</a>
+        <a href="./docs/" data-i18n="nav.docs" data-i18n-href="links.docsHome">文件</a>
+      </nav>
+      <div class="header-actions">
+        <button class="language-toggle" type="button" aria-label="Switch to English">EN</button>
+        <a class="button button-small button-dark" data-i18n-href="links.github" href="https://github.com/tavricccc/novae" target="_blank" rel="noreferrer">GitHub <i class="ti ti-external-link" aria-hidden="true"></i></a>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="pulse"></span><span data-i18n="hero.eyebrow">每一個聲音，都可能成為改變的起點</span></p>
+          <h1 data-i18n="hero.title">讓校園裡的每顆新星，<em>被看見。</em></h1>
+          <p class="hero-lede" data-i18n="hero.lede"></p>
+          <div class="hero-actions">
+            <a class="button button-primary" data-i18n-href="links.github" href="https://github.com/tavricccc/novae" target="_blank" rel="noreferrer"><span data-i18n="hero.ctaPrimary">查看開源專案</span><i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+            <a class="text-link" data-i18n-href="links.docsHome" href="./docs/"><span data-i18n="hero.ctaDocs">閱讀完整文件</span><i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+          </div>
+          <ul class="hero-facts" data-render="hero-facts" aria-label="highlights"></ul>
+        </div>
+        <div class="hero-interface" data-novae-demo="desktop" data-compact="true"></div>
+      </section>
+
+      <section class="trust-strip" data-render="trust" aria-label="values"></section>
+
+      <section class="section" id="story">
+        <div class="story-sky" aria-hidden="true">
+          <span class="story-orbit story-orbit--one"></span>
+          <span class="story-orbit story-orbit--two"></span>
+          <span class="story-star story-star--one"></span>
+          <span class="story-star story-star--two"></span>
+          <span class="story-star story-star--three"></span>
+          <span class="story-star story-star--four"></span>
+          <strong>NOVAE</strong>
+        </div>
+        <div class="section-heading">
+          <p class="section-number" data-i18n="story.number">00 / 名字的故事</p>
+          <h2 data-i18n="story.title"></h2>
+          <p data-i18n="story.body"></p>
+        </div>
+      </section>
+
+      <section class="section" id="features">
+        <div class="section-heading">
+          <p class="section-number" data-i18n="features.number"></p>
+          <h2 data-i18n="features.title"></h2>
+          <p data-i18n="features.lede"></p>
+        </div>
+        <div class="capability-grid" data-render="features"></div>
+      </section>
+
+      <section class="section workflow-section" id="workflow">
+        <div class="section-heading horizontal">
+          <div>
+            <p class="section-number" data-i18n="workflow.number"></p>
+            <h2 data-i18n="workflow.title"></h2>
+          </div>
+          <p data-i18n="workflow.lede"></p>
+        </div>
+        <ol class="timeline" data-render="workflow-steps"></ol>
+        <div class="status-strip" data-render="workflow-statuses" aria-label="statuses"></div>
+      </section>
+
+      <section class="section config-section" id="config">
+        <div class="config-copy">
+          <p class="section-number" data-i18n="config.number"></p>
+          <h2 data-i18n="config.title"></h2>
+          <p data-i18n="config.lede"></p>
+          <ul class="config-points" data-render="config-points"></ul>
+          <a class="text-link" data-i18n="config.cta" data-i18n-href="links.docsConfig" href="./docs/configuration.html"></a>
+        </div>
+        <div class="config-panel">
+          <div class="access-modes">
+            <div class="access-grid" data-render="config-access"></div>
+          </div>
+          <div class="config-console" data-config-console>
+            <div class="console-tabs" data-render="config-tabs" role="tablist"></div>
+            <div data-render="config-codes"></div>
+            <div data-render="config-results"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section experience-section" id="experience">
+        <div class="section-heading horizontal">
+          <div>
+            <p class="section-number" data-i18n="experience.number"></p>
+            <h2 data-i18n="experience.title"></h2>
+          </div>
+          <p data-i18n="experience.lede"></p>
+        </div>
+        <div class="reference-stage">
+          <div class="reference-desktop" data-novae-demo="desktop"></div>
+          <div class="reference-mobile" data-novae-demo="mobile"></div>
+        </div>
+      </section>
+
+      <section class="section architecture-section" id="architecture">
+        <div class="section-heading horizontal">
+          <div>
+            <p class="section-number" data-i18n="architecture.number"></p>
+            <h2 data-i18n="architecture.title"></h2>
+          </div>
+          <p data-i18n="architecture.lede"></p>
+        </div>
+        <div class="trust-map" data-render="arch-nodes"></div>
+        <div class="security-note">
+          <span aria-hidden="true"><i class="ti ti-shield-check"></i></span>
+          <p>
+            <small data-i18n="architecture.note"></small>
+          </p>
+          <a class="text-link" data-i18n="architecture.cta" data-i18n-href="links.docsSecurity" href="./docs/security.html"></a>
+        </div>
+      </section>
+
+      <section class="section pwa-section" id="pwa">
+        <div class="pwa-copy">
+          <p class="section-number" data-i18n="pwa.number"></p>
+          <h2 data-i18n="pwa.title"></h2>
+          <p data-i18n="pwa.lede"></p>
+        </div>
+        <div class="pwa-grid" data-render="pwa-cards"></div>
+      </section>
+
+      <section class="section roles-section" id="roles">
+        <div class="section-heading horizontal">
+          <div>
+            <p class="section-number" data-i18n="roles.number"></p>
+            <h2 data-i18n="roles.title"></h2>
+          </div>
+          <p data-i18n="roles.lede"></p>
+        </div>
+        <div class="roles-grid" data-render="roles"></div>
+        <div class="more-features" data-render="more-features"></div>
+      </section>
+
+      <section class="section fit-section" id="fit">
+        <div class="section-heading horizontal">
+          <div>
+            <p class="section-number" data-i18n="fit.number"></p>
+            <h2 data-i18n="fit.title"></h2>
+          </div>
+          <p data-i18n="fit.lede"></p>
+        </div>
+        <div class="fit-grid">
+          <article class="fit-yes">
+            <h3 data-i18n="fit.yesTitle"></h3>
+            <ul data-render="fit-yes"></ul>
+          </article>
+          <article class="fit-no">
+            <h3 data-i18n="fit.noTitle"></h3>
+            <ul data-render="fit-no"></ul>
+          </article>
+        </div>
+        <p class="fit-footnote" data-i18n="fit.footnote"></p>
+      </section>
+
+      <section class="cta-section">
+        <p class="section-number" data-i18n="cta.eyebrow"></p>
+        <h2 data-i18n="cta.title"></h2>
+        <p data-i18n="cta.body"></p>
+        <div>
+          <a class="button button-light" data-i18n-href="links.github" href="https://github.com/tavricccc/novae" target="_blank" rel="noreferrer"><span data-i18n="cta.github"></span><i class="ti ti-arrow-right" aria-hidden="true"></i></a>
+          <a class="button button-outline" data-i18n-href="links.docsDeploy" href="./docs/deployment-guide.html"><span data-i18n="cta.deploy"></span></a>
+          <a class="button button-outline" data-i18n-href="links.docsConfig" href="./docs/configuration.html"><span data-i18n="cta.config"></span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="brand" href="#top"><span class="brand-mark"><img src="./logo.svg" alt="" /></span><span><strong>Novae</strong><small>Novae</small></span></a>
+      <p data-i18n="footer.tagline"></p>
+      <div>
+        <a data-i18n="footer.github" data-i18n-href="links.github" href="https://github.com/tavricccc/novae" target="_blank" rel="noreferrer">GitHub</a>
+        <a data-i18n="footer.docs" data-i18n-href="links.docsHome" href="./docs/">Docs</a>
+        <a data-i18n="footer.license" data-i18n-href="links.license" href="https://github.com/tavricccc/novae/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
+      </div>
+    </footer>
+  </body>
+</html>

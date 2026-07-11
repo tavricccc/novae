@@ -1,0 +1,52 @@
+@font-face{
+  font-family:'tabler-icons';
+  src:url('../../node_modules/@tabler/icons-webfont/dist/fonts/tabler-icons.woff2') format('woff2');
+  font-style:normal;
+  font-weight:400;
+  font-display:block
+}
+
+.ti{
+  display:inline-block;
+  font-family:'tabler-icons'!important;
+  font-style:normal;
+  font-weight:400;
+  line-height:1;
+  speak:none;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale
+}
+
+/* Marketing + chrome */
+.ti-external-link:before{content:'\ea99'}
+.ti-arrow-right:before{content:'\ea1f'}
+.ti-shield-lock:before{content:'\ed58'}
+.ti-adjustments-horizontal:before{content:'\ec38'}
+.ti-trending-up:before{content:'\eb43'}
+.ti-login-2:before{content:'\fc76'}
+.ti-message-circle:before{content:'\eaed'}
+.ti-speakerphone:before{content:'\ed61'}
+.ti-bell:before{content:'\ea35'}
+.ti-photo:before{content:'\eb0a'}
+.ti-search:before{content:'\eb1c'}
+.ti-git-branch:before{content:'\eab2'}
+.ti-lock-heart:before{content:'\f92c'}
+.ti-messages:before{content:'\eb6c'}
+.ti-chart-dots:before{content:'\ee2f'}
+.ti-gauge:before{content:'\eab1'}
+.ti-chart-bar:before{content:'\ea59'}
+.ti-device-mobile-down:before{content:'\f8b3'}
+.ti-devices:before{content:'\eb87'}
+.ti-refresh:before{content:'\eb13'}
+.ti-bell-ringing:before{content:'\ed07'}
+.ti-shield-check:before{content:'\eb22'}
+
+/* Mock interface board */
+.ti-thumb-up:before{content:'\eb3c'}
+.ti-message:before{content:'\eaef'}
+.ti-dots:before{content:'\ea95'}
+.ti-list-details:before{content:'\ef40'}
+.ti-archive:before{content:'\ea0b'}
+.ti-sort-descending:before{content:'\eb27'}
+.ti-plus:before{content:'\eb0b'}
+.ti-chevron-down:before{content:'\ea5f'}
