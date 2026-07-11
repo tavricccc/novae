@@ -2,6 +2,16 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "統一專案網站與文件",
+    version: "v2.0.161",
+    date: "2026-07-11",
+    time: "21:01",
+    items: [
+      { title: "新增專案介紹頁與完整雙語文件網站。" },
+      { title: "統一網站與專案文件內容，確保資訊保持一致。" }
+    ]
+  },
+  {
     title: "修正內容排序與分頁",
     version: "v2.0.160",
     date: "2026-07-11",

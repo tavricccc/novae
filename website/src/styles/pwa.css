@@ -1,0 +1,20 @@
+.pwa-section{
+  display:grid;grid-template-columns:.85fr 1.15fr;column-gap:8vw;row-gap:40px;
+  background:#171715;color:#f7f7f5
+}
+.pwa-copy h2{font-size:clamp(42px,5.5vw,72px);line-height:1;letter-spacing:-.06em;margin:0}
+.pwa-copy h2 em{color:#6ee7b7}
+.pwa-copy>p:last-child{color:#9e9e91;max-width:520px;margin-top:24px}
+.pwa-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pwa-grid article{
+  display:flex;gap:16px;padding:24px;border:1px solid #43433d;border-radius:24px;background:#20201d
+}
+.pwa-icon{
+  display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:13px;
+  background:#292925;color:#6ee7b7;font-size:18px
+}
+.pwa-grid h3{font-size:15px;margin:0 0 7px}
+.pwa-grid p{font-size:13px;line-height:1.7;color:#9e9e91;margin:0}
+.pwa-section .section-number{color:#6ee7b7}
+@media(max-width:900px){.pwa-section{grid-template-columns:1fr}.pwa-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.pwa-grid{grid-template-columns:1fr}.pwa-grid article{border-radius:20px}}

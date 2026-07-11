@@ -1,0 +1,21 @@
+{
+  "name": "novae-site",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build:docs": "node scripts/build-docs.mjs",
+    "dev": "npm run build:docs && vite",
+    "build": "npm run build:docs && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^8.0.16"
+  },
+  "dependencies": {
+    "@tabler/icons-webfont": "^3.44.0",
+    "markdown-it": "^14.3.0",
+    "markdown-it-anchor": "^9.2.1",
+    "mermaid": "^11.16.0"
+  }
+}
