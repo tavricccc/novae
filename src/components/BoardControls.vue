@@ -2,7 +2,10 @@
   <div class="relative z-20 space-y-3">
     <div class="flex flex-row items-center justify-between gap-3 md:mt-0">
       <div class="hidden min-w-0 flex-row items-center gap-3 sm:gap-4 md:flex md:gap-6">
-        <h2 class="shrink-0 text-xl font-bold tracking-tight text-ink-950 dark:text-ink-50 md:text-2xl">提案</h2>
+        <div class="shrink-0">
+          <h2 class="text-xl font-bold tracking-tight text-ink-950 dark:text-ink-50 md:text-2xl">提案</h2>
+          <p class="mt-1 text-xs font-normal text-ink-500 dark:text-ink-400">瀏覽提案內容與目前處理進度</p>
+        </div>
 
         <div
           v-if="activeFilter !== 'my-proposals'"
@@ -12,14 +15,14 @@
         >
           <button
             type="button"
-            class="button-toolbar hidden h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold md:flex"
+            class="button-toolbar board-control hidden h-9 shrink-0 items-center gap-1.5 px-3 md:flex"
             :class="{ 'button-toolbar--active': isCategoryOpen }"
             title="選擇分類"
             aria-label="選擇分類"
             :aria-expanded="isCategoryOpen"
             @click="toggleCategory"
           >
-            <span class="text-sm font-semibold leading-none">{{ activeCategoryLabel }}</span>
+            <span class="leading-none">{{ activeCategoryLabel }}</span>
             <AppIcon name="chevron-down" :size="4" />
           </button>
 
@@ -56,14 +59,14 @@
         >
           <button
             type="button"
-            class="button-toolbar flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold"
+            class="button-toolbar board-control flex h-10 shrink-0 items-center gap-1.5 px-3"
             :class="{ 'button-toolbar--active': isCategoryOpen }"
             title="選擇分類"
             aria-label="選擇分類"
             :aria-expanded="isCategoryOpen"
             @click="toggleCategory"
           >
-            <span class="text-sm font-semibold leading-none">{{ activeCategoryLabel }}</span>
+            <span class="leading-none">{{ activeCategoryLabel }}</span>
             <AppIcon name="chevron-down" :size="4" />
           </button>
 
@@ -94,13 +97,13 @@
           v-if="activeFilter !== 'my-proposals'"
           v-model="statusTabModel"
           :options="statusOptions"
-          class="shrink-0"
+          class="board-segmented shrink-0"
         />
 
         <div class="static md:relative" @click.stop @pointerdown.stop>
           <button
             type="button"
-            class="button-toolbar flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0 md:h-9 md:w-9"
+            class="button-toolbar board-control board-control--icon flex h-10 w-10 shrink-0 items-center justify-center p-0 md:h-9 md:w-9"
             :class="{ 'button-toolbar--active': isSortOpen || sortOption !== 'latest' }"
             title="排序提案"
             aria-label="排序提案"
@@ -136,7 +139,7 @@
         <div class="static md:relative" @click.stop @pointerdown.stop>
           <button
             type="button"
-            class="button-toolbar flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0 md:h-9 md:w-9"
+            class="button-toolbar board-control board-control--icon flex h-10 w-10 shrink-0 items-center justify-center p-0 md:h-9 md:w-9"
             :class="{ 'button-toolbar--active': isSearchOpen || searchQuery }"
             title="搜尋提案"
             aria-label="搜尋提案"

@@ -2,6 +2,16 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善提案列表層次",
+    version: "v2.0.170",
+    date: "2026-07-12",
+    time: "17:55",
+    items: [
+      { title: "改善提案列表的標題、操作區與內容層次，提升資訊掃讀效率。" },
+      { title: "調整提案列表的邊框、圓角與陰影顯示。" }
+    ]
+  },
+  {
     title: "統一更新操作與圖示風格",
     version: "v2.0.169",
     date: "2026-07-12",
