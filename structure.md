@@ -15,7 +15,7 @@
 - `config/rate-limits.config.json` — 限流與圖片壓縮設定入口
 - `structure.md` / `AGENTS.md` — 結構地圖 / 代理人規則
 - `package.json` — scripts（typecheck、lint、build、check:edge、test:architecture、verify:local…）
-- `index.html` / `vite.config.ts` / `vercel.json` / `eslint.config.js` / `tsconfig*.json` / `tailwind.config.cjs` / `postcss.config.cjs`
+- `index.html` / `vite.config.ts` / `vercel.json` / `eslint.config.js` / `tsconfig*.json` / `tailwind.config.cjs`
 - `.env.example` / `.gitignore` / `skills-lock.json`
 
 ---

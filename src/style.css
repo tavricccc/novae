@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import "../node_modules/harmonyos-sans-webfont-splitted/dist/HarmonyOS_Sans_TC/index.css";
-@import "../node_modules/harmonyos-sans-webfont-splitted/dist/HarmonyOS_Sans_SC/index.css";
 @config "../tailwind.config.cjs";
 @font-face { font-family: 'JetBrains Mono'; src: url('./assets/fonts/jetbrains-mono-latin-400-600.woff2') format('woff2'); font-style: normal; font-weight: 400 600; font-display: swap; }
 @layer base {

@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import path from 'node:path';
 
@@ -54,6 +55,7 @@ export default defineConfig(({ mode }) => {
       htmlEnvPlugin(appVersion),
       versionFilePlugin(appVersion),
       vue(),
+      tailwindcss(),
       VitePWA({
         filename: 'sw.ts',
         injectRegister: false,

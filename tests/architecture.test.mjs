@@ -35,9 +35,10 @@ test('frontend keeps Firebase limited to Auth, App Check, and FCM', async () => 
 });
 
 test('runtime fonts are local compressed subsets', async () => {
+  const main = await read('src/main.ts');
   const style = await read('src/style.css');
 
-  assert.match(style, /harmonyos-sans-webfont-splitted/u);
+  assert.match(main, /harmonyos-sans-webfont-splitted/u);
   assert.match(style, /jetbrains-mono-latin-400-600\.woff2/u);
   assert.doesNotMatch(style, /material-symbols|Material Symbols/u);
   assert.doesNotMatch(style, /fonts\.googleapis|fonts\.gstatic|\.ttf/u);
