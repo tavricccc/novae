@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="flex min-h-0 flex-col overflow-hidden"
-    :class="[contentClass, { 'settings-panel-content--flat': flat }]"
-  >
+  <div class="flex min-h-0 flex-col overflow-hidden" :class="contentClass">
     <div
       v-if="!flat"
       class="flex items-start justify-between gap-3 border-b border-ink-100 px-4 py-3 dark:border-ink-700"
@@ -23,8 +20,8 @@
       </button>
     </div>
 
-    <div class="settings-content-scroll min-h-0 overflow-y-auto px-4" :class="flat ? '!px-1' : ''">
-      <section aria-label="目前帳號" class="settings-section settings-section--account border-b border-ink-100 py-4 dark:border-ink-800/60">
+    <div class="min-h-0 overflow-y-auto px-4" :class="flat ? '!px-1' : ''">
+      <section aria-label="目前帳號" class="border-b border-ink-100 py-4 dark:border-ink-800/60">
         <p v-if="SCHOOL_NAME" class="mb-3 text-xs font-semibold text-ink-500 dark:text-ink-400">
           {{ SCHOOL_NAME }}
         </p>
@@ -49,7 +46,7 @@
         </div>
       </section>
 
-      <section class="settings-section settings-section--push border-b border-ink-100 dark:border-ink-800/60" aria-label="推播通知">
+      <section class="border-b border-ink-100 dark:border-ink-800/60" aria-label="推播通知">
         <button
           type="button"
           class="flex w-full items-center justify-between gap-4 py-4 text-left transition-colors hover:bg-ink-50 focus-visible:bg-ink-50 dark:hover:bg-ink-800/50 dark:focus-visible:bg-ink-800/50"
@@ -75,7 +72,7 @@
         </button>
       </section>
 
-      <section class="settings-section settings-section--preferences border-b border-ink-100 py-4 dark:border-ink-800/60" aria-label="通知類型">
+      <section class="border-b border-ink-100 py-4 dark:border-ink-800/60" aria-label="通知類型">
         <div class="mb-1">
           <p class="text-sm font-semibold text-ink-950 dark:text-ink-50">通知類型</p>
         </div>
@@ -105,7 +102,7 @@
         </div>
       </section>
 
-      <section class="settings-section settings-section--links border-b border-ink-100 dark:border-ink-800/60" aria-label="其他頁面">
+      <section class="border-b border-ink-100 dark:border-ink-800/60" aria-label="其他頁面">
         <p v-if="!flat" class="pt-4 text-xs font-semibold text-ink-600 dark:text-ink-300">其他</p>
         <div class="divide-y divide-ink-100 dark:divide-ink-800/60">
           <RouterLink

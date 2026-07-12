@@ -27,7 +27,7 @@
     --color-warning-container: 254 243 199;
     --color-on-warning-container: 120 53 15;
     --color-shadow: 17 17 17;
-    --color-page-background: 247 247 245;
+    --color-page-background: 255 255 255;
     --motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
     --motion-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
     --motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
@@ -355,7 +355,7 @@
 
 @layer components {
   .panel {
-    @apply border border-ink-200/75 bg-white shadow-note dark:border-ink-700/80 dark:bg-ink-900;
+    @apply border border-ink-200/90 bg-white shadow-note dark:border-ink-700/80 dark:bg-ink-900;
     border-radius: var(--radius-outer);
     transition:
       opacity var(--motion-duration-panel) var(--motion-ease),
@@ -825,41 +825,11 @@
   }
 
   .dashboard-surface {
-    @apply rounded-[1.25rem] border border-ink-200/75 bg-white p-5 shadow-note dark:border-ink-800/80 dark:bg-ink-900;
+    @apply rounded-[1.25rem] border border-ink-200/90 bg-white p-5 shadow-note dark:border-ink-800/80 dark:bg-ink-900;
   }
 
   .dashboard-metric {
-    @apply rounded-[1.25rem] border border-ink-200/75 bg-white p-5 shadow-note dark:border-ink-800/80 dark:bg-ink-900;
-  }
-
-  .settings-panel-content--flat {
-    @apply gap-4 overflow-visible;
-  }
-
-  .settings-panel-content--flat .settings-content-scroll {
-    @apply space-y-4 overflow-visible px-0;
-  }
-
-  .settings-panel-content--flat .settings-section {
-    @apply rounded-[1.25rem] border border-ink-200/75 bg-white px-5 shadow-note dark:border-ink-800/80 dark:bg-ink-900;
-  }
-
-  .settings-panel-content--flat .settings-section--account,
-  .settings-panel-content--flat .settings-section--preferences {
-    @apply py-5;
-  }
-
-  .settings-panel-content--flat .settings-section--account,
-  .settings-panel-content--flat .settings-section--push,
-  .settings-panel-content--flat .settings-section--preferences,
-  .settings-panel-content--flat .settings-section--links {
-    border-bottom-color: rgb(221 221 211 / 0.75);
-  }
-
-  @media (max-width: 767px) {
-    .settings-panel-content--flat .settings-section {
-      @apply rounded-2xl px-4;
-    }
+    @apply rounded-[1.25rem] border border-ink-200/90 bg-white p-5 shadow-note dark:border-ink-800/80 dark:bg-ink-900;
   }
 
   .dashboard-section-head {

@@ -47,7 +47,7 @@ module.exports = {
         'on-warning-container': 'rgb(var(--color-on-warning-container) / <alpha-value>)',
       },
       boxShadow: {
-        note: '0 1px 2px rgba(17, 17, 17, 0.035), 0 16px 36px -26px rgba(17, 17, 17, 0.28)',
+        note: '0 18px 40px -24px rgba(17, 17, 17, 0.4)',
         elevated: '0 18px 40px -22px rgb(var(--color-shadow) / 0.34)',
       },
     },

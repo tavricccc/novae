@@ -1,39 +1,37 @@
 <template>
-  <section class="panel relative flex min-h-0 flex-col overflow-hidden">
-    <div class="border-b border-ink-200/70 px-4 py-4 dark:border-ink-800/80 sm:px-5 md:px-6">
-      <BoardControls
-        v-model:status-tab="statusTab"
-        v-model:search-query="searchQuery"
-        v-model:sort-option="sortOption"
-        :active-filter="activeFilter"
-        :active-category-label="activeCategoryLabel"
-        :search-hint="searchHint"
-      >
-        <template #actions>
-          <CreateActionMenu
-            v-if="showToggle && activeFilter !== 'my-proposals'"
-            :can-create-announcement="isAdmin"
-            :default-category="defaultComposerCategory"
-            @create-announcement="handleCreateAnnouncement"
-            @create-issue="openComposerForCategory"
-          >
-            <template #trigger="{ open }">
-              <button
-                type="button"
-                class="button-icon-filled hidden md:flex !h-9 !w-9 items-center justify-center shrink-0"
-                title="新增"
-                aria-label="新增"
-                @click="open"
-              >
-                <AppIcon name="plus" :size="4" :stroke-width="2.5" />
-              </button>
-            </template>
-          </CreateActionMenu>
-        </template>
-      </BoardControls>
-    </div>
+  <section class="relative flex min-h-0 flex-col gap-5">
+    <BoardControls
+      v-model:status-tab="statusTab"
+      v-model:search-query="searchQuery"
+      v-model:sort-option="sortOption"
+      :active-filter="activeFilter"
+      :active-category-label="activeCategoryLabel"
+      :search-hint="searchHint"
+    >
+      <template #actions>
+        <CreateActionMenu
+          v-if="showToggle && activeFilter !== 'my-proposals'"
+          :can-create-announcement="isAdmin"
+          :default-category="defaultComposerCategory"
+          @create-announcement="handleCreateAnnouncement"
+          @create-issue="openComposerForCategory"
+        >
+          <template #trigger="{ open }">
+            <button
+              type="button"
+              class="button-icon-filled hidden md:flex !h-9 !w-9 items-center justify-center shrink-0"
+              title="新增"
+              aria-label="新增"
+              @click="open"
+            >
+              <AppIcon name="plus" :size="4" :stroke-width="2.5" />
+            </button>
+          </template>
+        </CreateActionMenu>
+      </template>
+    </BoardControls>
 
-    <div ref="boardScrollRef" class="scrollbar-none min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-2 pb-4 pt-2 sm:px-3 md:px-4 md:pt-3">
+    <div ref="boardScrollRef" class="scrollbar-none min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-4">
       <Transition name="panel-switch" mode="out-in">
         <div :key="boardPanelKey" class="space-y-4">
           <PageLoadFailure

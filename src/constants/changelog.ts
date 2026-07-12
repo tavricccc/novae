@@ -2,16 +2,6 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
-    title: "提升介面資訊層次",
-    version: "v2.0.170",
-    date: "2026-07-12",
-    time: "16:32",
-    items: [
-      { title: "改善提案、設定與統計頁面的卡片層次、文字對比與資訊辨識度。" },
-      { title: "統一主要內容的淡灰邊框、圓角與柔和陰影。" }
-    ]
-  },
-  {
     title: "統一更新操作與圖示風格",
     version: "v2.0.169",
     date: "2026-07-12",
