@@ -108,6 +108,10 @@ UPSTASH_REDIS_REST_URL
 UPSTASH_REDIS_REST_TOKEN
 ```
 
+Cloudinary 的 `CLOUDINARY_CLOUD_NAME`、`CLOUDINARY_API_KEY` 與
+`CLOUDINARY_API_SECRET` 必須取自同一個 Product Environment。若瀏覽器直接上傳圖片時收到
+`401 Unauthorized`，請重新複製這三項設定並重新部署 `backendAction`；只更新其中一項會使簽章驗證失敗。
+
 ## 7. 第一次發布
 
 1. 從 Actions 手動執行 **Deploy Supabase Backend**，選擇 `main`。

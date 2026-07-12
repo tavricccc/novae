@@ -2,6 +2,15 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "改善圖片上傳驗證提示",
+    version: "v2.0.168",
+    date: "2026-07-12",
+    time: "11:05",
+    items: [
+      { title: "改善圖片上傳驗證失敗、逾時、大小與格式錯誤的提示。" }
+    ]
+  },
+  {
     title: "完善內容發布與刪除",
     version: "v2.0.167",
     date: "2026-07-12",

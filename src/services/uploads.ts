@@ -43,6 +43,12 @@ interface CloudinaryUploadResponse {
   version?: number;
 }
 
+interface CloudinaryErrorResponse {
+  error?: {
+    message?: string;
+  };
+}
+
 export interface ImageUploadInput {
   file: File;
   height: number;
@@ -58,6 +64,30 @@ function toReadableUploadError(error: unknown) {
   }
 
   return toReadableBackendError(error);
+}
+
+async function createCloudinaryUploadError(response: Response) {
+  let providerMessage = '';
+  try {
+    const payload = await response.json() as CloudinaryErrorResponse;
+    providerMessage = payload.error?.message?.trim() ?? '';
+  } catch {
+    // Cloudinary 偶爾會回傳非 JSON 錯誤頁；只依狀態碼提供安全訊息。
+  }
+
+  if (response.status === 401) {
+    if (/timestamp|stale/i.test(providerMessage)) {
+      return new Error('圖片上傳驗證已逾時，請重新選擇圖片後再試。');
+    }
+    return new Error('圖片服務驗證失敗，請聯絡管理員檢查 Cloudinary 金鑰設定。');
+  }
+  if (response.status === 413 || /file size|too large/i.test(providerMessage)) {
+    return new Error('圖片大小超過上傳限制。');
+  }
+  if (response.status === 400 && /format|allowed_formats/i.test(providerMessage)) {
+    return new Error('圖片格式不受支援，請重新選擇圖片。');
+  }
+  return new Error(`圖片上傳失敗（${response.status}），請稍後再試。`);
 }
 
 async function uploadToCloudinary(file: File, session: ImageUploadSession) {
@@ -79,7 +109,7 @@ async function uploadToCloudinary(file: File, session: ImageUploadSession) {
       `https://api.cloudinary.com/v1_1/${session.cloudName}/image/upload`,
       { method: 'POST', body },
     );
-    if (!response.ok) throw new Error(`圖片上傳失敗：${response.status}`);
+    if (!response.ok) throw await createCloudinaryUploadError(response);
     return await response.json() as CloudinaryUploadResponse;
   }, { label: '圖片上傳', timeoutMs: LONG_REQUEST_TIMEOUT_MS });
 }
