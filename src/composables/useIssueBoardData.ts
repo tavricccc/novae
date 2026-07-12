@@ -57,6 +57,7 @@ export function useIssueBoardData() {
     loadMoreBucket,
     addIssueToBucket,
     removeIssueFromBuckets,
+    invalidateIssueBuckets,
     upsertIssueAcrossBuckets,
     patchCachedIssues,
   } = useIssueBuckets({ user, activeFilter, isAdmin, supportedIssueIds, currentPageSize, sortOption });
@@ -110,6 +111,7 @@ export function useIssueBoardData() {
     filterIssues,
   });
   let realtimeUnsubscribe: (() => void) | null = null;
+  const LIST_REVALIDATE_INTERVAL_MS = 60_000;
   const unregisterResumeHandler = registerAppResumeHandler(() => {
     if (!isAllowedUser.value) return;
     const updatedAt = activeFilter.value === 'my-proposals'
@@ -262,12 +264,18 @@ export function useIssueBoardData() {
               ...issue,
               support_count: event.supportCount ?? issue.support_count,
             }));
+            if (sortOption.value === 'most-supported') void refreshCurrentData();
             return;
           }
           if (event.eventType !== 'issue_changed') return;
-          if (activeFilter.value !== 'my-proposals' && event.category !== activeFilter.value) return;
+          invalidateIssueBuckets();
           if (event.op === 'delete') {
             handleIssueDeleted(event.targetId);
+            return;
+          }
+          if (activeFilter.value !== 'my-proposals' && event.category !== activeFilter.value) {
+            removeIssueFromBuckets(event.targetId);
+            invalidateIssueBuckets();
             return;
           }
           void fetchIssueRecordById(event.targetId, {
@@ -279,6 +287,7 @@ export function useIssueBoardData() {
         },
         () => {
           markContentRealtimeUnreliable();
+          void refreshCurrentData();
         },
       );
     },
@@ -336,6 +345,22 @@ export function useIssueBoardData() {
       ? userIssuesState.updatedAt
       : currentState.value.updatedAt;
     if (shouldRefreshContentAfterResume(updatedAt)) void refreshCurrentData();
+  });
+
+  const revalidateTimer = window.setInterval(() => {
+    if (
+      document.visibilityState !== 'visible'
+      || !isOnline.value
+      || !isAllowedUser.value
+      || currentLoading.value
+      || currentLoadingMore.value
+      || searchQuery.value.trim()
+    ) return;
+    void refreshCurrentData();
+  }, LIST_REVALIDATE_INTERVAL_MS);
+
+  onBeforeUnmount(() => {
+    window.clearInterval(revalidateTimer);
   });
 
   return {

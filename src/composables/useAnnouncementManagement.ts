@@ -59,6 +59,7 @@ export function useAnnouncementManagement() {
   const deletePendingAnnouncement = ref<AnnouncementRecord | null>(null);
   const sessionLoading = computed(() => authLoading.value || !initialized.value);
   let realtimeUnsubscribe: (() => void) | null = null;
+  const LIST_REVALIDATE_INTERVAL_MS = 60_000;
   const unregisterResumeHandler = registerAppResumeHandler(() => {
     if (!initialized.value || !isAllowedUser.value) return;
     if (!shouldRefreshContentAfterResume(updatedAt.value)) return;
@@ -225,6 +226,7 @@ export function useAnnouncementManagement() {
         }).catch(() => removeAnnouncement(event.targetId));
       }, () => {
         markContentRealtimeUnreliable();
+        void refreshAnnouncementList({ force: true });
       });
     },
     { immediate: true },
@@ -242,6 +244,22 @@ export function useAnnouncementManagement() {
     }
     if (!initialized.value || !isAllowedUser.value) return;
     if (shouldRefreshContentAfterResume(updatedAt.value)) void refreshAnnouncementList({ force: true });
+  });
+
+  const revalidateTimer = window.setInterval(() => {
+    if (
+      document.visibilityState !== 'visible'
+      || !isOnline.value
+      || !initialized.value
+      || !isAllowedUser.value
+      || loading.value
+      || loadingMore.value
+    ) return;
+    void refreshAnnouncementList({ force: true });
+  }, LIST_REVALIDATE_INTERVAL_MS);
+
+  onScopeDispose(() => {
+    window.clearInterval(revalidateTimer);
   });
 
   return {

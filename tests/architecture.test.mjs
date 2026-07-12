@@ -550,12 +550,23 @@ test('announcement writes update visible lists and invalidate list-page caches',
 test('realtime-backed lists revalidate cached content after inactive periods', async () => {
   const discussionComments = await read('src/composables/useDiscussionComments.ts');
   const announcementManagement = await read('src/composables/useAnnouncementManagement.ts');
+  const issueBoard = await read('src/composables/useIssueBoardData.ts');
+  const realtimeEvents = await read('src/services/realtime-events.ts');
+  const boardControls = await read('src/components/BoardControls.vue');
+  const announcementControls = await read('src/components/AnnouncementControls.vue');
   const announcements = await read('src/services/announcements.ts');
   const issueWrites = await read('src/services/issues-write.ts');
 
   assert.match(discussionComments, /const hydrated = !options\.force && hydrateSnapshot\(id\)/u);
   assert.match(discussionComments, /forceRefresh: options\.force === true \|\| hydrated/u);
   assert.match(announcementManagement, /refreshAnnouncementList\(\{ force: true \}\)/u);
+  assert.match(announcementManagement, /LIST_REVALIDATE_INTERVAL_MS = 60_000/u);
+  assert.match(issueBoard, /LIST_REVALIDATE_INTERVAL_MS = 60_000/u);
+  assert.match(issueBoard, /invalidateIssueBuckets\(\)/u);
+  assert.match(realtimeEvents, /scheduleReconnect/u);
+  assert.match(realtimeEvents, /status !== 'CHANNEL_ERROR'.*status !== 'TIMED_OUT'.*status !== 'CLOSED'/u);
+  assert.match(boardControls, /aria-label="重新整理提案"/u);
+  assert.match(announcementControls, /aria-label="重新整理公告"/u);
   assert.match(announcements, /ANNOUNCEMENT_COMMENTS_CACHE_PREFIX/u);
   assert.match(issueWrites, /markContentCachePrefixStale\('issue-comments-page\|'\)/u);
 });

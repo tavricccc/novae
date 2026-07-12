@@ -156,6 +156,7 @@ export function useIssueBuckets(deps: BucketDeps) {
 
   function refreshBucket(statusBucket: IssueStatusBucket) {
     const bucket = getBucketState(statusBucket);
+    if (bucket.loading || bucket.refreshing) return Promise.resolve();
     bumpBucketVersion(bucket);
     bucket.cursor = null;
     bucket.hasMore = true;
@@ -168,6 +169,7 @@ export function useIssueBuckets(deps: BucketDeps) {
 
   function patchCachedIssues(issueId: string, updater: (issue: IssueRecord) => IssueRecord) {
     globalBucketCache.forEach((bucket) => {
+      if (!bucket.issues.some((issue) => issue.id === issueId)) return;
       bucket.issues = bucket.issues.map((issue) => issue.id === issueId ? updater(issue) : issue);
       bucket.updatedAt = Date.now();
     });
@@ -190,8 +192,15 @@ export function useIssueBuckets(deps: BucketDeps) {
     });
   }
 
+  function invalidateIssueBuckets() {
+    globalBucketCache.forEach((bucket) => {
+      bucket.updatedAt = 0;
+    });
+  }
+
   function upsertIssueAcrossBuckets(issue: IssueRecord) {
     removeIssueFromBuckets(issue.id);
+    invalidateIssueBuckets();
     addIssueToBucket(issue);
   }
 
@@ -212,6 +221,7 @@ export function useIssueBuckets(deps: BucketDeps) {
     loadMoreBucket,
     addIssueToBucket,
     removeIssueFromBuckets,
+    invalidateIssueBuckets,
     upsertIssueAcrossBuckets,
     patchCachedIssues,
   };

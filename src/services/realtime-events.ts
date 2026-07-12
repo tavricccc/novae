@@ -13,6 +13,23 @@ const realtimeSubscribers = new Map<number, RealtimeSubscriber>();
 let realtimeSubscriberSerial = 0;
 let realtimeChannelSerial = 0;
 let sharedRealtimeChannel: RealtimeChannel | null = null;
+let reconnectAttempt = 0;
+let reconnectTimer = 0;
+
+function clearReconnectTimer() {
+  window.clearTimeout(reconnectTimer);
+  reconnectTimer = 0;
+}
+
+function scheduleReconnect() {
+  if (realtimeSubscribers.size === 0 || reconnectTimer) return;
+  const delay = Math.min(30_000, 1_000 * 2 ** reconnectAttempt);
+  reconnectAttempt += 1;
+  reconnectTimer = window.setTimeout(() => {
+    reconnectTimer = 0;
+    ensureSharedRealtimeChannel();
+  }, delay);
+}
 
 export type ContentRealtimeEventType =
   | 'issue_changed'
@@ -88,9 +105,10 @@ function normalizeRealtimeEvent(data: Record<string, unknown>): ContentRealtimeE
 }
 
 function ensureSharedRealtimeChannel() {
-  if (sharedRealtimeChannel) return;
+  if (sharedRealtimeChannel || realtimeSubscribers.size === 0) return;
+  clearReconnectTimer();
   const client = getSupabaseClient();
-  sharedRealtimeChannel = client
+  const channel = client
     .channel(`content-realtime:shared:${realtimeChannelSerial += 1}`)
     .on('postgres_changes', {
       event: 'INSERT',
@@ -102,10 +120,19 @@ function ensureSharedRealtimeChannel() {
       realtimeSubscribers.forEach((subscriber) => subscriber.callback(event));
     })
     .subscribe((status) => {
-      if (status !== 'CHANNEL_ERROR' && status !== 'TIMED_OUT') return;
+      if (status === 'SUBSCRIBED') {
+        reconnectAttempt = 0;
+        return;
+      }
+      if (status !== 'CHANNEL_ERROR' && status !== 'TIMED_OUT' && status !== 'CLOSED') return;
+      if (sharedRealtimeChannel !== channel) return;
+      sharedRealtimeChannel = null;
       const error = new Error('content-realtime-unavailable');
       realtimeSubscribers.forEach((subscriber) => subscriber.onError?.(error));
+      void client.removeChannel(channel);
+      scheduleReconnect();
     });
+  sharedRealtimeChannel = channel;
 }
 
 export function subscribeContentRealtimeEvents(
@@ -120,7 +147,10 @@ export function subscribeContentRealtimeEvents(
 
   return () => {
     realtimeSubscribers.delete(subscriberId);
-    if (realtimeSubscribers.size > 0 || !sharedRealtimeChannel) return;
+    if (realtimeSubscribers.size > 0) return;
+    clearReconnectTimer();
+    reconnectAttempt = 0;
+    if (!sharedRealtimeChannel) return;
     const client = getSupabaseClient();
     const channel = sharedRealtimeChannel;
     sharedRealtimeChannel = null;

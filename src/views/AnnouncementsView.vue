@@ -2,6 +2,8 @@
   <section class="mx-auto w-full max-w-7xl space-y-5">
     <AnnouncementControls
       v-model:sort-option="sortOption"
+      :refreshing="manualRefreshing"
+      @refresh="handleManualRefresh"
     >
       <template #actions>
         <CreateActionMenu
@@ -106,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AnnouncementControls from '@/components/AnnouncementControls.vue';
 import AnnouncementComposerDialog from '@/components/AnnouncementComposerDialog.vue';
@@ -130,6 +132,7 @@ import { useLoadingTimeout } from '@/composables/useLoadingTimeout';
 import { DEFAULT_ISSUE_CATEGORY } from '@/constants/categories';
 import { resetAppConnection } from '@/lib/reconnect';
 import type { IssueCategory } from '@/types';
+import { useToast } from '@/composables/useToast';
 
 const {
   announcements,
@@ -161,6 +164,8 @@ const {
 
 const route = useRoute();
 const router = useRouter();
+const { showProgressToast } = useToast();
+const manualRefreshing = ref(false);
 const rawAnnouncementLoading = computed(() => sessionLoading.value || loading.value);
 const announcementPanelKey = computed(() => sortOption.value);
 const { visibleLoading: visibleAnnouncementLoading } = useMinimumLoading(rawAnnouncementLoading);
@@ -176,6 +181,19 @@ const infiniteScrollDisabled = computed(() =>
 async function retryAnnouncements() {
   await resetAppConnection();
   await refreshAnnouncements();
+}
+async function handleManualRefresh() {
+  if (manualRefreshing.value) return;
+  manualRefreshing.value = true;
+  const progressToast = showProgressToast('正在更新公告...');
+  try {
+    await refreshAnnouncements();
+    progressToast.succeed('公告已更新。');
+  } catch {
+    progressToast.fail('公告更新失敗，請稍後再試。');
+  } finally {
+    manualRefreshing.value = false;
+  }
 }
 async function handleCreateIssue(category: IssueCategory) {
   await requestCreateIssue(router, category);

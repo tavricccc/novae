@@ -7,6 +7,8 @@
       :active-filter="activeFilter"
       :active-category-label="activeCategoryLabel"
       :search-hint="searchHint"
+      :refreshing="manualRefreshing"
+      @refresh="handleManualRefresh"
     >
       <template #actions>
         <CreateActionMenu
@@ -154,12 +156,13 @@ const emit = defineEmits<{
 }>();
 
 const { isAdmin } = useSession();
-const { showToast } = useToast();
+const { showProgressToast, showToast } = useToast();
 const router = useRouter();
 const route = useRoute();
 const composerCategory = ref<IssueCategory>(DEFAULT_ISSUE_CATEGORY);
 const boardScrollRef = ref<HTMLElement | null>(null);
 const restoreBoardScrollPending = ref(false);
+const manualRefreshing = ref(false);
 const composerCategoryLabel = computed(() => ISSUE_CATEGORY_LABELS[composerCategory.value]);
 
 const {
@@ -218,6 +221,19 @@ const infiniteScrollDisabled = computed(() =>
 async function retryCurrentData() {
   await resetAppConnection();
   await refreshCurrentData();
+}
+async function handleManualRefresh() {
+  if (manualRefreshing.value) return;
+  manualRefreshing.value = true;
+  const progressToast = showProgressToast('正在更新提案...');
+  try {
+    await refreshCurrentData();
+    progressToast.succeed('提案已更新。');
+  } catch {
+    progressToast.fail('提案更新失敗，請稍後再試。');
+  } finally {
+    manualRefreshing.value = false;
+  }
 }
 const { sentinel: loadMoreSentinel } = useInfiniteScroll({
   disabled: infiniteScrollDisabled,

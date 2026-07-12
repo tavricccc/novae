@@ -43,7 +43,7 @@
 
 ### Realtime 不更新
 
-確認初始讀取成功、連線未被 CSP／代理阻擋、event audience 與目前使用者相符。Realtime 是增量更新；重新整理能恢復通常表示訂閱或 patch 流程有問題，而非資料遺失。
+確認初始讀取成功、連線未被 CSP／代理阻擋、event audience 與目前使用者相符。提案與公告列表會自動重連、連線失敗後補抓，並在前景定期校正；也可使用列表標題列的重新整理按鈕立即強制讀取。若強制讀取能恢復但自動更新仍持續失敗，應檢查 `realtime_events` publication、RLS 與瀏覽器 WebSocket 連線。
 
 ## 圖片
 

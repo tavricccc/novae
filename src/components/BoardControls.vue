@@ -184,6 +184,17 @@
           </transition>
         </div>
 
+        <button
+          type="button"
+          class="button-toolbar flex h-10 w-10 shrink-0 items-center justify-center rounded-full p-0 md:h-9 md:w-9"
+          title="重新整理提案"
+          aria-label="重新整理提案"
+          :disabled="refreshing"
+          @click="emit('refresh')"
+        >
+          <AppIcon name="refresh" class="h-4 w-4" />
+        </button>
+
         <slot name="actions" />
       </div>
     </div>
@@ -206,12 +217,14 @@ const props = defineProps<{
   activeFilter: string;
   activeCategoryLabel: string;
   sortOption: IssueSortOption;
+  refreshing?: boolean;
 }>();
 
 const emit = defineEmits<{
   'update:statusTab': [value: 'active' | 'closed'];
   'update:searchQuery': [value: string];
   'update:sortOption': [value: IssueSortOption];
+  refresh: [];
 }>();
 
 const issueSortOptions = [
