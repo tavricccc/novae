@@ -18,6 +18,7 @@ const MARKDOWN_UPLOAD_ID_PATTERN = /srp-upload:\/\/([0-9a-fA-F-]{36})/gu;
 const MARKDOWN_IMAGE_SOURCE_PATTERN = /!\[[^\]]*\]\((\S+?)(?:\s+["'][^"']*["'])?\)/gu;
 const PRIVATE_URL_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 const PRIVATE_URL_REFRESH_BUFFER_MS = 5 * 60 * 1000;
+const PRIVATE_DELIVERY_SCOPE = "private-v2";
 const PUBLIC_URL_CACHE_MS = 365 * 24 * 60 * 60 * 1000;
 const PUBLIC_DELIVERY_SCOPE = "public-v2";
 
@@ -382,7 +383,7 @@ export async function handleUploadAction(
     }
     const cachedExpiresAtMs = Date.parse(upload.delivery_url_expires_at ?? "");
     if (
-      upload.delivery_url_scope === "private"
+      upload.delivery_url_scope === PRIVATE_DELIVERY_SCOPE
       && upload.delivery_url
       && Number.isFinite(cachedExpiresAtMs)
       && cachedExpiresAtMs > Date.now() + PRIVATE_URL_REFRESH_BUFFER_MS
@@ -394,7 +395,7 @@ export async function handleUploadAction(
     const { error: cacheError } = await supabase.schema("app_private").from("uploads").update({
       delivery_url: url,
       delivery_url_expires_at: expiresAt.toISOString(),
-      delivery_url_scope: "private",
+      delivery_url_scope: PRIVATE_DELIVERY_SCOPE,
     }).eq("id", upload.id);
     if (cacheError) throw cacheError;
     return { expiresAtMs: expiresAt.getTime(), id: upload.id, url };

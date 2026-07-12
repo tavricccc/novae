@@ -92,7 +92,6 @@ export async function createCloudinaryExpiringImageUrl(publicId: string, expires
     expires_at: Math.floor(expiresAt.getTime() / 1000).toString(),
     format: "webp",
     public_id: publicId,
-    resource_type: "image",
     timestamp: Math.floor(Date.now() / 1000).toString(),
     type: "authenticated",
   };

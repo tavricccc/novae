@@ -614,9 +614,11 @@ test('private issue data and upload URLs stay behind backend authorization', asy
   assert.match(uploads, /async function resolveUploadAccessBatch/u);
   assert.match(uploads, /canReadIssue\(issue, auth\)/u);
   assert.match(uploads, /issueIsPrivateToOwner/u);
+  assert.match(uploads, /PRIVATE_DELIVERY_SCOPE = "private-v2"/u);
   assert.match(uploads, /PUBLIC_DELIVERY_SCOPE = "public-v2"/u);
   assert.match(cloudinary, /deliveryPath = `\$\{publicId\}\.webp`/u);
   assert.match(cloudinary, /s--\$\{signature\}--\/\$\{encodedPublicId\}\.webp/u);
+  assert.doesNotMatch(cloudinary, /resource_type: "image",[\s\S]*timestamp:[\s\S]*type: "authenticated"/u);
   assert.match(support, /issueAllowsSupport/u);
   assert.match(support, /issue\.support_enabled !== true/u);
 });
