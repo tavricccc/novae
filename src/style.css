@@ -886,17 +886,6 @@
   pointer-events: none;
 }
 
-.app-reloading-overlay::before {
-  position: fixed;
-  inset: 0 0 auto;
-  height: env(safe-area-inset-top);
-  background: rgb(15 23 42 / 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  content: '';
-  pointer-events: none;
-}
-
 .dialog-overlay[data-padding='padded'] {
   padding-bottom: 1.5rem;
   padding-left: 1rem;

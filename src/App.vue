@@ -52,7 +52,7 @@
     <Transition name="dialog" appear>
       <div
         v-if="reloading"
-        class="app-reloading-overlay fixed inset-0 z-[90] flex items-center justify-center bg-ink-950/65 text-white backdrop-blur-md"
+        class="fixed inset-0 z-[90] flex items-center justify-center bg-ink-950/65 text-white backdrop-blur-md"
         role="status"
         aria-live="assertive"
         :aria-label="reloadingAriaLabel"
@@ -78,7 +78,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import { useAppInstallPrompt } from '@/composables/useAppInstallPrompt';
 import { useAppStartupGate } from '@/composables/useAppStartupGate';
 import { useAppUpdate } from '@/composables/useAppUpdate';
-import { useFullscreenScrimTheme } from '@/composables/useDialogThemeColor';
 import { usePushPermissionPrompt } from '@/composables/usePushPermissionPrompt';
 import { useSession } from '@/composables/useSession';
 import { useToast } from '@/composables/useToast';
@@ -95,7 +94,6 @@ if (typeof document !== 'undefined') {
 }
 
 const { canAutoReloadCurrentVersion, reloadApp, reloading, updateAvailable } = useAppUpdate();
-useFullscreenScrimTheme(computed(() => Boolean(reloading.value)));
 const { open: startupGateOpen, stalled: startupGateStalled } = useAppStartupGate();
 const route = useRoute();
 const router = useRouter();

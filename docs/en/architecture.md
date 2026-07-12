@@ -62,7 +62,6 @@ Supabase's built-in JWT check is disabled for these functions because they valid
 - Public proposal records are separated from private author data.
 - Transactions create outbox events alongside content changes.
 - Realtime audiences are authorized for public, author, recipient, or admin access. Lists and comments reconnect and re-fetch after channel failures and periodically reconcile while visible. Selecting the active desktop top navigation or mobile bottom navigation refreshes proposal and announcement lists manually.
-- The iOS PWA uses a translucent status bar so pages, full-screen content, dialog scrims, and update overlays extend their matching backgrounds through the top safe area.
 - Dashboard counters and aggregates avoid scanning primary content on each visit.
 
 ## Key flows
