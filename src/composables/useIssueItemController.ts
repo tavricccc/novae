@@ -73,12 +73,10 @@ export function useIssueItemController(
   async function performDelete() {
     const deletedIssueId = await deleteSelectedIssue();
     if (deleteError.value) {
-      showToast(deleteError.value, 'error');
       return;
     }
     if (deletedIssueId) {
       onIssueDeleted(deletedIssueId);
-      showToast('提案已刪除。', 'success');
     }
   }
 

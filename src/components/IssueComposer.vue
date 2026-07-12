@@ -94,7 +94,7 @@
               取消
             </button>
             <button type="submit" class="button-primary flex-1 px-5 text-sm font-semibold sm:flex-none" :disabled="submitting || uploading">
-              <BusyButtonContent :busy="submitting" label="確認發布" busy-label="送出中..." />
+              確認發布
             </button>
           </div>
         </div>
@@ -109,7 +109,6 @@ import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 import { useDialogFocus } from '@/composables/useDialogFocus';
 import { useIssueComposerForm } from '@/composables/useIssueComposerForm';
 import DialogOverlay from '@/components/ui/DialogOverlay.vue';
-import BusyButtonContent from '@/components/ui/BusyButtonContent.vue';
 import MarkdownImageEditor from '@/components/ui/MarkdownImageEditor.vue';
 import type { IssueRecord, WritableIssueCategory } from '@/types';
 import { RATE_LIMITS } from '@/generated/rate-limits';

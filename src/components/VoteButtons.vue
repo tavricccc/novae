@@ -8,8 +8,7 @@
       :aria-label="optimisticSupported ? '取消附議' : '進行附議'"
       @click="toggle"
     >
-      <AppIcon v-if="!busy" name="thumbs-up" :size="compact ? 4 : 5" />
-      <LoadingSpinner v-else :size="compact ? 4 : 5" class="text-ink-500 dark:text-ink-400" />
+      <AppIcon name="thumbs-up" :size="compact ? 4 : 5" />
       <!-- Support count display -->
       <span class="text-sm font-semibold select-none leading-none">{{ displaySupportCount }}</span>
     </button>
@@ -18,7 +17,6 @@
 
 <script setup lang="ts">
 import { computed, toRef } from 'vue';
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
 import { useVoteSupport } from '@/composables/useVoteSupport';
 

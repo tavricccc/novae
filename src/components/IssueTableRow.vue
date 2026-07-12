@@ -162,7 +162,6 @@
       title="確定要刪除這筆提案嗎？"
       message="刪除後這筆提案將無法復原。"
       confirm-label="確認刪除"
-      busy-label="刪除中..."
       :busy="isDeleting"
       @cancel="isDeleteDialogOpen = false"
       @confirm="performDelete"

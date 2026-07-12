@@ -41,7 +41,7 @@
           :disabled="busy"
           @click="emit('confirm')"
         >
-          <BusyButtonContent :busy="busy" :label="confirmLabel" :busy-label="busyLabel" />
+          {{ confirmLabel }}
         </button>
       </div>
     </section>
@@ -50,7 +50,6 @@
 
 <script setup lang="ts">
 import { toRef } from 'vue';
-import BusyButtonContent from '@/components/ui/BusyButtonContent.vue';
 import DialogOverlay from '@/components/ui/DialogOverlay.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 import { useDialogFocus } from '@/composables/useDialogFocus';
@@ -63,14 +62,12 @@ const props = withDefaults(defineProps<{
   cancelLabel?: string;
   confirmLabel?: string;
   busy?: boolean;
-  busyLabel?: string;
 }>(), {
   title: '',
   eyebrow: '',
   cancelLabel: '取消',
   confirmLabel: '確認',
   busy: false,
-  busyLabel: '處理中...',
 });
 
 useBodyScrollLock(toRef(props, 'open'));

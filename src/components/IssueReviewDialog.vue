@@ -82,11 +82,7 @@
           :disabled="saving"
           @click="handlePrimaryClick"
         >
-          <BusyButtonContent
-            :busy="saving"
-            :label="idlePrimaryLabel"
-            busy-label="處理中..."
-          />
+          {{ idlePrimaryLabel }}
         </button>
       </div>
     </section>
@@ -95,7 +91,6 @@
 
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue';
-import BusyButtonContent from '@/components/ui/BusyButtonContent.vue';
 import DialogOverlay from '@/components/ui/DialogOverlay.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 import { useDialogFocus } from '@/composables/useDialogFocus';
@@ -133,7 +128,7 @@ const reviewDecision = ref<'approved' | 'rejected'>('approved');
 const rejectionReason = ref(props.issue.review_rejection_reason ?? '');
 const saving = ref(false);
 const errorMsg = ref('');
-const { showToast } = useToast();
+const { showProgressToast } = useToast();
 
 const idlePrimaryLabel = computed(() => {
   if (step.value === 1) {
@@ -175,27 +170,29 @@ function handleSecondaryClick() {
 async function submitReview() {
   saving.value = true;
   errorMsg.value = '';
+  const progressToast = showProgressToast('正在更新提案審核...');
   try {
     if (reviewDecision.value === 'approved') {
       const updated = await moderateIssueStatus(props.issue.id, 'pending');
       emit('success', updated);
-      showToast('提案審核已通過。', 'success');
+      progressToast.succeed('提案審核已通過。');
       emit('close');
     } else {
       const reason = rejectionReason.value.replace(/\s+/g, ' ').trim();
       if (!reason) {
         errorMsg.value = '請輸入審核未通過原因。';
+        progressToast.fail(errorMsg.value);
         saving.value = false;
         return;
       }
       const updated = await moderateIssueStatus(props.issue.id, 'review-rejected', reason);
       emit('success', updated);
-      showToast('提案審核已更新。', 'success');
+      progressToast.succeed('提案審核已更新。');
       emit('close');
     }
   } catch (caught) {
     errorMsg.value = caught instanceof Error ? caught.message : '審核處理失敗，請稍後再試。';
-    showToast(errorMsg.value, 'error');
+    progressToast.fail(errorMsg.value);
   } finally {
     saving.value = false;
   }

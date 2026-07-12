@@ -1036,25 +1036,52 @@
 }
 
 .toast-enter-active,
-.toast-leave-active {
+.toast-leave-active,
+.toast-move {
   transition:
-    opacity var(--motion-duration) var(--motion-ease-enter),
-    transform var(--motion-duration) var(--motion-ease-enter);
+    opacity 0.26s var(--motion-ease-enter),
+    transform 0.32s var(--motion-ease-enter);
+}
+
+.toast-enter-active {
+  animation: toast-drop-in 0.48s var(--motion-ease-enter);
 }
 
 .toast-leave-active {
+  position: absolute;
+  right: 0;
   transition-duration: var(--motion-duration-fast);
   transition-timing-function: var(--motion-ease-exit);
 }
 
 .toast-enter-from {
   opacity: 0;
-  transform: translateY(-6px) scale(0.98);
 }
 
 .toast-leave-to {
   opacity: 0;
-  transform: translateY(-3px) scale(0.99);
+  transform: translateY(-8px) scale(0.97);
+}
+
+@keyframes toast-drop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-28px) scale(0.92) rotateX(-12deg);
+    filter: blur(5px);
+  }
+  58% {
+    opacity: 1;
+    transform: translateY(4px) scale(1.018) rotateX(2deg);
+    filter: blur(0);
+  }
+  78% {
+    transform: translateY(-2px) scale(0.995) rotateX(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotateX(0);
+    filter: blur(0);
+  }
 }
 
 .dialog-enter-active {

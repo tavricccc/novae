@@ -84,11 +84,7 @@
           {{ step === 1 ? '取消' : '返回' }}
         </button>
         <button type="button" class="button-primary" :disabled="saving" @click="handlePrimaryClick">
-          <BusyButtonContent
-            :busy="saving"
-            :label="idlePrimaryLabel"
-            busy-label="處理中..."
-          />
+          {{ idlePrimaryLabel }}
         </button>
       </div>
     </section>
@@ -97,7 +93,6 @@
 
 <script setup lang="ts">
 import { computed, ref, toRef, watch } from 'vue';
-import BusyButtonContent from '@/components/ui/BusyButtonContent.vue';
 import DialogOverlay from '@/components/ui/DialogOverlay.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 import { useDialogFocus } from '@/composables/useDialogFocus';
@@ -170,7 +165,7 @@ const nextStatus = ref<EditableStatus>(initialStatus());
 const resultContent = ref(props.issue.result_content ?? '');
 const saving = ref(false);
 const errorMsg = ref('');
-const { showToast } = useToast();
+const { showProgressToast } = useToast();
 const requiresResult = computed(() => nextStatus.value === 'completed' || nextStatus.value === 'infeasible');
 
 const idlePrimaryLabel = computed(() => {
@@ -213,6 +208,7 @@ function handleSecondaryClick() {
 async function save() {
   saving.value = true;
   errorMsg.value = '';
+  const progressToast = showProgressToast('正在更新提案狀態...');
   try {
     if (!requiresResult.value) {
       const updated = await moderateIssueStatus(props.issue.id, 'processing');
@@ -221,23 +217,24 @@ async function save() {
         finalIssue = await updateIssueResult(props.issue.id, '');
       }
       emit('success', finalIssue);
-      showToast('提案狀態已更新。', 'success');
+      progressToast.succeed('提案狀態已更新。');
     } else {
       const content = resultContent.value.trim();
       if (!content) {
         errorMsg.value = '請輸入提案結果說明。';
+        progressToast.fail(errorMsg.value);
         saving.value = false;
         return;
       }
       const updated = await moderateIssueStatus(props.issue.id, nextStatus.value);
       const finalIssue = await updateIssueResult(props.issue.id, content);
       emit('success', finalIssue);
-      showToast('提案狀態與結果已更新。', 'success');
+      progressToast.succeed('提案狀態與結果已更新。');
     }
     emit('close');
   } catch (caught) {
     errorMsg.value = caught instanceof Error ? caught.message : '更新失敗，請稍後再試。';
-    showToast(errorMsg.value, 'error');
+    progressToast.fail(errorMsg.value);
   } finally {
     saving.value = false;
   }

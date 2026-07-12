@@ -35,7 +35,6 @@
       title="確定要刪除這筆提案嗎？"
       message="刪除後這筆提案將無法復原。"
       confirm-label="確認刪除"
-      busy-label="刪除中..."
       :busy="isDeleting"
       @cancel="closeDeleteDialog"
       @confirm="performRouteIssueDelete"
@@ -118,13 +117,10 @@ function copyRouteIssueUrl() {
 async function performRouteIssueDelete() {
   const deletedIssueId = await performDelete();
   if (actionError.value) {
-    showToast(actionError.value, 'error');
     return;
   }
 
-  if (deletedIssueId) {
-    showToast('提案已刪除。', 'success');
-  }
+  if (!deletedIssueId) return;
   closeDeleteDialog();
   closeRouteIssue();
 }

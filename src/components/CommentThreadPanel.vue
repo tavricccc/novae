@@ -96,7 +96,6 @@
       title="確定要刪除這則留言嗎？"
       message="刪除後這則留言將無法復原。"
       confirm-label="確認刪除"
-      busy-label="刪除中..."
       :busy="Boolean(commentPendingDelete) && deletingId === commentPendingDelete"
       @cancel="closeDeleteDialog"
       @confirm="confirmDeleteComment"

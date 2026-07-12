@@ -34,7 +34,6 @@
       title="確定要刪除這則公告嗎？"
       message="刪除後這則公告將無法復原。"
       confirm-label="確認刪除"
-      busy-label="刪除中..."
       :busy="deleting"
       @cancel="closeDeleteDialog"
       @confirm="confirmDelete"

@@ -121,8 +121,7 @@
             :title="submitting ? '傳送中...' : '送出留言'"
             aria-label="送出留言"
           >
-            <LoadingSpinner v-if="submitting" :size="4" />
-            <AppIcon v-else name="send" />
+            <AppIcon name="send" />
           </button>
         </div>
       </div>
@@ -138,7 +137,6 @@
 import { computed, nextTick, ref, watch } from 'vue';
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
-import LoadingSpinner from '@/components/ui/LoadingSpinner.vue';
 import { useMarkdownImageUpload } from '@/composables/useMarkdownImageUpload';
 import { useSession } from '@/composables/useSession';
 import { useToast } from '@/composables/useToast';

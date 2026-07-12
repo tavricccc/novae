@@ -16,7 +16,7 @@ interface VoteSupportOptions {
 
 export function useVoteSupport(options: VoteSupportOptions) {
   const { user } = useSession();
-  const { showToast } = useToast();
+  const { showProgressToast, showToast } = useToast();
   const busy = ref(false);
   const optimisticSupported = ref(options.currentUserSupported.value);
 
@@ -59,6 +59,7 @@ export function useVoteSupport(options: VoteSupportOptions) {
     const previousSupported = optimisticSupported.value;
     optimisticSupported.value = nextSupported;
     busy.value = true;
+    const progressToast = showProgressToast(nextSupported ? '正在附議...' : '正在取消附議...');
 
     try {
       const result = nextSupported
@@ -70,21 +71,21 @@ export function useVoteSupport(options: VoteSupportOptions) {
         supported: result.supported,
         supportCount: result.support_count,
       });
+      progressToast.succeed(result.supported ? '已完成附議。' : '已取消附議。');
     } catch (err) {
       optimisticSupported.value = previousSupported;
       const errMsg = err instanceof Error ? err.message : '';
       if (isContentUnavailableError(err)) {
-        showToast(errMsg || '這篇提案已刪除，無法繼續操作。', 'error');
+        progressToast.fail(errMsg || '這篇提案已刪除，無法繼續操作。');
         options.onContentUnavailable?.(options.issueId.value);
       } else if (errMsg.includes('permission-denied') || errMsg.toLowerCase().includes('permission denied')) {
-        showToast(
+        progressToast.fail(
           options.statusLabel.value
             ? `此提案目前為「${options.statusLabel.value}」狀態，不開放附議`
             : '本提案目前的狀態不開放附議。',
-          'error',
         );
       } else {
-        showToast('附議失敗，請稍後再試。', 'error');
+        progressToast.fail('附議失敗，請稍後再試。');
       }
     } finally {
       busy.value = false;

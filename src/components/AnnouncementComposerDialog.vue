@@ -98,11 +98,7 @@
               class="button-primary flex-1 px-5 text-sm font-semibold sm:flex-none"
               :disabled="submitting || uploading || !title.trim() || (!content.trim() && editorImages.length === 0)"
             >
-              <BusyButtonContent
-                :busy="submitting"
-                label="發布公告"
-                busy-label="發布中..."
-              />
+              發布公告
             </button>
           </div>
         </div>
@@ -114,7 +110,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import DialogOverlay from '@/components/ui/DialogOverlay.vue';
-import BusyButtonContent from '@/components/ui/BusyButtonContent.vue';
 import MarkdownImageEditor from '@/components/ui/MarkdownImageEditor.vue';
 import { useBodyScrollLock } from '@/composables/useBodyScrollLock';
 import { useDialogFocus } from '@/composables/useDialogFocus';
