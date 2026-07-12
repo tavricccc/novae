@@ -490,6 +490,19 @@ test('content writes validate markdown uploads before database writes', async ()
   );
 });
 
+test('comment realtime triggers pass an explicit operation to the emitter', async () => {
+  const migration = await read('supabase/migrations/202607120001_fix_comment_realtime_overload.sql');
+
+  assert.match(migration, /queue_issue_comment_realtime_event[\s\S]*lower\(tg_op\)/u);
+  assert.match(migration, /queue_announcement_comment_realtime_event[\s\S]*lower\(tg_op\)/u);
+  assert.match(
+    migration,
+    /drop function if exists app_private\.emit_content_realtime_event\([\s\S]*integer\s*\);/u,
+  );
+  assert.match(migration, /comment_count integer,\s*op text\s*\)/u);
+  assert.doesNotMatch(migration, /op text default/u);
+});
+
 test('personal notification writes and pushes are scoped to the recipient', async () => {
   const backendAction = [
     await read('supabase/functions/backendAction/issue-comments.ts'),

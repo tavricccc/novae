@@ -2,6 +2,16 @@ import type { ChangelogEntry } from '@/types';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
+    title: "修正內容刪除異常",
+    version: "v2.0.167",
+    date: "2026-07-12",
+    time: "10:41",
+    items: [
+      { title: "修正含有留言的提案或公告可能無法刪除的問題。" },
+      { title: "強化內容新增、更新與刪除操作的穩定性。" }
+    ]
+  },
+  {
     title: "統一官網導覽體驗",
     version: "v2.0.166",
     date: "2026-07-12",
