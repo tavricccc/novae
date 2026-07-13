@@ -99,7 +99,7 @@ const props = withDefaults(defineProps<{
 const { isCompactLayout, tableRef } = useCompactTableLayout();
 
 const tableCols = computed(() => {
-  const cols = ['6rem', '8rem', '1fr', '8rem', '9rem'];
+  const cols = ['6rem', '8rem', 'minmax(0, 1fr)', '8rem', '9rem'];
   if (props.canManage) cols.push('2.5rem');
   return cols.join(' ');
 });

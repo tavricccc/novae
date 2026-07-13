@@ -55,8 +55,8 @@
   }
 
   .app-root[data-sidebar-expanded='true'] {
-    --app-sidebar-width: 15rem;
-    --app-sidebar-panel-width: 15rem;
+    --app-sidebar-width: var(--app-sidebar-expanded-width);
+    --app-sidebar-panel-width: var(--app-sidebar-expanded-width);
   }
 
   .app-sidebar {
@@ -70,8 +70,8 @@
 
   @media (min-width: 768px) and (max-width: 1399px) {
     .app-root[data-sidebar-expanded='true'] {
-      --app-sidebar-width: 5rem;
-      --app-sidebar-panel-width: 15rem;
+      --app-sidebar-width: var(--app-sidebar-expanded-width);
+      --app-sidebar-panel-width: var(--app-sidebar-expanded-width);
     }
 
     .app-root[data-sidebar-expanded='true'] .app-sidebar {

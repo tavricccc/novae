@@ -80,7 +80,7 @@ const resolvedCompactLayout = computed(() => props.compactLayout ?? isCompactLay
 const gridCols = computed(() => {
   const cols = ['6rem'];
   if (props.showAuthor) cols.push('8rem');
-  cols.push('1fr', '8rem', '9rem', '7rem');
+  cols.push('minmax(0, 1fr)', '8rem', '9rem', '7rem');
   if (props.isAdmin) cols.push('2.5rem');
   return cols.join(' ');
 });

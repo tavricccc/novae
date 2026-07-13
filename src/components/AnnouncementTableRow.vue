@@ -161,7 +161,7 @@ const dateLabel = computed(() => formatDateOnly(props.announcement.published_at)
 const stopRowActionClick = () => undefined;
 
 const tableCols = computed(() => {
-  const cols = ['6rem', '1fr', '8rem', '7rem'];
+  const cols = ['6rem', 'minmax(0, 1fr)', '8rem', '7rem'];
   if (props.canManage) cols.push('2.5rem');
   return cols.join(' ');
 });

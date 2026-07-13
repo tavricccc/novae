@@ -220,7 +220,7 @@ const {
 const stopRowActionClick = () => undefined;
 const tableCols = computed(() => {
   const cols = ['6rem'];
-  cols.push('1fr', '8rem', '9rem', '7rem');
+  cols.push('minmax(0, 1fr)', '8rem', '9rem', '7rem');
   if (isAdmin.value) cols.push('2.5rem');
   return cols.join(' ');
 });

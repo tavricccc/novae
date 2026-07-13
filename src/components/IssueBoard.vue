@@ -7,29 +7,7 @@
       :active-filter="activeFilter"
       :active-category-label="activeCategoryLabel"
       :search-hint="searchHint"
-    >
-      <template #actions>
-        <CreateActionMenu
-          v-if="showToggle && activeFilter !== 'my-proposals'"
-          :can-create-announcement="isAdmin"
-          :default-category="defaultComposerCategory"
-          @create-announcement="handleCreateAnnouncement"
-          @create-issue="openComposerForCategory"
-        >
-          <template #trigger="{ open }">
-            <button
-              type="button"
-              class="button-icon-filled hidden md:flex !h-9 !w-9 items-center justify-center shrink-0"
-              title="新增"
-              aria-label="新增"
-              @click="open"
-            >
-              <AppIcon name="plus" :size="4" :stroke-width="2.5" />
-            </button>
-          </template>
-        </CreateActionMenu>
-      </template>
-    </BoardControls>
+    />
 
     <div ref="boardScrollRef" class="scrollbar-none min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pb-4">
       <Transition name="panel-switch" mode="out-in">
@@ -112,13 +90,11 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import BoardControls from '@/components/BoardControls.vue';
-import CreateActionMenu from '@/components/CreateActionMenu.vue';
 import IssueBoardTable from '@/components/IssueBoardTable.vue';
 import IssueComposer from '@/components/IssueComposer.vue';
 import EmptyStatePanel from '@/components/ui/EmptyStatePanel.vue';
 import PageLoadFailure from '@/components/ui/PageLoadFailure.vue';
 import SkeletonTable from '@/components/ui/SkeletonTable.vue';
-import AppIcon from '@/components/ui/AppIcon.vue';
 import { useIssueBoardData } from '@/composables/useIssueBoardData';
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll';
 import { useMinimumLoading } from '@/composables/useMinimumLoading';
@@ -128,7 +104,6 @@ import {
   CREATE_ENTRY_QUERY_KEY,
   CREATE_ISSUE_QUERY_VALUE,
   registerCreateIssueHandler,
-  requestCreateAnnouncement,
 } from '@/composables/useCreateEntryActions';
 import { useSession } from '@/composables/useSession';
 import { useToast } from '@/composables/useToast';
@@ -147,7 +122,6 @@ let savedIssueBoardScrollTop = 0;
 
 const props = defineProps<{
   isFormOpen?: boolean;
-  showToggle?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -249,10 +223,6 @@ const emptyStateDescription = computed(() => {
   const statusLabel = statusTab.value === 'active' ? '進行中' : '已結案';
   return `目前在「${activeCategoryLabel.value}」分類中沒有${statusLabel}提案。`;
 });
-const defaultComposerCategory = computed(() =>
-  activeFilter.value === 'my-proposals' ? DEFAULT_ISSUE_CATEGORY : activeFilter.value
-);
-
 function issueBoardScrollKey() {
   return [
     activeFilter.value,
@@ -302,10 +272,6 @@ function openComposerForCategory(category: IssueCategory) {
   if (!props.isFormOpen) {
     emit('toggle-form');
   }
-}
-
-async function handleCreateAnnouncement() {
-  await requestCreateAnnouncement(router);
 }
 
 async function clearCreateQuery() {

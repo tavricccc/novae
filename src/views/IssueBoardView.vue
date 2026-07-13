@@ -29,7 +29,6 @@
       v-if="isAllowedUser"
       class="min-h-0 flex-1"
       :is-form-open="isFormOpen"
-      :show-toggle="isAllowedUser"
       @toggle-form="toggleForm"
     />
   </div>

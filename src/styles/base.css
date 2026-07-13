@@ -37,7 +37,9 @@
     --control-height: 2.75rem;
     --tap-target: 2.75rem;
     --app-header-height: 4rem;
-    --app-sidebar-width: 5rem;
+    --app-sidebar-collapsed-width: 5rem;
+    --app-sidebar-expanded-width: 13.5rem;
+    --app-sidebar-width: var(--app-sidebar-collapsed-width);
     --app-sidebar-panel-width: var(--app-sidebar-width);
     --dialog-page-background: 245 245 243;
     --control-padding-x: 1rem;

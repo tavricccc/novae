@@ -183,8 +183,6 @@
             </div>
           </transition>
         </div>
-
-        <slot name="actions" />
       </div>
     </div>
   </div>
