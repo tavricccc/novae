@@ -2,7 +2,7 @@
 
 [English](en/configuration.md) · [文件首頁](README.md)
 
-設定分成三類：提交到 Git 的產品規則、進入前端 bundle 的公開環境變數，以及只存在部署平台的後端 secrets。不要跨越這三個邊界。
+本頁說明提交到 Git 的產品規則，包括分類、可見範圍、限流與圖片。公開環境變數與部署憑證已獨立到[環境與憑證](environment-configuration.md)，不要跨越兩者的公開邊界。
 
 ## 產生式設定
 
@@ -114,44 +114,6 @@ git diff
 | `webpQuality` | 第一輪 WebP 品質，越高通常越清楚也越大 |
 | `outputScales` | 未達目標大小時依序縮圖的比例；必須由大到小評估 |
 
-## 前端環境變數
-
-所有欄位均可被瀏覽器使用者看到。本機開發填在未追蹤的 `.env`；部署時填在 GitHub `production`／`development` 的 **Environment secrets**，不是 Environment variables。逐項取得方式見[從零部署指南](deployment-guide.md)。
-
-| 名稱 | 必要 | 用途 |
-| --- | --- | --- |
-| `VITE_SCHOOL_NAME` | 否 | 啟動畫面與「我的」頁面顯示的學校名稱；留空時不顯示 |
-| `VITE_ALLOWED_DOMAIN` | 是 | 前端登入提示與預檢 |
-| `VITE_FIREBASE_API_KEY` | 是 | Firebase Web config |
-| `VITE_FIREBASE_AUTH_DOMAIN` | 是 | Firebase Auth domain |
-| `VITE_FIREBASE_PROJECT_ID` | 是 | Firebase project ID |
-| `VITE_FIREBASE_APP_ID` | 是 | Firebase Web App ID |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | 是 | FCM sender ID |
-| `VITE_FIREBASE_VAPID_KEY` | 是 | Web Push public key |
-| `VITE_FIREBASE_APP_CHECK_ENABLED` | 否 | `true` 時啟用 App Check |
-| `VITE_RECAPTCHA_ENTERPRISE_SITE_KEY` | 條件式 | 啟用 App Check 時必要 |
-| `VITE_SUPABASE_URL` | 是 | Supabase project URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | 是 | Supabase publishable key |
-
-## 後端與部署 secrets
-
-| 群組 | 名稱 |
-| --- | --- |
-| Supabase 部署 | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY` |
-| Firebase 驗證 | `FIREBASE_PROJECT_ID`, `FIREBASE_WEB_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON` |
-| 存取控制 | `ALLOWED_DOMAIN`, `ADMIN_EMAILS` |
-| Cloudinary | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_WEBHOOK_SECRET` |
-| 內部觸發 | `WEBHOOK_SECRET` |
-| Notion | `NOTION_TOKEN`, `NOTION_DATABASE_ID`, `NOTION_VERSION`（選用，預設 `2022-06-28`） |
-| Upstash | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
-| Vercel 部署 | `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` |
-
-`ADMIN_EMAILS` 是必填的完整信箱清單，以半形逗號分隔，例如 `admin@school.edu.tw,backup@school.edu.tw`。`VITE_ALLOWED_DOMAIN` 與 `ALLOWED_DOMAIN` 必須完全相同，只填 `@` 後面的網域；管理員帳號本身也必須屬於該網域。
-
-`FIREBASE_PROJECT_ID` 與 `FIREBASE_WEB_API_KEY` 通常分別重用前端的 project ID 與 API key。`CLOUDINARY_WEBHOOK_SECRET` 在目前標準 HMAC 驗證中重用 `CLOUDINARY_API_SECRET`；`WEBHOOK_SECRET` 則必須另外產生隨機值。`GOOGLE_SERVICE_ACCOUNT_JSON` 填完整 JSON，不是檔案路徑。
-
-Supabase 託管的 Edge Functions 自動提供 `SUPABASE_URL`，不需建立 GitHub secret。workflow 會把 `SUPABASE_SERVICE_ROLE_KEY` 以 `APP_SUPABASE_SERVICE_ROLE_KEY` 名稱寫入 Edge secrets。正式與開發環境必須使用不同資源與 secrets。
-
 ## 變更檢查清單
 
 - 執行 `npm run generate:all` 並檢查產生差異。
@@ -159,3 +121,4 @@ Supabase 託管的 Edge Functions 自動提供 `SUPABASE_URL`，不需建立 Git
 - 不把 secret、真實使用者資料或正式環境 ID 寫入 Git。
 - 將規則變更同步到中英文文件。
 - 分類移除或資料模型變更使用新的 migration。
+- 若要設定 `.env`、GitHub 或部署平台，接著閱讀[環境與憑證](environment-configuration.md)。

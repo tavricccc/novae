@@ -34,7 +34,7 @@ Windows PowerShell 可使用：
 Copy-Item .env.example .env
 ```
 
-本機 `.env` 只需要填前端 `VITE_*` 區塊。至少填入 Firebase、Supabase 與允許網域欄位；檔案後半的部署／後端值留空即可。所有 `VITE_*` 值都會進入瀏覽器 bundle，不可放入 service role key、資料庫密碼或第三方 API secret。欄位說明見[設定參考](configuration.md#前端環境變數)。
+本機 `.env` 只需要填前端 `VITE_*` 區塊。至少填入 Firebase、Supabase 與允許網域欄位；檔案後半的部署／後端值留空即可。所有 `VITE_*` 值都會進入瀏覽器 bundle，不可放入 service role key、資料庫密碼或第三方 API secret。欄位說明見[環境與憑證](environment-configuration.md#前端環境變數)。
 
 ## 3. 啟動開發伺服器
 

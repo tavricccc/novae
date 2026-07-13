@@ -2,7 +2,7 @@
 
 [繁體中文](../user-guide.md) · [Documentation home](../README.md)
 
-This guide covers student and administrator workflows. Category names, visibility, support thresholds, and deadlines are deployment-specific, so screens may differ from the examples.
+This guide covers everyday user workflows. See the [administrator guide](admin-guide.md) for review and management tasks. Category names, visibility, support thresholds, and deadlines are deployment-specific, so screens may differ from the examples.
 
 ## Roles
 
@@ -60,12 +60,6 @@ Comments support Markdown and limited images. Do not copy private-case details i
 School users can read, like, and comment on announcements. Administrators create or delete them; published announcements cannot be edited. Publishing may trigger in-app and Web Push delivery, so verify audience, dates, links, and title first.
 
 The notification page stores in-app items and unread state. Opening an item rechecks target access. Web Push additionally requires browser support, OS permission, site permission, and a valid device token. Disabling Push does not disable in-app notifications.
-
-## Administrator workflows
-
-For review, verify category, public suitability, personal data, and media. Approve, or provide a specific actionable rejection reason. After approval, verify visibility, author display, and support behavior.
-
-Move accepted work to processing. When closing it, choose completed or infeasible and write a clear outcome for users. The dashboard summarizes activity and integration health but is not an audit log; use the [operations runbook](operations.md) for incidents.
 
 ## Safety for users
 

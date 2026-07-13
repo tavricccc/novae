@@ -21,4 +21,36 @@ async function initMermaid() {
   }
 }
 
+function initializeDocumentNavigation() {
+  const jump = document.querySelector('[data-docs-jump]');
+  jump?.addEventListener('change', () => {
+    if (jump.value) window.location.assign(jump.value);
+  });
+
+  const currentDocument = document.querySelector('.docs-sidebar [aria-current="page"]');
+  currentDocument?.scrollIntoView({ block: 'center' });
+
+  const links = [...document.querySelectorAll('.docs-toc-link')];
+  if (!links.length) return;
+  const headings = links
+    .map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))))
+    .filter(Boolean);
+  const linkById = new Map(links.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+
+  const markCurrent = (id) => {
+    links.forEach((link) => link.classList.toggle('is-active', link === linkById.get(id)));
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    const visible = entries
+      .filter((entry) => entry.isIntersecting)
+      .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+    if (visible[0]) markCurrent(visible[0].target.id);
+  }, { rootMargin: '-88px 0px -70% 0px' });
+
+  headings.forEach((heading) => observer.observe(heading));
+  markCurrent(headings[0]?.id);
+}
+
+initializeDocumentNavigation();
 initMermaid();

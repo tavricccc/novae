@@ -25,12 +25,12 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-完整環境與驗證步驟見[快速開始](docs/quick-start.md)。平台操作方式見[使用手冊](docs/user-guide.md)，正式上線請從[部署指南](docs/deployment-guide.md)開始。
+完整環境與驗證步驟見[快速開始](docs/quick-start.md)。平台操作方式分為[使用者操作](docs/user-guide.md)與[管理員操作](docs/admin-guide.md)，正式上線請從[部署指南](docs/deployment-guide.md)開始。
 
 ### 文件與社群
 
 - [完整文件索引](docs/README.md)
-- [設定行為參考](docs/configuration.md)
+- [產品規則設定](docs/configuration.md)與[環境憑證參考](docs/environment-configuration.md)
 - [系統架構](docs/architecture.md)
 - [安全政策](SECURITY.md)
 - [貢獻指南](CONTRIBUTING.md)
@@ -59,12 +59,12 @@ cp .env.example .env
 npm run dev
 ```
 
-Follow the [quick start](docs/en/quick-start.md) for setup and verification, the [user guide](docs/en/user-guide.md) for product workflows, and the [deployment guide](docs/en/deployment-guide.md) for production.
+Follow the [quick start](docs/en/quick-start.md) for setup and verification, the [user guide](docs/en/user-guide.md) and [administrator guide](docs/en/admin-guide.md) for product workflows, and the [deployment guide](docs/en/deployment-guide.md) for production.
 
 ### Documentation and community
 
 - [Documentation index](docs/README.md#english)
-- [Configuration behavior](docs/en/configuration.md)
+- [Product rules](docs/en/configuration.md) and [environment credentials](docs/en/environment-configuration.md)
 - [Architecture](docs/en/architecture.md)
 - [Security policy](SECURITY.md#english)
 - [Contributing](CONTRIBUTING.md#english)

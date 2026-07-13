@@ -13,7 +13,7 @@ Top nav is shared on landing and docs: **Home / Docs** only (plus language + Git
 | Changelog | [`content/changelog.md`](content/changelog.md) |
 | Docs body (Chinese) | [`../docs/*.md`](../docs) — e.g. `user-guide.md` |
 | Docs body (English) | [`../docs/en/*.md`](../docs/en) |
-| Docs sidebar titles / order | [`scripts/build-docs.mjs`](scripts/build-docs.mjs) → `NAV_ZH` / `NAV_EN` / `DOC_ORDER` |
+| Docs sidebar groups / titles / order | [`scripts/build-docs.mjs`](scripts/build-docs.mjs) → `NAV_ZH` / `NAV_EN` |
 | Landing section structure only | [`index.html`](index.html) — prefer JSON for text |
 | Shared chrome / marketing styles | [`src/styles/site.css`](src/styles/site.css) |
 | Docs prose / sidebar styles | [`src/styles/docs.css`](src/styles/docs.css) |

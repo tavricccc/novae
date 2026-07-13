@@ -33,7 +33,7 @@ PowerShell:
 Copy-Item .env.example .env
 ```
 
-For local development, fill only the frontend `VITE_*` section and leave backend/deployment entries blank. At minimum, provide Firebase, Supabase, and the allowed domain. Every `VITE_*` value is bundled for browsers; never put service-role keys, database passwords, or third-party secrets there. See the [configuration reference](configuration.md#frontend-environment-variables).
+For local development, fill only the frontend `VITE_*` section and leave backend/deployment entries blank. At minimum, provide Firebase, Supabase, and the allowed domain. Every `VITE_*` value is bundled for browsers; never put service-role keys, database passwords, or third-party secrets there. See [environment and credentials](environment-configuration.md#frontend-environment-variables).
 
 ## 3. Start development
 

@@ -7,9 +7,8 @@
     <div class="app-background-fill pointer-events-none absolute inset-0"></div>
     <div class="app-background-wash pointer-events-none absolute inset-x-0 top-0 h-80 dark:hidden"></div>
 
-    <!-- Full-bleed Fixed Header -->
-    <header class="app-header fixed inset-x-0 top-0 z-40 w-full backdrop-blur-md transition-colors duration-300 md:border-b md:border-ink-200/80 md:dark:border-ink-700/80">
-      <div class="app-header__inner mx-auto max-w-7xl px-4 flex items-center justify-between sm:px-6 lg:px-8">
+    <header class="app-header fixed inset-x-0 top-0 z-40 w-full backdrop-blur-md transition-colors duration-300 md:hidden">
+      <div class="app-header__inner mx-auto flex max-w-7xl items-center px-4 sm:px-6">
         <div class="flex min-w-0 items-center gap-3">
           <button
             v-if="showMobileBackButton"
@@ -21,47 +20,85 @@
           >
             <AppIcon name="chevron-left" :size="5" />
           </button>
-          <h1 class="app-header__title flex h-10 min-w-0 shrink-0 items-center text-ink-950 dark:text-ink-50 md:h-auto" :aria-label="mobileHeaderTitle">
-            <span class="hidden md:inline-flex"><BrandMark /></span>
-            <span class="truncate text-2xl font-bold tracking-tight md:hidden leading-none">{{ mobileHeaderTitle }}</span>
+          <h1 class="app-header__title flex h-10 min-w-0 shrink-0 items-center text-ink-950 dark:text-ink-50" :aria-label="mobileHeaderTitle">
+            <span class="truncate text-2xl font-bold leading-none tracking-tight">{{ mobileHeaderTitle }}</span>
           </h1>
-
-          <!-- Desktop Navigation -->
-          <nav v-if="isAllowedUser" ref="navRef" aria-label="主要導覽" class="relative hidden md:flex items-center gap-6 ml-8">
-            <!-- Sliding Underline Indicator -->
-            <div
-              class="absolute bottom-0 h-0.5 rounded-full bg-ink-900 dark:bg-ink-100 pointer-events-none"
-              :style="[underlineStyle, { transition: 'all 240ms cubic-bezier(0.16, 1, 0.3, 1)' }]"
-            ></div>
-
-            <RouterLink
-              v-for="item in navItems"
-              :key="item.key"
-              :ref="el => setNavElement(item.key, el)"
-              :to="item.to"
-              class="text-trigger relative flex h-16 items-center rounded-none px-1 text-sm font-medium tracking-normal"
-              :class="[
-                item.isActive
-                  ? 'text-ink-950 dark:text-ink-50 font-semibold'
-                  : 'text-ink-500 hover:text-ink-900 dark:text-ink-400 dark:hover:text-ink-100'
-              ]"
-              @click="handleNavigationClick(item.isActive)"
-            >
-              {{ item.label }}
-            </RouterLink>
-          </nav>
-        </div>
-
-        <div class="hidden items-center gap-3 md:flex">
-          <NotificationBell v-if="isAllowedUser" />
-          <SettingsPanel v-if="isAllowedUser" />
         </div>
       </div>
     </header>
 
-    <!-- Main Content Container -->
+    <aside
+      v-if="isAllowedUser"
+      class="app-sidebar fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-center border-r border-ink-200/80 bg-white/95 py-4 backdrop-blur-xl dark:border-ink-800/80 dark:bg-ink-950/95 md:flex"
+      aria-label="桌面主要導覽"
+    >
+      <RouterLink
+        :to="{ name: 'issues', params: { filter: DEFAULT_ISSUE_ROUTE_FILTER } }"
+        class="app-sidebar__brand"
+        aria-label="Novae 提案首頁"
+      >
+        <BrandMark />
+      </RouterLink>
 
-    <!-- Main Content Container -->
+      <nav class="mt-7 flex w-full flex-1 flex-col items-center gap-2 px-3" aria-label="主要功能">
+        <RouterLink
+          v-for="item in primaryRouteNavItems"
+          :key="item.key"
+          :to="item.to"
+          class="app-sidebar__item"
+          :class="{ 'app-sidebar__item--active': item.isActive }"
+          :aria-label="item.label"
+          :data-label="item.label"
+          @click="handleNavigationClick(item.isActive)"
+        >
+          <AppIcon :name="item.icon" :size="5" :stroke-width="1.9" />
+        </RouterLink>
+
+        <CreateActionMenu
+          :can-create-announcement="isAdmin"
+          :default-category="defaultCreateCategory"
+          :default-kind="defaultCreateKind"
+          @create-announcement="handleCreateAnnouncement"
+          @create-issue="handleCreateIssue"
+        >
+          <template #trigger="{ open }">
+            <button
+              type="button"
+              class="app-sidebar__item"
+              aria-label="新增"
+              data-label="新增"
+              @click="open"
+            >
+              <AppIcon name="plus" :size="5.5" :stroke-width="2.4" />
+            </button>
+          </template>
+        </CreateActionMenu>
+
+        <RouterLink
+          to="/notifications"
+          class="app-sidebar__item"
+          :class="{ 'app-sidebar__item--active': route.name === 'notifications' }"
+          :aria-label="hasUnread ? '通知，有新通知' : '通知'"
+          data-label="通知"
+        >
+          <span class="relative inline-flex" aria-hidden="true">
+            <AppIcon name="bell" :size="5" :stroke-width="1.9" />
+            <span v-if="hasUnread" class="app-sidebar__badge"></span>
+          </span>
+        </RouterLink>
+
+        <RouterLink
+          to="/settings"
+          class="app-sidebar__item overflow-visible"
+          :class="{ 'app-sidebar__item--active': isMyProposalsRouteActive || ['settings', 'dashboard'].includes(route.name as string) }"
+          aria-label="我的"
+          data-label="我的"
+        >
+          <UserAvatar :photo-url="displayPhotoUrl" :name="user?.displayName || 'U'" size="sm" alt-text="使用者頭像" class="!h-6 !w-6 rounded-full" />
+        </RouterLink>
+      </nav>
+    </aside>
+
     <div
       ref="mainContentRef"
       class="app-main-content relative mx-auto flex w-full flex-1 flex-col overflow-y-auto overscroll-contain px-4 sm:px-6 lg:px-8"
@@ -85,7 +122,7 @@
         ></div>
 
         <RouterLink
-          v-for="item in mobileRouteNavItems"
+          v-for="item in primaryRouteNavItems"
           :key="item.key"
           :ref="el => setMobileNavElement(item.key, el)"
           :to="item.to"
@@ -156,8 +193,6 @@
 import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { RouterLink, useRoute, useRouter } from 'vue-router';
 import CreateActionMenu from '@/components/CreateActionMenu.vue';
-import SettingsPanel from '@/components/SettingsPanel.vue';
-import NotificationBell from '@/components/NotificationBell.vue';
 import BrandMark from '@/components/ui/BrandMark.vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
 import UserAvatar from '@/components/ui/UserAvatar.vue';
@@ -180,50 +215,27 @@ const isAnnouncementRouteActive = computed(() =>
   route.name === 'announcements' || route.name === 'announcement-detail'
 );
 const isMyProposalsRouteActive = computed(() => isIssueRouteActive.value && activeFilter.value === 'my-proposals');
-const navItems = computed(() => {
-  const items = [
-    {
-      isActive: isIssueRouteActive.value && activeFilter.value !== 'my-proposals',
-      key: 'issues',
-      label: '提案',
-      to: { name: 'issues', params: { filter: DEFAULT_ISSUE_ROUTE_FILTER } },
-    },
-    {
-      isActive: isAnnouncementRouteActive.value,
-      key: 'announcements',
-      label: '公告',
-      to: { name: 'announcements' },
-    },
-    {
-      isActive: isMyProposalsRouteActive.value,
-      key: 'my-proposals',
-      label: '我的提案',
-      to: { name: 'issues', params: { filter: 'my-proposals' } },
-    },
-  ];
-  return items;
-});
+const primaryRouteNavItems = computed(() => [
+  {
+    icon: 'comment' as const,
+    isActive: isIssueRouteActive.value && activeFilter.value !== 'my-proposals',
+    key: 'issues',
+    label: '提案',
+    to: { name: 'issues', params: { filter: DEFAULT_ISSUE_ROUTE_FILTER } },
+  },
+  {
+    icon: 'megaphone' as const,
+    isActive: isAnnouncementRouteActive.value,
+    key: 'announcements',
+    label: '公告',
+    to: { name: 'announcements' },
+  },
+]);
 const displayPhotoUrl = computed(() => customPhotoUrl.value || user.value?.photoURL || null);
 const defaultCreateCategory = computed<IssueCategory>(() =>
   isIssueCategory(activeFilter.value) ? activeFilter.value : DEFAULT_ISSUE_CATEGORY
 );
 const defaultCreateKind = computed(() => isAnnouncementRouteActive.value ? 'announcement' : 'issue');
-const mobileRouteNavItems = computed(() => [
-  {
-    icon: 'comment' as const,
-    isActive: navItems.value[0]?.isActive ?? false,
-    key: 'issues',
-    label: '提案',
-    to: navItems.value[0]?.to,
-  },
-  {
-    icon: 'megaphone' as const,
-    isActive: navItems.value[1]?.isActive ?? false,
-    key: 'announcements',
-    label: '公告',
-    to: navItems.value[1]?.to,
-  },
-]);
 const mobileHeaderTitle = computed(() => {
   if (route.name === 'issue-detail') return isMyProposalsRouteActive.value ? '我的提案' : '提案內容';
   if (route.name === 'announcement-detail') return '公告內容';
@@ -248,8 +260,6 @@ const mobileBackLabel = computed(() => {
   return '返回提案列表';
 });
 
-const navRef = ref<HTMLDivElement | null>(null);
-const navElementRefs = ref<Record<string, HTMLElement | null>>({});
 const mobileNavRef = ref<HTMLDivElement | null>(null);
 const mobileNavElementRefs = ref<Record<string, HTMLElement | null>>({});
 const mainContentRef = ref<HTMLDivElement | null>(null);
@@ -270,11 +280,6 @@ const rootStyle = computed(() => {
   };
 });
 
-const underlineStyle = ref({
-  left: '0px',
-  width: '0px',
-});
-
 const mobileIndicatorStyle = ref({
   left: '0px',
   width: '0px',
@@ -287,20 +292,8 @@ function resolveElement(element: Element | { $el?: Element } | null) {
   return '$el' in element ? element.$el ?? null : element;
 }
 
-function setNavElement(key: string, element: Element | { $el?: Element } | null) {
-  navElementRefs.value[key] = resolveElement(element) as HTMLElement | null;
-}
-
 function setMobileNavElement(key: string, element: Element | { $el?: Element } | null) {
   mobileNavElementRefs.value[key] = resolveElement(element) as HTMLElement | null;
-}
-
-function activeNavKey() {
-  if (isAnnouncementRouteActive.value) return 'announcements';
-  if (isMyProposalsRouteActive.value) return 'my-proposals';
-  if (route.name === 'dashboard') return 'dashboard';
-  if (isIssueRouteActive.value) return 'issues';
-  return '';
 }
 
 function activeMobileNavKey() {
@@ -349,26 +342,6 @@ async function handleMobileBack() {
   }
 }
 
-function updateUnderline() {
-  nextTick(() => {
-    if (!isAllowedUser.value) return;
-    const activeEl = navElementRefs.value[activeNavKey()];
-    if (!activeEl || !navRef.value) {
-      underlineStyle.value = {
-        left: '0px',
-        width: '0px',
-      };
-      return;
-    }
-    const navRect = navRef.value.getBoundingClientRect();
-    const btnRect = activeEl.getBoundingClientRect();
-    underlineStyle.value = {
-      left: `${btnRect.left - navRect.left}px`,
-      width: `${btnRect.width}px`,
-    };
-  });
-}
-
 function updateMobileIndicator() {
   nextTick(() => {
     if (!isAllowedUser.value) return;
@@ -396,7 +369,6 @@ function updateMobileIndicator() {
 watch(
   [activeFilter, isAllowedUser, () => route.name],
   () => {
-    updateUnderline();
     updateMobileIndicator();
   },
   { immediate: true }
@@ -435,15 +407,11 @@ onMounted(() => {
     hasSafeIndicator.value = true;
   }
 
-  window.addEventListener('resize', updateUnderline);
   window.addEventListener('resize', updateMobileIndicator);
-  // Initial call with a tiny delay to ensure proper calculation
-  setTimeout(updateUnderline, 100);
   setTimeout(updateMobileIndicator, 100);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', updateUnderline);
   window.removeEventListener('resize', updateMobileIndicator);
 });
 

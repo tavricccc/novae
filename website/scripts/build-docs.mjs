@@ -14,51 +14,64 @@ const contentDir = path.resolve(root, '..', 'docs');
 const changelogPath = path.join(root, 'content', 'changelog.md');
 const outDir = path.join(root, 'docs-site');
 
-const DOC_ORDER = [
-  'README',
-  'project-overview',
-  'quick-start',
-  'user-guide',
-  'architecture',
-  'configuration',
-  'deployment-guide',
-  'operations',
-  'troubleshooting',
-  'security',
-  'costs',
-  'contributing'
-];
-
 const NAV_ZH = [
-  { id: 'README', title: '文件首頁', file: 'index.html' },
-  { id: 'changelog', title: '更新紀錄', file: 'changelog.html' },
-  { id: 'quick-start', title: '快速開始', file: 'quick-start.html' },
-  { id: 'user-guide', title: '使用手冊', file: 'user-guide.html' },
-  { id: 'configuration', title: '設定參考', file: 'configuration.html' },
-  { id: 'project-overview', title: '產品亮點', file: 'project-overview.html' },
-  { id: 'deployment-guide', title: '部署指南', file: 'deployment-guide.html' },
-  { id: 'troubleshooting', title: '故障排除', file: 'troubleshooting.html' },
-  { id: 'operations', title: '維運手冊', file: 'operations.html' },
-  { id: 'security', title: '安全模型', file: 'security.html' },
-  { id: 'costs', title: '成本指南', file: 'costs.html' },
-  { id: 'architecture', title: '系統架構', file: 'architecture.html' },
-  { id: 'contributing', title: '貢獻指南', file: 'contributing.html' }
+  { group: '開始了解', items: [
+    { id: 'README', title: '文件首頁', file: 'index.html' },
+    { id: 'changelog', title: '更新紀錄', file: 'changelog.html' },
+    { id: 'project-overview', title: '產品亮點', file: 'project-overview.html' }
+  ] },
+  { group: '使用平台', items: [
+    { id: 'quick-start', title: '快速開始', file: 'quick-start.html' },
+    { id: 'user-guide', title: '使用者操作', file: 'user-guide.html' },
+    { id: 'admin-guide', title: '管理員操作', file: 'admin-guide.html' }
+  ] },
+  { group: '自訂與部署', items: [
+    { id: 'configuration', title: '產品規則設定', file: 'configuration.html' },
+    { id: 'environment-configuration', title: '環境與憑證', file: 'environment-configuration.html' },
+    { id: 'deployment-guide', title: '部署指南', file: 'deployment-guide.html' }
+  ] },
+  { group: '維運與安全', items: [
+    { id: 'troubleshooting', title: '故障排除', file: 'troubleshooting.html' },
+    { id: 'operations', title: '維運手冊', file: 'operations.html' },
+    { id: 'security', title: '安全模型', file: 'security.html' },
+    { id: 'costs', title: '成本指南', file: 'costs.html' }
+  ] },
+  { group: '深入了解', items: [
+    { id: 'architecture', title: '系統架構', file: 'architecture.html' },
+    { id: 'contributing', title: '貢獻指南', file: 'contributing.html' }
+  ] }
 ];
 
 const NAV_EN = [
-  { id: 'README', title: 'Docs home', file: 'index.html' },
-  { id: 'quick-start', title: 'Quick start', file: 'quick-start.html' },
-  { id: 'user-guide', title: 'User guide', file: 'user-guide.html' },
-  { id: 'configuration', title: 'Configuration', file: 'configuration.html' },
-  { id: 'project-overview', title: 'Product highlights', file: 'project-overview.html' },
-  { id: 'deployment-guide', title: 'Deployment', file: 'deployment-guide.html' },
-  { id: 'troubleshooting', title: 'Troubleshooting', file: 'troubleshooting.html' },
-  { id: 'operations', title: 'Operations', file: 'operations.html' },
-  { id: 'security', title: 'Security', file: 'security.html' },
-  { id: 'costs', title: 'Costs', file: 'costs.html' },
-  { id: 'architecture', title: 'Architecture', file: 'architecture.html' },
-  { id: 'contributing', title: 'Contributing', file: 'contributing.html' }
+  { group: 'Get started', items: [
+    { id: 'README', title: 'Docs home', file: 'index.html' },
+    { id: 'project-overview', title: 'Product highlights', file: 'project-overview.html' }
+  ] },
+  { group: 'Use Novae', items: [
+    { id: 'quick-start', title: 'Quick start', file: 'quick-start.html' },
+    { id: 'user-guide', title: 'User workflows', file: 'user-guide.html' },
+    { id: 'admin-guide', title: 'Administrator workflows', file: 'admin-guide.html' }
+  ] },
+  { group: 'Customize and deploy', items: [
+    { id: 'configuration', title: 'Product rules', file: 'configuration.html' },
+    { id: 'environment-configuration', title: 'Environment and credentials', file: 'environment-configuration.html' },
+    { id: 'deployment-guide', title: 'Deployment', file: 'deployment-guide.html' }
+  ] },
+  { group: 'Operate and secure', items: [
+    { id: 'troubleshooting', title: 'Troubleshooting', file: 'troubleshooting.html' },
+    { id: 'operations', title: 'Operations', file: 'operations.html' },
+    { id: 'security', title: 'Security', file: 'security.html' },
+    { id: 'costs', title: 'Costs', file: 'costs.html' }
+  ] },
+  { group: 'Go deeper', items: [
+    { id: 'architecture', title: 'Architecture', file: 'architecture.html' },
+    { id: 'contributing', title: 'Contributing', file: 'contributing.html' }
+  ] }
 ];
+
+function flattenNav(nav) {
+  return nav.flatMap((section) => section.items);
+}
 
 const DEPLOYMENT_NAV_ZH = [
   { id: 'deployment/github', title: '1. GitHub 與 Environment', file: 'deployment/github.html' },
@@ -189,7 +202,7 @@ function pageNameFromRel(rel) {
 }
 
 function sibling(lang, id) {
-  const nav = lang === 'en' ? NAV_EN : NAV_ZH;
+  const nav = flattenNav(lang === 'en' ? NAV_EN : NAV_ZH);
   const deploymentNav = lang === 'en' ? DEPLOYMENT_NAV_EN : DEPLOYMENT_NAV_ZH;
   const deploymentIndex = deploymentNav.findIndex((item) => item.id === id);
   if (deploymentIndex >= 0) {
@@ -242,21 +255,31 @@ function renderShell({ lang, id, title, bodyHtml, outRel }) {
     ? `<a class="docs-context-link" href="${docsRootPrefix}deployment-guide.html">${isEn ? '← Deployment overview' : '← 返回部署指南總覽'}</a>`
     : '';
 
-  const sidebar = nav
-    .map((item) => {
+  const renderNavItem = (item) => {
       const href = `${docsRootPrefix}${item.file}`;
       const active = item.id === id || (item.id === 'deployment-guide' && id.startsWith('deployment/'))
         ? ' is-active'
         : '';
+      const current = item.id === id ? ' aria-current="page"' : '';
       const lessons = item.id === 'deployment-guide' && showDeploymentLessons
         ? `<div class="docs-subnav">${deploymentNav.map((lesson) => {
             const lessonActive = lesson.id === id ? ' is-active' : '';
-            return `<a class="docs-subnav-link${lessonActive}" href="${docsRootPrefix}${lesson.file}">${lesson.title}</a>`;
+            const lessonCurrent = lesson.id === id ? ' aria-current="page"' : '';
+            return `<a class="docs-subnav-link${lessonActive}"${lessonCurrent} href="${docsRootPrefix}${lesson.file}">${lesson.title}</a>`;
           }).join('')}</div>`
         : '';
-      return `<a class="docs-nav-link${active}" href="${href}">${item.title}</a>${lessons}`;
-    })
+      return `<a class="docs-nav-link${active}"${current} href="${href}">${item.title}</a>${lessons}`;
+    };
+  const sidebar = nav
+    .map((section) => `<div class="docs-nav-group"><p>${section.group}</p>${section.items.map(renderNavItem).join('')}</div>`)
     .join('');
+  const mobileOptions = nav
+    .map((section) => `<optgroup label="${section.group}">${section.items.map((item) => {
+      const selected = item.id === id || (item.id === 'deployment-guide' && id.startsWith('deployment/')) ? ' selected' : '';
+      return `<option value="${docsRootPrefix}${item.file}"${selected}>${item.title}</option>`;
+    }).join('')}</optgroup>`)
+    .join('');
+  const tableOfContents = renderTableOfContents(bodyHtml, isEn);
 
   const prevNext = `
     <nav class="docs-pager">
@@ -313,8 +336,12 @@ function renderShell({ lang, id, title, bodyHtml, outRel }) {
       </div>
     </header>
     <div class="docs-layout">
-      <aside class="docs-sidebar" aria-label="docs">
+      <aside class="docs-sidebar" aria-label="${isEn ? 'Documentation' : '文件目錄'}">
         <p class="docs-sidebar-label">${isEn ? 'Documentation' : '文件目錄'}</p>
+        <label class="docs-jump">
+          <span>${isEn ? 'Choose a document' : '選擇文件'}</span>
+          <select data-docs-jump>${mobileOptions}</select>
+        </label>
         ${sidebar}
       </aside>
       <main id="docs-main" class="docs-main">
@@ -324,6 +351,7 @@ function renderShell({ lang, id, title, bodyHtml, outRel }) {
         </article>
         ${prevNext}
       </main>
+      ${tableOfContents}
     </div>
     <footer class="site-footer">
       <a class="brand" href="${assetPrefix}" aria-label="Novae">
@@ -347,6 +375,20 @@ function escapeAttr(value) {
     .replaceAll('&', '&amp;')
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;');
+}
+
+function renderTableOfContents(bodyHtml, isEn) {
+  const headings = [...bodyHtml.matchAll(/<h([23]) id="([^"]+)">([\s\S]*?)<\/h\1>/g)]
+    .map((match) => ({
+      level: match[1],
+      id: match[2],
+      title: match[3].replace(/<[^>]+>/g, '').trim()
+    }));
+  if (headings.length < 2) return '';
+  const links = headings
+    .map((heading) => `<a class="docs-toc-link docs-toc-link--h${heading.level}" href="#${heading.id}">${heading.title}</a>`)
+    .join('');
+  return `<aside class="docs-toc" aria-label="${isEn ? 'On this page' : '本頁內容'}"><p>${isEn ? 'On this page' : '本頁內容'}</p>${links}</aside>`;
 }
 
 function extractTitle(markdown, html) {
@@ -430,7 +472,7 @@ function build() {
   // English docs index (no en/README in source) — build from NAV_EN
   const enIndexPath = path.join(outDir, 'en', 'index.html');
   if (!fs.existsSync(enIndexPath)) {
-    const list = NAV_EN.filter((item) => item.id !== 'README')
+    const list = flattenNav(NAV_EN).filter((item) => item.id !== 'README')
       .map((item) => `<li><a href="${item.file}">${item.title}</a></li>`)
       .join('');
     const body = `<h1>Novae documentation</h1>

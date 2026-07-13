@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@tabler/icons-webfont": "^3.44.0",
-    "harmonyos-sans-webfont-splitted": "^1.2.1",
     "markdown-it": "^14.3.0",
     "markdown-it-anchor": "^9.2.1",
     "mermaid": "^11.16.0"

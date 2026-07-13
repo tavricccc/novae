@@ -2,7 +2,7 @@
 
 [繁體中文](../configuration.md) · [Documentation home](../README.md)
 
-Configuration has three boundaries: versioned product rules, public values bundled for browsers, and private backend/deployment secrets. Never move a value across these boundaries without reviewing its exposure.
+This page covers versioned product rules: categories, visibility, rate limits, and images. Public environment variables and private deployment credentials now live in [environment and credentials](environment-configuration.md). Never move a value across their exposure boundary.
 
 ## Generated configuration
 
@@ -84,44 +84,6 @@ Lower limits reduce abuse and cost but reject legitimate peaks more often. Messa
 
 `issueMaxImages`, `announcementMaxImages`, and `commentMaxImages` cap references per item. `maxSourceMegabytes` rejects oversized source files before expensive work. `maxDimension` limits the longest output edge. `maxUploadKilobytes` is the compression target, `webpQuality` is the first-pass quality, and `outputScales` are progressively smaller retries. Smaller values save bandwidth but can reduce readability and increase compression failures.
 
-## Frontend environment variables
-
-Every value below is visible to browser users. Put local-development values in the untracked `.env`; for deployment, use GitHub `production` / `development` **Environment secrets**, not Environment variables. See the [from-scratch deployment guide](deployment-guide.md) for exact acquisition steps.
-
-| Name | Required | Purpose |
-| --- | --- | --- |
-| `VITE_SCHOOL_NAME` | No | School name shown on startup and account screens; hidden when empty |
-| `VITE_ALLOWED_DOMAIN` | Yes | Sign-in hint and client precheck |
-| `VITE_FIREBASE_API_KEY` | Yes | Firebase Web configuration |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Yes | Firebase Auth domain |
-| `VITE_FIREBASE_PROJECT_ID` | Yes | Firebase project ID |
-| `VITE_FIREBASE_APP_ID` | Yes | Firebase Web App ID |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Yes | FCM sender ID |
-| `VITE_FIREBASE_VAPID_KEY` | Yes | Web Push public key |
-| `VITE_FIREBASE_APP_CHECK_ENABLED` | No | Enables App Check when `true` |
-| `VITE_RECAPTCHA_ENTERPRISE_SITE_KEY` | Conditional | Required with App Check |
-| `VITE_SUPABASE_URL` | Yes | Supabase project URL |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase publishable key |
-
-## Backend and deployment secrets
-
-| Group | Names |
-| --- | --- |
-| Supabase | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY` |
-| Firebase | `FIREBASE_PROJECT_ID`, `FIREBASE_WEB_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON` |
-| Access | `ALLOWED_DOMAIN`, `ADMIN_EMAILS` |
-| Cloudinary | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_WEBHOOK_SECRET` |
-| Internal | `WEBHOOK_SECRET` |
-| Notion | `NOTION_TOKEN`, `NOTION_DATABASE_ID`, optional `NOTION_VERSION` |
-| Upstash | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` |
-| Vercel | `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` |
-
-`ADMIN_EMAILS` is required and contains full addresses separated by ASCII commas, such as `admin@school.edu.tw,backup@school.edu.tw`. Keep `VITE_ALLOWED_DOMAIN` and `ALLOWED_DOMAIN` identical and enter only the text after `@`; administrators must also belong to that domain.
-
-`FIREBASE_PROJECT_ID` and `FIREBASE_WEB_API_KEY` normally reuse the frontend project ID and API key. With the current standard HMAC verification, `CLOUDINARY_WEBHOOK_SECRET` reuses `CLOUDINARY_API_SECRET`, while `WEBHOOK_SECRET` must be independently random. `GOOGLE_SERVICE_ACCOUNT_JSON` contains the entire JSON, not a path.
-
-Hosted Supabase Edge Functions inject `SUPABASE_URL`, so no GitHub secret is needed. The workflow writes `SUPABASE_SERVICE_ROLE_KEY` to Edge as `APP_SUPABASE_SERVICE_ROLE_KEY`. Production and development must use separate resources and credentials.
-
 ## Change checklist
 
 - Regenerate and inspect committed output.
@@ -129,3 +91,4 @@ Hosted Supabase Edge Functions inject `SUPABASE_URL`, so no GitHub secret is nee
 - Never commit secrets, production identifiers, or real user data.
 - Update both language editions of affected documentation.
 - Use a new migration for category removal or schema changes.
+- Continue with [environment and credentials](environment-configuration.md) when configuring `.env`, GitHub, or deployment platforms.
