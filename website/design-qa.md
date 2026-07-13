@@ -1,6 +1,6 @@
 # Design QA
 
-- source of truth: live app at `C:/Users/tavri/projects/novae`
+- source of truth: the live application in the project root
 - coded mock: `src/modules/mock-interface.js` + `src/styles/interface.css`
 - reference viewports: desktop board (~1280+); mobile bottom-nav shell (~360)
 - state: proposal board, public issues, active tab, admin-visible columns

@@ -29,27 +29,21 @@
   letter-spacing:0;-webkit-font-smoothing:antialiased;pointer-events:none;user-select:none
 }
 .novae-demo button{font:inherit;color:inherit;cursor:default;background:none;border:0;padding:0}
-.novae-demo--desktop{display:grid;grid-template-columns:17.25rem minmax(0,1fr);min-height:31rem}
+.novae-demo--desktop{display:grid;grid-template-columns:5rem minmax(0,1fr);min-height:31rem}
 .novae-demo-sidebar{
   display:flex;min-width:0;flex-direction:column;border-right:1px solid rgba(221,221,211,.8);
-  background:rgba(255,255,255,.95);padding:1rem .75rem
+  align-items:center;background:rgba(255,255,255,.95);padding:1rem .5rem
 }
-.novae-sidebar-brand{display:flex;height:3rem;align-items:center;gap:.75rem;padding:0 .75rem;min-width:0}
+.novae-sidebar-brand{display:grid;height:3rem;place-items:center}
 .novae-sidebar-brand>img{width:24px;height:20px;object-fit:contain;flex:none}
-.novae-sidebar-brand>strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.875rem}
-.novae-sidebar-brand>span{display:grid;place-items:center;margin-left:auto;width:1.75rem;height:1.75rem;border:1px solid var(--novae-line);border-radius:999px;color:var(--novae-muted)}
-.novae-demo-sidebar nav{display:flex;flex:1;flex-direction:column;gap:.5rem;margin-top:1.75rem}
+.novae-demo-sidebar nav{display:flex;width:100%;flex:1;align-items:center;flex-direction:column;gap:.5rem;margin-top:1.75rem}
 .novae-demo-sidebar nav a{
-  display:flex;height:3rem;align-items:center;gap:.75rem;border-radius:999px;padding:0 .875rem;
-  color:var(--novae-muted);font-size:.875rem;font-weight:600;white-space:nowrap
+  display:grid;width:3rem;height:3rem;place-items:center;border-radius:999px;
+  color:var(--novae-muted);font-size:.875rem;font-weight:600
 }
 .novae-demo-sidebar nav a>.ti{width:1.25rem;text-align:center;font-size:1.25rem}
 .novae-demo-sidebar nav a.is-active{background:var(--novae-subtle);color:var(--novae-ink)}
-.novae-sidebar-profile{display:flex;align-items:center;gap:.75rem;min-width:0;padding:.625rem;border-radius:1rem}
-.novae-sidebar-profile>span:last-child{min-width:0;flex:1}
-.novae-sidebar-profile strong,.novae-sidebar-profile small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.novae-sidebar-profile strong{font-size:.875rem;font-weight:600}
-.novae-sidebar-profile small{margin-top:.125rem;color:var(--novae-soft);font-size:.75rem}
+.novae-sidebar-profile{display:grid;width:3rem;height:3rem;place-items:center;border-radius:999px}
 .novae-avatar{
   display:inline-grid;place-items:center;flex:none;width:1.75rem;height:1.75rem;
   border-radius:50%;border:1px solid #c6c6b8;background:#efefea;color:#5d5d54;

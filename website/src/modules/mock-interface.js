@@ -58,14 +58,14 @@ function controls() {
 function desktopDemo() {
   return `<section class="novae-demo novae-demo--desktop" aria-label="Novae desktop" inert>
     <aside class="novae-demo-sidebar">
-      <div class="novae-sidebar-brand"><img src="./logo.svg" alt="Novae"/><strong>Novae</strong><span>${icon('chevron-left')}</span></div>
+      <div class="novae-sidebar-brand"><img src="./logo.svg" alt="Novae"/></div>
       <nav>
-        <a class="is-active">${icon('message')}<span>${ui('proposals')}</span></a>
-        <a>${icon('speakerphone')}<span>${ui('announcements')}</span></a>
-        <a>${icon('plus')}<span>${ui('create')}</span></a>
-        <a>${icon('bell')}<span>${ui('alerts')}</span></a>
+        <a class="is-active" aria-label="${ui('proposals')}">${icon('message')}</a>
+        <a aria-label="${ui('announcements')}">${icon('speakerphone')}</a>
+        <a aria-label="${ui('create')}">${icon('plus')}</a>
+        <a aria-label="${ui('alerts')}">${icon('bell')}</a>
       </nav>
-      <div class="novae-sidebar-profile"><span class="novae-avatar novae-user-avatar">N</span><span><strong>${ui('demoUser')}</strong><small>${ui('schoolName')}</small></span></div>
+      <div class="novae-sidebar-profile"><span class="novae-avatar novae-user-avatar">N</span></div>
     </aside>
     <main class="novae-demo-main">
       <div class="novae-demo-toolbar"><div><h3>${ui('proposals')}</h3><button class="novae-category" type="button">${ui('publicIssues')}${icon('chevron-down')}</button></div>${controls()}</div>

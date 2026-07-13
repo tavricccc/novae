@@ -300,8 +300,6 @@
       "alerts": "通知",
       "mine": "我的",
       "create": "新增",
-      "demoUser": "Novae 使用者",
-      "schoolName": "國立南科國際實驗高級中學",
       "daysLeft": "剩 {n} 天",
       "goalReached": "已達標"
     },
