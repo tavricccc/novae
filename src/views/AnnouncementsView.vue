@@ -1,7 +1,9 @@
 <template>
   <section class="mx-auto w-full max-w-7xl space-y-5">
-    <div v-if="isAdmin" class="hidden justify-end md:flex">
+    <div class="hidden items-center justify-between gap-3 md:flex">
+      <h2 class="shrink-0 text-2xl font-bold tracking-tight text-ink-950 dark:text-ink-50">公告</h2>
       <CreateActionMenu
+        v-if="isAdmin"
         :can-create-announcement="isAdmin"
         :default-category="DEFAULT_ISSUE_CATEGORY"
         default-kind="announcement"
