@@ -3,7 +3,7 @@ import { getDerivedIssueStatus, getRemainingCalendarDays } from '@/lib/issue-sta
 import { formatDate } from '@/lib/format';
 import { getIssueOperationTimeItems, isClosedIssueStatus } from '@/lib/issue-timeline';
 import { ISSUE_CATEGORY_LABELS, issueRequiresReview } from '@/constants/categories';
-import { ISSUE_STATUS_ICONS, ISSUE_STATUS_LABELS } from '@/constants/statuses';
+import { ISSUE_STATUS_LABELS } from '@/constants/statuses';
 import { useAuthorAvatarUrl } from '@/composables/useAuthorAvatar';
 import type { IssueOperationTimeItem, IssueRecord } from '@/types';
 
@@ -36,7 +36,6 @@ export function useIssueDisplay(issue: Ref<IssueRecord> | (() => IssueRecord)) {
   const derivedStatus = computed(() => getDerivedIssueStatus(resolvedIssue.value));
   const categoryLabel = computed(() => ISSUE_CATEGORY_LABELS[resolvedIssue.value.category]);
   const statusLabel = computed(() => ISSUE_STATUS_LABELS[derivedStatus.value]);
-  const statusIcon = computed(() => ISSUE_STATUS_ICONS[derivedStatus.value]);
   const isClosed = computed(() => isClosedIssueStatus(derivedStatus.value));
 
   const primaryTimeLabel = computed(() => {
@@ -65,7 +64,6 @@ export function useIssueDisplay(issue: Ref<IssueRecord> | (() => IssueRecord)) {
     derivedStatus,
     categoryLabel,
     statusLabel,
-    statusIcon,
     primaryTimeLabel,
     primaryTimeValueLabel,
     operationTimeItems,

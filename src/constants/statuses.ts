@@ -23,13 +23,3 @@ export const ISSUE_STATUS_LABELS: Record<IssueStatus, string> = {
   infeasible: '無法實行',
   completed: '已完成',
 };
-
-export const ISSUE_STATUS_ICONS = {
-  'under-review': 'shield-check',
-  pending: 'circle-help',
-  processing: 'refresh',
-  'auto-rejected': 'circle-alert',
-  'review-rejected': 'circle-alert',
-  infeasible: 'lock',
-  completed: 'check-circle',
-} as const;

@@ -11,7 +11,6 @@
         {{ categoryLabel }}
       </span>
       <span class="tag font-semibold shadow-sm" :class="statusClass">
-        <AppIcon :name="statusIcon" :size="3.5" :stroke-width="2" />
         {{ statusLabel }}
       </span>
       <span
@@ -166,7 +165,6 @@ const {
   derivedStatus,
   categoryLabel,
   statusLabel,
-  statusIcon,
   primaryTimeLabel,
   primaryTimeValueLabel,
   operationTimeItems,

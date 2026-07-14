@@ -1,59 +1,19 @@
 <template>
-  <div
-    class="relative"
-    :class="{ 'z-50': isDropdownOpen }"
-  >
-    <!-- Mobile Row -->
-    <div v-if="compactLayout" class="issue-row-mobile list-row-trigger relative overflow-hidden" @click="openDetails()">
-      <div class="flex min-w-0 items-center gap-2 w-full">
-        <span class="tag-sm shrink-0" :class="statusClass">
-          <AppIcon :name="statusIcon" :size="3" :stroke-width="2" />
+  <div class="relative" :class="{ 'z-50': isDropdownOpen }" role="listitem">
+    <article
+      class="issue-card list-row-trigger relative overflow-hidden"
+      data-list-row-trigger
+      @click="openDetails()"
+    >
+      <header class="flex min-w-0 items-center gap-2">
+        <span class="tag-sm shrink-0 font-semibold" :class="statusClass">
           {{ statusLabel }}
         </span>
-        <UserAvatar v-if="issue.canViewAuthor" :photo-url="displayPhotoUrl" :name="displayAuthorName" size="sm" :alt-text="`${displayAuthorName} 的頭像`" class="shrink-0" />
-        <div class="flex-1 py-1 text-left">
-          <span class="line-clamp-1 text-sm font-semibold tracking-normal text-ink-900 dark:text-ink-50">
-            <SearchHighlight :text="issue.title" :query="highlightQuery" />
-          </span>
-        </div>
-      </div>
-      <div class="mt-1 flex w-full items-center gap-2">
-        <div class="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-xs text-ink-500 dark:text-ink-400">
-          <span class="min-w-0 truncate font-normal text-ink-400 dark:text-ink-500">
-            {{ primaryTimeValueLabel }}
-          </span>
-          <template v-if="issue.support_enabled">
-            <span class="shrink-0 inline-flex items-center gap-1 px-1 py-0.5 rounded bg-ink-100/70 text-ink-700 font-medium dark:bg-ink-900/60 dark:text-ink-300">
-              {{ supportCount }}/{{ issue.support_goal ?? 0 }} 附議
-            </span>
-          </template>
-        </div>
-        <div class="flex shrink-0 items-center justify-end gap-1.5" @click.stop="stopRowActionClick">
-          <!-- comment button -->
-          <button
-            type="button"
-            class="button-toolbar h-8 w-8 rounded-full p-0 md:h-7 md:w-7"
-            title="查看詳情"
-            aria-label="查看詳情"
-            @click.stop="openDetails('comments')"
-          >
-            <AppIcon name="comment" />
-          </button>
-
-          <VoteButtons
-            v-if="issue.support_enabled"
-            class="shrink-0"
-            :issue-id="issue.id"
-            :current-user-supported="currentUserSupported"
-            :support-count="supportCount"
-            :support-closed="supportClosed"
-            :status-label="statusLabel"
-            :compact="true"
-            @supported="handleSupport"
-          />
-
+        <span class="ml-auto truncate text-xs text-ink-400 dark:text-ink-500">
+          {{ primaryTimeValueLabel }}
+        </span>
+        <div v-if="isAdmin" class="shrink-0" @click.stop="stopCardActionClick">
           <IssueAdminMenu
-            v-if="isAdmin"
             :issue="issue"
             :compact="true"
             class="!space-y-0"
@@ -64,58 +24,55 @@
             @delete="confirmDelete"
           />
         </div>
-      </div>
-    </div>
+      </header>
 
-    <!-- Desktop full row (hidden below md) -->
-    <div
-      v-else
-      class="issue-table-row relative grid overflow-hidden"
-      data-list-row-trigger
-      :style="{ 'grid-template-columns': tableCols }"
-      role="row"
-      @click="openDetails()"
-    >
-      <div class="flex items-center w-24 shrink-0">
-        <span class="tag" :class="statusClass">
-          <AppIcon :name="statusIcon" :size="3" :stroke-width="2" />
-          {{ statusLabel }}
-        </span>
-      </div>
-
-      <div class="flex min-w-0 items-center gap-2.5 pr-4">
-        <UserAvatar v-if="issue.canViewAuthor" :photo-url="displayPhotoUrl" :name="displayAuthorName" size="sm" :alt-text="`${displayAuthorName} 的頭像`" class="shrink-0" />
-        <div class="min-w-0 flex-1 py-0.5 text-left">
-          <div class="truncate text-sm font-semibold tracking-[0.01em] text-ink-900 dark:text-ink-100 sm:text-base" :title="issue.title">
+      <div class="mt-3 flex min-w-0 items-center gap-2.5">
+        <UserAvatar
+          v-if="issue.canViewAuthor"
+          :photo-url="displayPhotoUrl"
+          :name="displayAuthorName"
+          size="sm"
+          :alt-text="`${displayAuthorName} 的頭像`"
+          class="shrink-0"
+        />
+        <div class="min-w-0 flex-1">
+          <h3 class="line-clamp-2 text-[15px] font-semibold leading-6 tracking-[0.01em] text-ink-950 dark:text-ink-50 sm:text-base">
             <SearchHighlight :text="issue.title" :query="highlightQuery" />
-          </div>
-          <div v-if="issue.canViewAuthor" class="mt-0.5 truncate text-xs text-ink-400 dark:text-ink-500" :title="displayAuthorName">
+          </h3>
+          <p v-if="issue.canViewAuthor" class="mt-0.5 truncate text-xs text-ink-500 dark:text-ink-400">
             {{ displayAuthorName }}
-          </div>
+          </p>
         </div>
       </div>
 
-      <div class="flex items-center w-36 shrink-0 text-xs text-ink-400/90 dark:text-ink-500/90 whitespace-nowrap">
-        {{ primaryTimeValueLabel }}
-      </div>
-
-      <div class="flex items-center w-36 shrink-0 pr-2">
-        <div v-if="issue.support_enabled" class="w-full space-y-1 text-xs text-ink-500 dark:text-ink-400">
-          <div class="flex items-center justify-between">
-            <span class="font-medium text-ink-700 dark:text-ink-300">{{ supportCount }} / {{ issue.support_goal ?? 0 }}</span>
-            <span v-if="supportRemainingLabel" class="font-medium text-ink-400 dark:text-ink-500">{{ supportRemainingLabel }}</span>
-          </div>
-          <div class="h-1.5 w-full overflow-hidden rounded-full bg-ink-200 dark:bg-ink-700" aria-hidden="true">
-            <div
-              class="h-full rounded-full bg-ink-900 transition-all duration-500 dark:bg-ink-100"
-              :style="supportProgressStyle"
-            ></div>
-          </div>
+      <div v-if="issue.support_enabled" class="mt-4 rounded-xl bg-ink-50/85 px-3 py-2.5 dark:bg-ink-900/55">
+        <div class="flex items-center justify-between gap-3 text-xs">
+          <span class="font-semibold tabular-nums text-ink-700 dark:text-ink-300">
+            {{ supportCount }} / {{ issue.support_goal ?? 0 }} 附議
+          </span>
+          <span v-if="supportRemainingLabel" class="text-ink-400 dark:text-ink-500">
+            {{ supportRemainingLabel }}
+          </span>
         </div>
-        <span v-else class="text-xs text-ink-400 dark:text-ink-500">不開放附議</span>
+        <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-200/80 dark:bg-ink-700" aria-hidden="true">
+          <div
+            class="h-full rounded-full bg-ink-900 transition-all duration-500 dark:bg-ink-100"
+            :style="supportProgressStyle"
+          ></div>
+        </div>
       </div>
+      <p v-else class="mt-4 text-xs text-ink-400 dark:text-ink-500">此提案不開放附議</p>
 
-      <div class="flex items-center gap-1 w-28 shrink-0" @click.stop="stopRowActionClick">
+      <footer class="mt-3 flex items-center justify-end gap-1.5" @click.stop="stopCardActionClick">
+        <button
+          type="button"
+          class="button-toolbar h-8 w-8 rounded-full p-0"
+          title="查看留言"
+          aria-label="查看留言"
+          @click.stop="openDetails('comments')"
+        >
+          <AppIcon name="comment" />
+        </button>
         <VoteButtons
           v-if="issue.support_enabled"
           :issue-id="issue.id"
@@ -126,31 +83,8 @@
           :compact="true"
           @supported="handleSupport"
         />
-        <button
-          type="button"
-          class="button-toolbar h-7 w-7 rounded-full p-0"
-          title="查看詳情"
-          aria-label="查看詳情"
-          @click="openDetails('comments')"
-        >
-          <AppIcon name="comment" />
-        </button>
-      </div>
-
-      <div class="flex items-center w-10 shrink-0" @click.stop="stopRowActionClick">
-        <IssueAdminMenu
-          v-if="isAdmin"
-          :issue="issue"
-          :compact="true"
-          class="!space-y-0"
-          @dropdown-open="(open) => isDropdownOpen = open"
-          @message="(msg) => showActionFeedback(msg, 'success')"
-          @error="(err) => showActionFeedback(err, 'error')"
-          @status-changed="emit('issue-updated', $event)"
-          @delete="confirmDelete"
-        />
-      </div>
-    </div>
+      </footer>
+    </article>
 
     <ConfirmDialog
       :open="isDeleteDialogOpen"
@@ -165,7 +99,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef } from 'vue';
+import { toRef } from 'vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import IssueAdminMenu from '@/components/IssueAdminMenu.vue';
 import VoteButtons from '@/components/VoteButtons.vue';
@@ -177,7 +111,6 @@ import type { IssueRecord } from '@/types';
 
 const props = withDefaults(defineProps<{
   issue: IssueRecord;
-  compactLayout: boolean;
   highlightQuery?: string;
 }>(), {
   highlightQuery: '',
@@ -194,7 +127,6 @@ const {
   displayAuthorName,
   displayPhotoUrl,
   statusLabel,
-  statusIcon,
   primaryTimeValueLabel,
   isAdmin,
   currentUserSupported,
@@ -220,11 +152,5 @@ const {
   (issueId) => emit('issue-deleted', issueId),
 );
 
-const stopRowActionClick = () => undefined;
-const tableCols = computed(() => {
-  const cols = ['6rem'];
-  cols.push('minmax(0, 1fr)', '8rem', '9rem', '7rem');
-  if (isAdmin.value) cols.push('2.5rem');
-  return cols.join(' ');
-});
+const stopCardActionClick = () => undefined;
 </script>

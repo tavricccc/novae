@@ -1,5 +1,5 @@
 <template>
-  <section class="panel panel-pad relative mx-auto my-8 flex max-w-2xl flex-col items-center justify-center overflow-hidden px-6 py-12 text-center sm:px-12">
+  <section class="panel panel-pad relative mx-auto flex w-full max-w-2xl flex-col items-center justify-center overflow-hidden px-6 py-12 text-center sm:px-12">
     <DecorativeGlow size="md" />
 
     <div class="relative z-10 flex max-w-md flex-col items-center space-y-6">
