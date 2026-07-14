@@ -65,7 +65,7 @@ export async function handleNotificationAction(
           actor_uid: auth.uid,
           actor_is_admin: auth.isAdmin,
           notification_source: source,
-          page_size: 10,
+          page_size: 30,
           cursor_id: null,
           cursor_created_at: null,
         });
@@ -77,7 +77,14 @@ export async function handleNotificationAction(
       }),
     ]);
     if (stateResult.error) throw stateResult.error;
+    const openedAt = new Date().toISOString();
+    const openedResult = await supabase.schema("app_api").rpc("backend_mark_notifications_opened", {
+      actor_uid: auth.uid,
+      opened_at: openedAt,
+    });
+    if (openedResult.error) throw openedResult.error;
     return {
+      openedAtMs: Date.parse(openedAt),
       pages: Object.fromEntries(pageEntries),
       state: stateResult.data,
     };

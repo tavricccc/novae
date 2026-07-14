@@ -3,7 +3,7 @@ import { RATE_LIMITS } from "../_shared/rate-limits.ts";
 import { claimFixedWindowRateLimit } from "../_shared/upstash-rate-limit.ts";
 import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 import { validateMarkdownUploadsBeforeCreate } from "./uploads.ts";
-import { asUuid, readCursor, readCursorDate, utcHourWindow } from "./utils.ts";
+import { asNumber, asUuid, readCursor, readCursorDate, utcHourWindow } from "./utils.ts";
 import { INPUT_LIMITS, requiredText } from "./validation.ts";
 
 async function listAnnouncementComments(payload: JsonRecord, supabase: BackendSupabase) {
@@ -14,6 +14,7 @@ async function listAnnouncementComments(payload: JsonRecord, supabase: BackendSu
     announcement_id: announcementId,
     cursor_id: asUuid(cursor.id) || null,
     cursor_created_at: readCursorDate(cursor, "createdAtMs", "created_at") || null,
+    page_size: Math.min(Math.max(Math.round(asNumber(payload.pageSize, 30)), 1), 30),
   });
   if (error) throw error;
   return data;

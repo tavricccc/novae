@@ -45,6 +45,7 @@ export function useAnnouncementComments(
       await core.loadComments(options);
     },
     loadMoreComments: core.loadMoreComments,
+    loadMoreError: core.loadMoreError,
     hasMore: core.hasMore,
     loaded: core.loaded,
     loading: core.loading,

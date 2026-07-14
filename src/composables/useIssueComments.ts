@@ -36,6 +36,7 @@ export function useIssueComments(issueId: Ref<string>, onContentUnavailable?: (i
     hasMore: core.hasMore,
     loaded: core.loaded,
     loadMoreComments: core.loadMoreComments,
+    loadMoreError: core.loadMoreError,
     loadComments: async (issueIdValue?: string | unknown, options: { force?: boolean } = {}) => {
       const finalId = typeof issueIdValue === 'string' && issueIdValue ? issueIdValue : issueId.value;
       await core.loadComments({ ...options, id: finalId || undefined });

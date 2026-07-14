@@ -18,7 +18,7 @@
             </div>
           </div>
 
-          <div v-else-if="error" class="notification-group-card flex flex-col items-center justify-center px-6 py-10 text-center">
+          <div v-else-if="error && notifications.length === 0" class="notification-group-card flex flex-col items-center justify-center px-6 py-10 text-center">
             <AppIcon name="circle-alert" :size="8" class="text-error" />
             <p class="mt-3 text-sm font-semibold text-ink-900 dark:text-ink-100">通知暫時無法載入</p>
             <p class="mt-1 text-xs leading-5 text-ink-500 dark:text-ink-400">{{ error }}</p>
@@ -79,16 +79,14 @@
               <AppIcon name="chevron-right" :size="4" class="mt-7 shrink-0 text-ink-300 dark:text-ink-600" />
             </button>
 
-            <div v-if="hasMore" class="bg-white p-3 dark:bg-surface">
-              <button
-                type="button"
-                class="button-secondary h-10 w-full text-xs font-semibold"
-                :disabled="loadingMore"
-                @click.stop="loadMoreNotifications"
-              >
-                {{ loadingMore ? '載入中...' : '載入較早的通知' }}
-              </button>
-            </div>
+            <FeedLoadMoreControl
+              class="bg-white dark:bg-surface"
+              :has-more="hasMore"
+              :loading="loadingMore"
+              :error="Boolean(error)"
+              @load-more="loadMoreNotifications"
+            />
+            <div v-if="hasMore" ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
           </div>
         </div>
       </Transition>
@@ -100,6 +98,8 @@
 import { computed, onMounted } from 'vue';
 import AuthorAvatar from '@/components/AuthorAvatar.vue';
 import AppIcon, { type AppIconName } from '@/components/ui/AppIcon.vue';
+import FeedLoadMoreControl from '@/components/ui/FeedLoadMoreControl.vue';
+import { useInfiniteScroll } from '@/composables/useInfiniteScroll';
 import { useNotificationNavigation } from '@/composables/useNotificationNavigation';
 import { useNotifications } from '@/composables/useNotifications';
 import { formatDate } from '@/lib/format';
@@ -119,15 +119,23 @@ const {
 } = useNotifications();
 initializeNotifications();
 
+const infiniteScrollDisabled = computed(() =>
+  loading.value || loadingMore.value || Boolean(error.value) || !hasMore.value
+);
+const { sentinel: loadMoreSentinel } = useInfiniteScroll({
+  disabled: infiniteScrollDisabled,
+  onLoadMore: loadMoreNotifications,
+});
+
 const notificationPanelKey = computed(() => {
   if (loading.value) return 'loading';
-  if (error.value) return 'error';
+  if (error.value && notifications.value.length === 0) return 'error';
   if (notifications.value.length === 0) return 'empty';
   return 'list';
 });
 
-onMounted(async () => {
-  await openNotifications();
+onMounted(() => {
+  void openNotifications();
 });
 
 function notificationTitle(notification: NotificationRecord) {

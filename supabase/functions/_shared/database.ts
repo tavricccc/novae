@@ -401,6 +401,7 @@ interface AppApiFunctions {
     private_to_owner_categories: string[];
     review_required_categories: string[];
     sort_name: string;
+    status_bucket: string;
   }, Json>;
   backend_list_notifications: AppFunction<{
     actor_is_admin: boolean;

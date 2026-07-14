@@ -458,6 +458,31 @@ test('backend list actions use stable cursor pagination at the service boundary'
   assert.doesNotMatch(announcements, /sortNumber|most-liked|most-commented/u);
 });
 
+test('content feeds share 30-item batches and bounded load-more controls', async () => {
+  const pageSize = await read('src/lib/page-size.ts');
+  const infiniteScroll = await read('src/composables/useInfiniteScroll.ts');
+  const loadMoreControl = await read('src/components/ui/FeedLoadMoreControl.vue');
+  const issueSearch = await read('src/composables/useIssueSearch.ts');
+  const feedMigration = await read('supabase/migrations/202607140001_unified_feed_pagination.sql');
+  const issueRead = await read('supabase/functions/backendAction/issue-read.ts');
+
+  assert.match(pageSize, /CONTENT_FEED_PAGE_SIZE = 30/u);
+  assert.match(pageSize, /COMMENT_FEED_PAGE_SIZE = 30/u);
+  assert.match(pageSize, /NOTIFICATION_FEED_PAGE_SIZE = 30/u);
+  assert.match(infiniteScroll, /options\.root\?\.value/u);
+  assert.match(infiniteScroll, /loadPending/u);
+  assert.match(loadMoreControl, /rounded-full/u);
+  assert.match(loadMoreControl, /載入更多/u);
+  assert.match(loadMoreControl, /LoadingSpinner/u);
+  assert.match(issueSearch, /loadMoreSearchResults/u);
+  assert.match(feedMigration, /reply_groups as materialized/u);
+  assert.match(feedMigration, /create or replace function app_api\.backend_list_issues/u);
+  assert.match(feedMigration, /create or replace function app_api\.backend_list_notifications/u);
+  assert.match(feedMigration, /backend_issue_list_to_json/u);
+  assert.match(feedMigration, /array_agg\(issue_id\)/u);
+  assert.match(issueRead, /delete issue\.content/u);
+});
+
 test('content writes validate markdown uploads before database writes', async () => {
   const uploads = await read('supabase/functions/backendAction/uploads.ts');
   const issueCreate = await read('supabase/functions/backendAction/issue-create.ts');
@@ -553,7 +578,7 @@ test('announcement writes update visible lists and invalidate list-page caches',
   );
 });
 
-test('realtime-backed lists revalidate cached content after inactive periods', async () => {
+test('realtime-backed lists revalidate after stale resumes without fixed polling', async () => {
   const discussionComments = await read('src/composables/useDiscussionComments.ts');
   const announcementManagement = await read('src/composables/useAnnouncementManagement.ts');
   const issueBoard = await read('src/composables/useIssueBoardData.ts');
@@ -568,12 +593,15 @@ test('realtime-backed lists revalidate cached content after inactive periods', a
   const announcements = await read('src/services/announcements.ts');
   const issueWrites = await read('src/services/issues-write.ts');
 
-  assert.match(discussionComments, /COMMENTS_REVALIDATE_INTERVAL_MS = 60_000/u);
-  assert.match(discussionComments, /document\.visibilityState !== 'visible'/u);
+  assert.doesNotMatch(discussionComments, /setInterval/u);
+  assert.match(discussionComments, /registerAppResumeHandler/u);
+  assert.match(discussionComments, /shouldRefreshContentAfterResume/u);
   assert.match(discussionComments, /forceRefresh: options\.force === true \|\| hydrated/u);
   assert.match(announcementManagement, /refreshAnnouncementList\(\{ force: true \}\)/u);
-  assert.match(announcementManagement, /LIST_REVALIDATE_INTERVAL_MS = 60_000/u);
-  assert.match(issueBoard, /LIST_REVALIDATE_INTERVAL_MS = 60_000/u);
+  assert.doesNotMatch(announcementManagement, /setInterval/u);
+  assert.doesNotMatch(issueBoard, /setInterval/u);
+  assert.match(announcementManagement, /shouldRefreshContentAfterResume/u);
+  assert.match(issueBoard, /shouldRefreshContentAfterResume/u);
   assert.match(issueBoard, /invalidateIssueBuckets\(\)/u);
   assert.match(realtimeEvents, /scheduleReconnect/u);
   assert.match(realtimeEvents, /status !== 'CHANNEL_ERROR'.*status !== 'TIMED_OUT'.*status !== 'CLOSED'/u);
@@ -677,7 +705,7 @@ test('notification realtime subscriptions are shared and collision-resistant', a
   assert.match(notificationsComposable, /ensureNotificationsInitialized/u);
   assert.match(notificationsComposable, /registerAppResumeHandler\(reconnectNotificationsAfterResume\)/u);
   assert.match(notificationsComposable, /NOTIFICATION_RESUME_RECONNECT_MS = 10 \* 60_000/u);
-  assert.match(notificationsComposable, /fetchNotificationSnapshot\(activeSources\.value, uid\)/u);
+  assert.match(notificationsComposable, /fetchNotificationSnapshot\(activeSources\.value, uid, controller\.signal\)/u);
   assert.doesNotMatch(notificationsComposable, /setInterval/u);
   assert.doesNotMatch(notificationsComposable, /onScopeDispose\(clearSubscriptions\)/u);
   assert.match(notificationsService, /let realtimeChannelSerial = 0/u);

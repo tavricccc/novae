@@ -2,8 +2,9 @@ import { computed, onScopeDispose, reactive, type Ref } from 'vue';
 import type { AnnouncementRecord } from '@/types';
 import { fetchAnnouncementsPage, type AnnouncementCursor } from '@/services/announcements';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
-import { resolveViewportPageSize } from '@/lib/page-size';
+import { CONTENT_FEED_PAGE_SIZE } from '@/lib/page-size';
 import { isContentCacheFresh } from '@/services/content-read-cache';
+import { isAbortFailure } from '@/lib/request';
 
 interface UseAnnouncementsOptions {
   cacheScope?: Ref<string>;
@@ -51,12 +52,8 @@ function mergeAnnouncements(
 
 export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
   const { isOnline } = useNetworkStatus();
-  const pageSize = computed(() => resolveViewportPageSize({
-    min: 10,
-    max: 24,
-    reservedHeight: 220,
-    rowHeight: 92,
-  }));
+  let requestController: AbortController | null = null;
+  const pageSize = computed(() => CONTENT_FEED_PAGE_SIZE);
 
   function getState() {
     const key = `${options.cacheScope?.value ?? 'default'}:${pageSize.value}`;
@@ -92,6 +89,9 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
 
   async function loadFirstPage(loadOptions: { silent?: boolean } = {}) {
     const state = currentState.value;
+    requestController?.abort();
+    const controller = new AbortController();
+    requestController = controller;
     bumpVersion(state);
     const currentVersion = getVersion(state);
     state.error = '';
@@ -106,6 +106,7 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
       const page = await fetchAnnouncementsPage(null, pageSize.value, {
         cacheScope: options.cacheScope?.value,
         forceRefresh: loadOptions.silent === true,
+        signal: controller.signal,
       });
       if (currentVersion !== getVersion(state)) return;
       state.announcements = mergeAnnouncements([], page.announcements);
@@ -113,7 +114,8 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
       state.hasMore = page.hasMore;
       state.error = '';
       state.updatedAt = Date.now();
-    } catch {
+    } catch (caught) {
+      if (isAbortFailure(caught)) return;
       if (currentVersion === getVersion(state) && state.announcements.length === 0) {
         state.error = isOnline.value
           ? '公告載入失敗，請稍後再試。'
@@ -124,6 +126,7 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
         state.loading = false;
         state.refreshing = false;
       }
+      if (requestController === controller) requestController = null;
     }
   }
 
@@ -131,19 +134,24 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
     const state = currentState.value;
     if (!state.hasMore || !state.cursor || state.loadingMore) return;
     const currentVersion = getVersion(state);
+    requestController?.abort();
+    const controller = new AbortController();
+    requestController = controller;
     state.loadingMore = true;
     state.error = '';
 
     try {
       const page = await fetchAnnouncementsPage(state.cursor, pageSize.value, {
         cacheScope: options.cacheScope?.value,
+        signal: controller.signal,
       });
       if (currentVersion !== getVersion(state)) return;
       state.announcements = mergeAnnouncements(state.announcements, page.announcements);
       state.cursor = page.cursor;
       state.hasMore = page.hasMore;
       state.updatedAt = Date.now();
-    } catch {
+    } catch (caught) {
+      if (isAbortFailure(caught)) return;
       if (currentVersion === getVersion(state)) {
         state.error = isOnline.value
           ? '載入更多公告失敗，請稍後再試。'
@@ -153,6 +161,7 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
       if (currentVersion === getVersion(state)) {
         state.loadingMore = false;
       }
+      if (requestController === controller) requestController = null;
     }
   }
 
@@ -216,7 +225,12 @@ export function useAnnouncements(options: UseAnnouncementsOptions = {}) {
   }
 
   onScopeDispose(() => {
-    announcementStateCache.forEach(bumpVersion);
+    requestController?.abort();
+    const state = currentState.value;
+    bumpVersion(state);
+    state.loading = false;
+    state.loadingMore = false;
+    state.refreshing = false;
   });
 
   return {

@@ -1,11 +1,14 @@
 import { computed, type Ref } from 'vue';
-import type { IssueFilter, IssueRecord } from '@/types';
+import type { IssueFilter, IssueRecord, IssueSortOption } from '@/types';
+import { getIssueStatusBucket } from '@/lib/issue-timeline';
+import { sortIssues } from '@/lib/issue-sort';
 
 type IssueBoardFilter = IssueFilter | 'my-proposals';
 
 interface IssueBoardPaginationOptions {
   activeFilter: Ref<IssueBoardFilter>;
   statusTab: Ref<'active' | 'closed'>;
+  sortOption: Ref<IssueSortOption>;
   searchQuery: Ref<string>;
   canSearchGlobally: Ref<boolean>;
   isSearching: Ref<boolean>;
@@ -27,7 +30,11 @@ export function useIssueBoardPagination(options: IssueBoardPaginationOptions) {
 
     let list: IssueRecord[];
     if (options.activeFilter.value === 'my-proposals') {
-      list = options.userIssues.value;
+      list = sortIssues(
+        options.userIssues.value.filter((issue) => getIssueStatusBucket(issue) === options.statusTab.value),
+        options.statusTab.value,
+        options.sortOption.value,
+      );
     } else {
       list = options.searchIssues.value;
     }

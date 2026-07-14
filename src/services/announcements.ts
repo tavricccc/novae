@@ -15,6 +15,7 @@ import {
 import { normalizeDate, toReadableBackendError } from '@/services/issues-core';
 import type { CommentCursor } from './comment-cursor';
 import { normalizeCommentCursor } from './comment-cursor';
+import { COMMENT_FEED_PAGE_SIZE } from '@/lib/page-size';
 
 const ANNOUNCEMENT_LIMIT = 10;
 const ANNOUNCEMENT_LIST_CACHE_PREFIX = 'announcement-list-page|';
@@ -81,7 +82,7 @@ function normalizeAnnouncementComment(data: Record<string, unknown>): Announceme
 export async function fetchAnnouncementsPage(
   cursor: AnnouncementCursor = null,
   pageSize = ANNOUNCEMENT_LIMIT,
-  options: { cacheScope?: string; forceRefresh?: boolean } = {},
+  options: { cacheScope?: string; forceRefresh?: boolean; signal?: AbortSignal } = {},
 ) {
   const cacheKey = createContentCacheKey([
     'announcement-list-page',
@@ -99,7 +100,7 @@ export async function fetchAnnouncementsPage(
     const fn = invokeBackendAction<
       { cursor: AnnouncementCursor; pageSize: number },
       { announcements: Record<string, unknown>[]; cursor: AnnouncementCursor; hasMore: boolean }
-    >('listAnnouncements', { timeoutMs: READ_REQUEST_TIMEOUT_MS });
+    >('listAnnouncements', { signal: options.signal, timeoutMs: READ_REQUEST_TIMEOUT_MS });
     const result = await fn({ cursor, pageSize });
     const page = {
       announcements: result.announcements.map(normalizeAnnouncementRecord),
@@ -180,13 +181,13 @@ export async function fetchAnnouncementComments(
   }
 
   const fn = invokeBackendAction<
-    { announcementId: string; cursor?: CommentCursor },
+    { announcementId: string; cursor?: CommentCursor; pageSize: number },
     { comments: Array<Record<string, unknown>>; cursor: CommentCursor; hasMore: boolean }
   >('listAnnouncementComments', {
     signal: 'signal' in options ? options.signal ?? undefined : undefined,
     timeoutMs: READ_REQUEST_TIMEOUT_MS,
   });
-  const result = await fn({ announcementId, cursor });
+  const result = await fn({ announcementId, cursor, pageSize: COMMENT_FEED_PAGE_SIZE });
   const page = {
     comments: result.comments.map(normalizeAnnouncementComment),
     cursor: normalizeCommentCursor(result.cursor),

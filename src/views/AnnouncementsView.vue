@@ -55,7 +55,12 @@
             <div v-if="error" class="mt-3 rounded-xl border border-error/20 bg-error-container px-4 py-3 text-sm font-semibold text-on-error-container">
               {{ error }}
             </div>
-            <SkeletonAnnouncementList v-if="loadingMore" class="mt-2" :count="2" :can-manage="isAdmin" />
+            <FeedLoadMoreControl
+              :has-more="hasMore"
+              :loading="loadingMore"
+              :error="Boolean(error)"
+              @load-more="loadMoreAnnouncements"
+            />
             <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
           </template>
         </div>
@@ -89,6 +94,7 @@ import AnnouncementComposerDialog from '@/components/AnnouncementComposerDialog.
 import AnnouncementTable from '@/components/AnnouncementTable.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import EmptyStatePanel from '@/components/ui/EmptyStatePanel.vue';
+import FeedLoadMoreControl from '@/components/ui/FeedLoadMoreControl.vue';
 import SkeletonAnnouncementList from '@/components/ui/SkeletonAnnouncementList.vue';
 import PageLoadFailure from '@/components/ui/PageLoadFailure.vue';
 import {
@@ -145,7 +151,7 @@ const {
   problemTitle: announcementProblemTitle,
 } = useLoadingTimeout(rawAnnouncementLoading, 5_000);
 const infiniteScrollDisabled = computed(() =>
-  !hasMore.value || loading.value || loadingMore.value || !isAllowedUser.value
+  !hasMore.value || loading.value || loadingMore.value || Boolean(error.value) || !isAllowedUser.value
 );
 async function retryAnnouncements() {
   await resetAppConnection();

@@ -41,6 +41,21 @@ function issueReadPolicyParams(auth: AuthContext) {
   };
 }
 
+function compactIssueListResult(data: unknown) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return data;
+  const result = data as JsonRecord;
+  if (!Array.isArray(result.issues)) return result;
+  return {
+    ...result,
+    issues: result.issues.map((value) => {
+      if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+      const issue = { ...(value as JsonRecord) };
+      delete issue.content;
+      return issue;
+    }),
+  };
+}
+
 async function getIssue(
   payload: JsonRecord,
   auth: AuthContext,
@@ -86,7 +101,7 @@ async function listIssues(
     ...issueReadPolicyParams(auth),
   });
   if (error) throw error;
-  return data;
+  return compactIssueListResult(data);
 }
 
 async function listUserIssues(
@@ -96,6 +111,7 @@ async function listUserIssues(
 ) {
   const cursor = readCursor(payload);
   const { data, error } = await supabase.schema("app_api").rpc("backend_list_user_issues", {
+    status_bucket: asString(payload.statusBucket, "active"),
     sort_name: readSort(payload),
     page_size: readPageSize(payload),
     cursor_id: asUuid(cursor.id) || null,
@@ -107,7 +123,7 @@ async function listUserIssues(
     ...issueReadPolicyParams(auth),
   });
   if (error) throw error;
-  return data;
+  return compactIssueListResult(data);
 }
 
 export function isIssueReadAction(action: string) {

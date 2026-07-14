@@ -2,7 +2,9 @@ import { computed, reactive, watch, type Ref } from 'vue';
 import { fetchUserIssues } from '@/services/issues';
 import { createContentCacheKey, isContentCacheFresh } from '@/services/content-read-cache';
 import { sortIssues } from '@/lib/issue-sort';
-import type { IssueCursor, IssueFilter, IssueRecord, IssueSortOption } from '@/types';
+import { getIssueStatusBucket } from '@/lib/issue-timeline';
+import type { IssueCursor, IssueFilter, IssueRecord, IssueSortOption, IssueStatusBucket } from '@/types';
+import { isAbortFailure } from '@/lib/request';
 
 type IssueBoardFilter = IssueFilter | 'my-proposals';
 interface UserIssuesSnapshot {
@@ -20,6 +22,7 @@ export function useUserIssuesData(
   isAllowedUser: Ref<boolean>,
   supportedIssueIds: Ref<Set<string>>,
   sortOption: Ref<IssueSortOption>,
+  statusBucket: Ref<IssueStatusBucket>,
   pageSize: Ref<number>,
 ) {
   const userIssuesState = reactive({
@@ -34,6 +37,7 @@ export function useUserIssuesData(
   });
 
   let requestToken = 0;
+  let requestController: AbortController | null = null;
 
   const visibleIssues = computed(() => userIssuesState.allIssues);
   const hasMore = computed(() => userIssuesState.hasMore);
@@ -42,6 +46,7 @@ export function useUserIssuesData(
     return createContentCacheKey([
       'user-issues-state',
       userUid.value,
+      statusBucket.value,
       sortOption.value,
       pageSize.value,
     ]);
@@ -72,12 +77,16 @@ export function useUserIssuesData(
   }
 
   function addUserIssue(issue: IssueRecord) {
+    if (getIssueStatusBucket(issue) !== statusBucket.value) {
+      removeUserIssue(issue.id);
+      return;
+    }
     const issueMap = new Map(userIssuesState.allIssues.map((entry) => [entry.id, entry]));
     issueMap.set(issue.id, {
       ...issue,
       currentUserSupported: issue.currentUserSupported || supportedIssueIds.value.has(issue.id),
     });
-    userIssuesState.allIssues = sortIssues(Array.from(issueMap.values()), 'active', sortOption.value);
+    userIssuesState.allIssues = sortIssues(Array.from(issueMap.values()), statusBucket.value, sortOption.value);
     saveSnapshot();
   }
 
@@ -88,6 +97,8 @@ export function useUserIssuesData(
 
   function stopUserIssuesRequest() {
     requestToken += 1;
+    requestController?.abort();
+    requestController = null;
     userIssuesState.loading = false;
     userIssuesState.loadingMore = false;
     userIssuesState.refreshing = false;
@@ -115,6 +126,9 @@ export function useUserIssuesData(
     if (!options.silent && hydrateSnapshot()) return;
 
     const currentToken = ++requestToken;
+    requestController?.abort();
+    const controller = new AbortController();
+    requestController = controller;
     userIssuesState.error = '';
     if (options.silent && userIssuesState.allIssues.length > 0) {
       userIssuesState.refreshing = true;
@@ -127,16 +141,19 @@ export function useUserIssuesData(
         pageSize: pageSize.value,
         forceRefresh: options.silent === true,
         sort: sortOption.value,
+        statusBucket: statusBucket.value,
         supportedIssueIds: supportedIssueIds.value,
+        signal: controller.signal,
       });
       if (currentToken !== requestToken) return;
-      userIssuesState.allIssues = sortIssues(page.issues, 'active', sortOption.value);
+      userIssuesState.allIssues = sortIssues(page.issues, statusBucket.value, sortOption.value);
       userIssuesState.cursor = page.cursor;
       userIssuesState.hasMore = page.hasMore;
       userIssuesState.updatedAt = Date.now();
       userIssuesState.error = '';
       saveSnapshot();
-    } catch {
+    } catch (caught) {
+      if (isAbortFailure(caught)) return;
       if (currentToken === requestToken && userIssuesState.allIssues.length === 0) {
         userIssuesState.error = '提案載入失敗，請稍後再試。';
       }
@@ -145,36 +162,46 @@ export function useUserIssuesData(
         userIssuesState.loading = false;
         userIssuesState.refreshing = false;
       }
+      if (requestController === controller) requestController = null;
     }
   }
 
   async function loadMoreUserIssues() {
     if (!hasMore.value || userIssuesState.loadingMore) return;
+    const currentToken = requestToken;
+    requestController?.abort();
+    const controller = new AbortController();
+    requestController = controller;
     userIssuesState.loadingMore = true;
     try {
       const page = await fetchUserIssues(userUid.value, userIssuesState.cursor, {
         pageSize: pageSize.value,
         sort: sortOption.value,
+        statusBucket: statusBucket.value,
         supportedIssueIds: supportedIssueIds.value,
+        signal: controller.signal,
       });
+      if (currentToken !== requestToken) return;
       const ids = new Set(userIssuesState.allIssues.map((issue) => issue.id));
       userIssuesState.allIssues = sortIssues([
         ...userIssuesState.allIssues,
         ...page.issues.filter((issue) => !ids.has(issue.id)),
-      ], 'active', sortOption.value);
+      ], statusBucket.value, sortOption.value);
       userIssuesState.cursor = page.cursor;
       userIssuesState.hasMore = page.hasMore;
       userIssuesState.updatedAt = Date.now();
       userIssuesState.error = '';
       saveSnapshot();
-    } catch {
+    } catch (caught) {
+      if (isAbortFailure(caught)) return;
       userIssuesState.error = '載入更多提案失敗，請稍後再試。';
     } finally {
-      userIssuesState.loadingMore = false;
+      if (currentToken === requestToken) userIssuesState.loadingMore = false;
+      if (requestController === controller) requestController = null;
     }
   }
 
-  watch([activeFilter, userUid, isAllowedUser], () => {
+  watch([activeFilter, userUid, isAllowedUser, statusBucket], () => {
     void loadCurrentUserIssues();
   }, { immediate: true });
 

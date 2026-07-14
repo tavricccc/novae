@@ -20,6 +20,7 @@ import {
 import { subscribeContentRealtimeEvents } from '@/services/realtime-events';
 import { fetchIssueRecordById } from '@/services/issues';
 import type { IssueRecord, IssueSortOption } from '@/types';
+import { CONTENT_FEED_PAGE_SIZE } from '@/lib/page-size';
 
 export function useIssueBoardData() {
   const { user, isAdmin, isAllowedUser, mySupportedIssueIds, roleLoading } = useSession();
@@ -47,7 +48,7 @@ export function useIssueBoardData() {
   const { restoreDocumentTitle } = useDocumentTitle(activeCategoryLabel, defaultDocumentTitle);
 
   const supportedIssueIds = mySupportedIssueIds;
-  const currentPageSize = computed(() => 20);
+  const currentPageSize = computed(() => CONTENT_FEED_PAGE_SIZE);
 
   const {
     activeState,
@@ -72,6 +73,7 @@ export function useIssueBoardData() {
     addSearchIssue,
     removeSearchIssue,
     patchSearchIssue,
+    loadMoreSearchResults,
     resetSearchResults,
   } = useIssueSearch({
     activeFilter,
@@ -92,7 +94,15 @@ export function useIssueBoardData() {
     bumpUserIssuesRequestToken,
     stopUserIssuesRequest,
     loadCurrentUserIssues,
-  } = useUserIssuesData(activeFilter, userUid, isAllowedUser, supportedIssueIds, sortOption, currentPageSize);
+  } = useUserIssuesData(
+    activeFilter,
+    userUid,
+    isAllowedUser,
+    supportedIssueIds,
+    sortOption,
+    statusTab,
+    currentPageSize,
+  );
 
   const {
     globalPage,
@@ -102,6 +112,7 @@ export function useIssueBoardData() {
   } = useIssueBoardPagination({
     activeFilter,
     statusTab,
+    sortOption,
     searchQuery,
     canSearchGlobally,
     isSearching,
@@ -111,7 +122,6 @@ export function useIssueBoardData() {
     filterIssues,
   });
   let realtimeUnsubscribe: (() => void) | null = null;
-  const LIST_REVALIDATE_INTERVAL_MS = 60_000;
   const unregisterResumeHandler = registerAppResumeHandler(() => {
     if (!isAllowedUser.value) return;
     const updatedAt = activeFilter.value === 'my-proposals'
@@ -147,6 +157,7 @@ export function useIssueBoardData() {
   });
   const currentLoadingMore = computed(() => {
     if (activeFilter.value === 'my-proposals') return userIssuesState.loadingMore;
+    if (isSearching.value && isGlobalMode.value) return searchState.loadingMore;
     return currentState.value.loadingMore;
   });
   const currentError = computed(() => {
@@ -312,17 +323,22 @@ export function useIssueBoardData() {
     }, 500);
   }
 
-  function loadMoreCurrentData() {
+  async function loadMoreCurrentData() {
     if (activeFilter.value === 'my-proposals') {
-      void loadMoreUserIssues();
+      await loadMoreUserIssues();
+      return;
+    }
+    if (isSearching.value && isGlobalMode.value) {
+      await loadMoreSearchResults();
       return;
     }
     if (isGlobalMode.value) return;
-    loadMoreBucket(statusTab.value);
+    await loadMoreBucket(statusTab.value);
   }
 
   const hasMoreCurrentData = computed(() => {
     if (activeFilter.value === 'my-proposals') return hasMoreUserIssues.value;
+    if (isSearching.value && isGlobalMode.value) return searchState.hasMore;
     if (isGlobalMode.value) return globalPage.value < globalTotalPages.value;
     return currentState.value.hasMore;
   });
@@ -345,22 +361,6 @@ export function useIssueBoardData() {
       ? userIssuesState.updatedAt
       : currentState.value.updatedAt;
     if (shouldRefreshContentAfterResume(updatedAt)) void refreshCurrentData();
-  });
-
-  const revalidateTimer = window.setInterval(() => {
-    if (
-      document.visibilityState !== 'visible'
-      || !isOnline.value
-      || !isAllowedUser.value
-      || currentLoading.value
-      || currentLoadingMore.value
-      || searchQuery.value.trim()
-    ) return;
-    void refreshCurrentData();
-  }, LIST_REVALIDATE_INTERVAL_MS);
-
-  onBeforeUnmount(() => {
-    window.clearInterval(revalidateTimer);
   });
 
   return {

@@ -15,8 +15,8 @@ import {
   normalizeStatus,
   toReadableBackendError,
 } from './issues-core';
+import { NOTIFICATION_FEED_PAGE_SIZE } from '@/lib/page-size';
 
-const NOTIFICATION_SOURCE_PAGE_SIZE = 10;
 let realtimeChannelSerial = 0;
 
 export type NotificationCursor = { createdAtMs: number; id: string } | null;
@@ -171,14 +171,15 @@ export function subscribeNotificationSource(
 export async function fetchNotificationSourcePages(
   requests: Array<{ cursor: NotificationCursor; source: NotificationSource }>,
   uid: string,
+  signal?: AbortSignal,
 ): Promise<Partial<Record<NotificationSource, NotificationSourcePage>>> {
   try {
     const fn = invokeBackendAction<
       { requests: Array<{ cursor: NotificationCursor; pageSize: number; source: NotificationSource }>; uid: string },
       { pages: Partial<Record<NotificationSource, Record<string, unknown>>> }
-    >('listNotificationPages', { timeoutMs: READ_REQUEST_TIMEOUT_MS });
+    >('listNotificationPages', { signal, timeoutMs: READ_REQUEST_TIMEOUT_MS });
     const result = await fn({
-      requests: requests.map((request) => ({ ...request, pageSize: NOTIFICATION_SOURCE_PAGE_SIZE })),
+      requests: requests.map((request) => ({ ...request, pageSize: NOTIFICATION_FEED_PAGE_SIZE })),
       uid,
     });
     return Object.fromEntries(requests.flatMap(({ source }) => {
@@ -245,11 +246,12 @@ async function getNotificationReadState(uid: string): Promise<NotificationReadSt
 export async function fetchNotificationSnapshot(
   sources: NotificationSource[],
   uid: string,
+  signal?: AbortSignal,
 ) {
   const fn = invokeBackendAction<
     { sources: NotificationSource[]; uid: string },
-    { pages: Partial<Record<NotificationSource, Record<string, unknown>>>; state: Record<string, unknown> }
-  >('getNotificationSnapshot', { timeoutMs: READ_REQUEST_TIMEOUT_MS });
+    { openedAtMs: number; pages: Partial<Record<NotificationSource, Record<string, unknown>>>; state: Record<string, unknown> }
+  >('getNotificationSnapshot', { signal, timeoutMs: READ_REQUEST_TIMEOUT_MS });
   const result = await fn({ sources, uid });
   return {
     pages: Object.fromEntries(sources.map((source) => {
@@ -264,6 +266,7 @@ export async function fetchNotificationSnapshot(
         )),
       } satisfies NotificationSourcePage];
     })) as Record<NotificationSource, NotificationSourcePage>,
+    openedAtMs: result.openedAtMs,
     state: normalizeNotificationReadState(result.state),
   };
 }

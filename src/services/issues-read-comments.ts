@@ -7,6 +7,7 @@ import type { CommentResponseRecord } from './issues-read-shared';
 import { READ_REQUEST_TIMEOUT_MS } from '@/lib/request';
 import { getRouteRequestSignal } from '@/lib/route-request';
 import { createContentCacheKey, getCachedContent, setCachedContent } from '@/services/content-read-cache';
+import { COMMENT_FEED_PAGE_SIZE } from '@/lib/page-size';
 
 interface FetchCommentsOptions {
   cacheScope?: string;
@@ -38,13 +39,13 @@ export async function fetchComments(
 
   try {
     const fn = invokeBackendAction<
-      { issueId: string; cursor?: CommentCursor | null },
+      { issueId: string; cursor?: CommentCursor | null; pageSize: number },
       { comments: CommentResponseRecord[]; cursor: CommentCursor | null; hasMore: boolean }
     >('listComments', {
       signal: getCommentRequestSignal(options),
       timeoutMs: READ_REQUEST_TIMEOUT_MS,
     });
-    const result = await fn({ issueId, cursor });
+    const result = await fn({ issueId, cursor, pageSize: COMMENT_FEED_PAGE_SIZE });
 
     const page = {
       comments: result.comments.map((comment) => ({

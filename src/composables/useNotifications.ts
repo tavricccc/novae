@@ -13,11 +13,13 @@ import {
 } from '@/services/notifications';
 import { resetAppConnection } from '@/lib/reconnect';
 import { setNotificationBadgeUnread } from '@/composables/useNotificationBadge';
+import { isAbortFailure } from '@/lib/request';
 
 type Unsubscribe = () => void;
 
 const notificationSources: NotificationSource[] = ['broadcast', 'admin', 'user'];
 const NOTIFICATION_RESUME_RECONNECT_MS = 10 * 60_000;
+const NOTIFICATION_VISIBLE_BATCH_SIZE = 30;
 const defaultPersonalPreferences = {
   comments: true,
   issueUpdates: true,
@@ -54,17 +56,24 @@ const readState = ref<NotificationReadState>({
 const loading = ref(false);
 const loadingMore = ref(false);
 const error = ref('');
+const visibleLimit = ref(NOTIFICATION_VISIBLE_BATCH_SIZE);
 let initialized = false;
 let loadingTimer: number | null = null;
 let lastSubscriptionStartedAt = 0;
 let subscriptionVersion = 0;
 let unsubscribes: Unsubscribe[] = [];
+let requestController: AbortController | null = null;
 
 const activeSources = computed<NotificationSource[]>(() =>
   isAdmin.value ? notificationSources : ['broadcast', 'user'],
 );
 
-const notifications = computed(() => {
+function compareNotifications(left: NotificationRecord, right: NotificationRecord) {
+  return (right.created_at?.getTime() ?? 0) - (left.created_at?.getTime() ?? 0)
+    || right.id.localeCompare(left.id);
+}
+
+const allLoadedNotifications = computed(() => {
   const items = activeSources.value.flatMap((source) => {
     const firstPageIdSet = new Set(firstPages.value[source].map((notification) => notification.id));
     return [
@@ -82,12 +91,14 @@ const notifications = computed(() => {
         && notification.created_at <= readState.value[notification.source]!,
       ),
     }))
-    .sort((left, right) =>
-      (right.created_at?.getTime() ?? 0) - (left.created_at?.getTime() ?? 0),
-    );
+    .sort(compareNotifications);
 });
+const notifications = computed(() => allLoadedNotifications.value.slice(0, visibleLimit.value));
 const hasUnread = computed(() => notifications.value.some((notification) => !notification.is_read));
-const hasMore = computed(() => activeSources.value.some((source) => sourceHasMore.value[source]));
+const hasMore = computed(() =>
+  allLoadedNotifications.value.length > visibleLimit.value
+  || activeSources.value.some((source) => sourceHasMore.value[source])
+);
 
 function clearLoadingTimer() {
   if (loadingTimer !== null) window.clearTimeout(loadingTimer);
@@ -96,6 +107,8 @@ function clearLoadingTimer() {
 
 function clearSubscriptions() {
   clearLoadingTimer();
+  requestController?.abort();
+  requestController = null;
   subscriptionVersion += 1;
   unsubscribes.forEach((unsubscribe) => unsubscribe());
   unsubscribes = [];
@@ -103,6 +116,7 @@ function clearSubscriptions() {
   extraPages.value = emptySourceRecord(() => []);
   cursors.value = emptySourceRecord(() => null);
   sourceHasMore.value = emptySourceRecord(() => false);
+  visibleLimit.value = NOTIFICATION_VISIBLE_BATCH_SIZE;
   readState.value = {
     admin: null,
     broadcast: null,
@@ -127,6 +141,8 @@ function startSubscriptions() {
   loading.value = true;
   error.value = '';
   const currentVersion = subscriptionVersion;
+  const controller = new AbortController();
+  requestController = controller;
   const pendingSources = new Set(activeSources.value);
   const failedSources = new Set<NotificationSource>();
   const finishSourceLoad = (source: NotificationSource, failed: boolean) => {
@@ -150,7 +166,7 @@ function startSubscriptions() {
       : '目前已離線，請恢復網路連線後重新整理。';
   }, 5_000);
 
-  void fetchNotificationSnapshot(activeSources.value, uid)
+  void fetchNotificationSnapshot(activeSources.value, uid, controller.signal)
     .then((snapshot) => {
       if (currentVersion !== subscriptionVersion) return;
       activeSources.value.forEach((source) => {
@@ -160,10 +176,18 @@ function startSubscriptions() {
         sourceHasMore.value[source] = page.hasMore;
         finishSourceLoad(source, false);
       });
-      readState.value = snapshot.state;
+      const openedAt = new Date(snapshot.openedAtMs);
+      readState.value = {
+        ...snapshot.state,
+        broadcast: openedAt,
+        user: openedAt,
+        admin: isAdmin.value ? openedAt : snapshot.state.admin,
+      };
+      setNotificationBadgeUnread(false);
     })
-    .catch(() => {
+    .catch((caught) => {
       if (currentVersion !== subscriptionVersion) return;
+      if (isAbortFailure(caught)) return;
       activeSources.value.forEach((source) => finishSourceLoad(source, true));
     });
 
@@ -223,24 +247,6 @@ function ensureNotificationsInitialized() {
   }
 }
 
-async function openNotifications() {
-  if (!user.value) return;
-
-  try {
-    const result = await markNotificationsOpened();
-    const openedAt = new Date(result.openedAtMs);
-    readState.value = {
-      broadcast: openedAt,
-      user: openedAt,
-      admin: isAdmin.value ? openedAt : readState.value.admin,
-      personalPreferences: readState.value.personalPreferences,
-    };
-    setNotificationBadgeUnread(false);
-  } catch {
-    void 0;
-  }
-}
-
 async function retryNotifications() {
   await resetAppConnection();
   startSubscriptions();
@@ -252,30 +258,66 @@ async function loadMoreNotifications() {
 
   loadingMore.value = true;
   error.value = '';
+  const desiredLimit = visibleLimit.value + NOTIFICATION_VISIBLE_BATCH_SIZE;
+  requestController?.abort();
+  const controller = new AbortController();
+  requestController = controller;
   try {
-    const requests = activeSources.value.flatMap((source) => {
-      const cursor = cursors.value[source];
-      return cursor && sourceHasMore.value[source] ? [{ cursor, source }] : [];
-    });
-    const pages = await fetchNotificationSourcePages(requests, uid);
-    requests.forEach(({ source }) => {
-      const page = pages[source];
-      if (!page) return;
-      const existingIds = new Set([
-        ...firstPages.value[source],
-        ...extraPages.value[source],
-      ].map((notification) => notification.id));
-      extraPages.value[source] = [
-        ...extraPages.value[source],
-        ...page.notifications.filter((notification) => !existingIds.has(notification.id)),
-      ];
-      cursors.value[source] = page.cursor;
-      sourceHasMore.value[source] = page.hasMore;
-    });
-  } catch {
+    for (let pass = 0; pass < activeSources.value.length; pass += 1) {
+      const merged = allLoadedNotifications.value;
+      const boundary = merged[desiredLimit - 1];
+      const requests = activeSources.value.flatMap((source) => {
+        const cursor = cursors.value[source];
+        if (!cursor || !sourceHasMore.value[source]) return [];
+        const sourceItems = [...firstPages.value[source], ...extraPages.value[source]];
+        const oldestLoaded = sourceItems[sourceItems.length - 1];
+        const needsBuffer = !boundary
+          || !oldestLoaded
+          || compareNotifications(oldestLoaded, boundary) < 0;
+        return needsBuffer ? [{ cursor, source }] : [];
+      });
+      if (requests.length === 0) break;
+
+      const pages = await fetchNotificationSourcePages(requests, uid, controller.signal);
+      requests.forEach(({ source }) => {
+        const page = pages[source];
+        if (!page) return;
+        const existingIds = new Set([
+          ...firstPages.value[source],
+          ...extraPages.value[source],
+        ].map((notification) => notification.id));
+        extraPages.value[source] = [
+          ...extraPages.value[source],
+          ...page.notifications.filter((notification) => !existingIds.has(notification.id)),
+        ];
+        cursors.value[source] = page.cursor;
+        sourceHasMore.value[source] = page.hasMore;
+      });
+    }
+    visibleLimit.value = Math.min(desiredLimit, allLoadedNotifications.value.length);
+  } catch (caught) {
+    if (isAbortFailure(caught)) return;
     error.value = notificationLoadFailureMessage();
   } finally {
     loadingMore.value = false;
+    if (requestController === controller) requestController = null;
+  }
+}
+
+async function openNotifications() {
+  if (!user.value || loading.value || !hasUnread.value) return;
+  try {
+    const result = await markNotificationsOpened();
+    const openedAt = new Date(result.openedAtMs);
+    readState.value = {
+      ...readState.value,
+      broadcast: openedAt,
+      user: openedAt,
+      admin: isAdmin.value ? openedAt : readState.value.admin,
+    };
+    setNotificationBadgeUnread(false);
+  } catch {
+    // Reading the list still succeeds when updating the read marker fails.
   }
 }
 

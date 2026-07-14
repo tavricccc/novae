@@ -79,6 +79,7 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
   const comments = ref<TComment[]>([]) as Ref<TComment[]>;
   const loading = ref(false);
   const loadingMore = ref(false);
+  const loadMoreError = ref('');
   const hasMore = ref(false);
   const loaded = ref(false);
   const cursor = ref<{ id: string; createdAtMs: number } | null>(null);
@@ -89,9 +90,9 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
 
   let requestVersion = 0;
   let requestController: AbortController | null = null;
+  let loadMoreController: AbortController | null = null;
   let realtimeUnsubscribe: (() => void) | null = null;
   let realtimeRefreshTimer = 0;
-  const COMMENTS_REVALIDATE_INTERVAL_MS = 60_000;
   const ignoredRealtimeCommentIds = new Set<string>();
   const namespaceCache = getNamespaceCache(adapters.cacheNamespace);
 
@@ -148,10 +149,14 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
   }
 
   function clearCommentState() {
+    loadMoreController?.abort(new RequestFailure(adapters.abortMessage, 'aborted'));
+    loadMoreController = null;
     comments.value = [];
     cursor.value = null;
     hasMore.value = false;
     loaded.value = false;
+    loadingMore.value = false;
+    loadMoreError.value = '';
   }
 
   function createRequestSignal() {
@@ -212,6 +217,9 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
 
   async function loadComments(options: { force?: boolean; id?: string; silent?: boolean } = {}) {
     const id = options.id || targetId();
+    loadMoreController?.abort(new RequestFailure(adapters.abortMessage, 'aborted'));
+    loadMoreController = null;
+    loadingMore.value = false;
     if (!id) {
       requestVersion += 1;
       requestController?.abort(new RequestFailure(adapters.abortMessage, 'aborted'));
@@ -223,6 +231,7 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
 
     const hydrated = (!options.force || options.silent) && hydrateSnapshot(id);
     if (hydrated && !isOnline.value) return;
+    if (hydrated && !options.force && !options.silent) return;
 
     const currentVersion = ++requestVersion;
     loading.value = !hydrated;
@@ -314,15 +323,28 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
   async function loadMoreComments() {
     const id = targetId();
     if (!id || !hasMore.value || !cursor.value || loadingMore.value) return;
+    const currentVersion = requestVersion;
+    const requestedCursor = cursor.value;
+    loadMoreController?.abort(new RequestFailure(adapters.abortMessage, 'aborted'));
+    const controller = new AbortController();
+    loadMoreController = controller;
     loadingMore.value = true;
+    loadMoreError.value = '';
     try {
-      const page = await adapters.fetchPage(id, cursor.value, {
+      const page = await adapters.fetchPage(id, requestedCursor, {
         cacheScope: serviceCacheScope(),
-        signal: null,
+        signal: controller.signal,
       });
-      comments.value = [...comments.value, ...page.comments];
+      if (currentVersion !== requestVersion || id !== targetId()) return;
+      const commentMap = new Map(comments.value.map((comment) => [comment.id, comment]));
+      page.comments.forEach((comment) => commentMap.set(comment.id, comment));
+      comments.value = Array.from(commentMap.values()).sort((left, right) =>
+        (left.created_at?.getTime() ?? 0) - (right.created_at?.getTime() ?? 0)
+        || left.id.localeCompare(right.id)
+      );
       cursor.value = page.cursor;
       hasMore.value = page.hasMore;
+      loadMoreError.value = '';
       saveSnapshot(id);
     } catch (caught) {
       if (!isAbortFailure(caught)) {
@@ -330,13 +352,17 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
           adapters.onContentUnavailable?.(id);
           return;
         }
+        loadMoreError.value = isOnline.value
+          ? '無法載入更多留言。'
+          : '目前已離線，請恢復網路連線後再試。';
         show(
-          isOnline.value ? '無法載入更多留言。' : '目前已離線，請恢復網路連線後再試。',
+          loadMoreError.value,
           'error',
         );
       }
     } finally {
-      loadingMore.value = false;
+      if (currentVersion === requestVersion) loadingMore.value = false;
+      if (loadMoreController === controller) loadMoreController = null;
     }
   }
 
@@ -446,12 +472,6 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
     }
   });
 
-  const revalidateTimer = window.setInterval(() => {
-    const id = targetId();
-    if (document.visibilityState !== 'visible' || !id || !loaded.value || loading.value || roleLoading.value) return;
-    void loadComments({ force: true, id, silent: true });
-  }, COMMENTS_REVALIDATE_INTERVAL_MS);
-
   if (autoTarget !== undefined) {
     watch(() => toValue(autoTarget), (id) => {
       clearCommentState();
@@ -481,9 +501,9 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
     realtimeUnsubscribe?.();
     unregisterResumeHandler();
     window.clearTimeout(realtimeRefreshTimer);
-    window.clearInterval(revalidateTimer);
     requestVersion += 1;
     requestController?.abort(new RequestFailure(adapters.abortMessage, 'aborted'));
+    loadMoreController?.abort(new RequestFailure(adapters.abortMessage, 'aborted'));
   });
 
   return {
@@ -498,6 +518,7 @@ export function useDiscussionComments<TComment extends DiscussionCommentRecord>(
     loaded,
     loadComments,
     loadMoreComments,
+    loadMoreError,
     loading,
     loadingMore,
     submitComment,

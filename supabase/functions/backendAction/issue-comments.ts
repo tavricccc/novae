@@ -4,7 +4,7 @@ import { RATE_LIMITS } from "../_shared/rate-limits.ts";
 import { claimFixedWindowRateLimit } from "../_shared/upstash-rate-limit.ts";
 import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 import { validateMarkdownUploadsBeforeCreate } from "./uploads.ts";
-import { asUuid, readCursor, readCursorDate, utcHourWindow } from "./utils.ts";
+import { asNumber, asUuid, readCursor, readCursorDate, utcHourWindow } from "./utils.ts";
 import { INPUT_LIMITS, requiredText } from "./validation.ts";
 
 const PRIVATE_TO_OWNER_CATEGORIES = ISSUE_CATEGORIES
@@ -35,6 +35,7 @@ async function listComments(payload: JsonRecord, auth: AuthContext, supabase: Ba
     issue_id: issueId,
     cursor_id: asUuid(cursor.id) || null,
     cursor_created_at: readCursorDate(cursor, "createdAtMs", "created_at") || null,
+    page_size: Math.min(Math.max(Math.round(asNumber(payload.pageSize, 30)), 1), 30),
     ...issueCommentPolicyParams(auth),
   });
   if (error) throw error;

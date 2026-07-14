@@ -1,7 +1,7 @@
 import { READ_REQUEST_TIMEOUT_MS } from '@/lib/request';
 import { invokeBackendAction } from '@/services/backend-action';
 import { createContentCacheKey, getCachedContent, setCachedContent } from '@/services/content-read-cache';
-import type { IssueCursor, IssueSortOption } from '@/types';
+import type { IssueCursor, IssueSortOption, IssueStatusBucket } from '@/types';
 import { normalizeIssueCursor, normalizeIssueRecord, toReadableBackendError, withSupportState } from './issues-core';
 
 export async function fetchUserIssues(
@@ -11,14 +11,18 @@ export async function fetchUserIssues(
     forceRefresh?: boolean;
     pageSize?: number;
     sort?: IssueSortOption;
+    statusBucket?: IssueStatusBucket;
     supportedIssueIds?: Set<string>;
+    signal?: AbortSignal;
   },
 ) {
-  const pageSize = options?.pageSize ?? 20;
+  const pageSize = options?.pageSize ?? 30;
   const sort = options?.sort ?? 'latest';
+  const statusBucket = options?.statusBucket ?? 'active';
   const cacheKey = createContentCacheKey([
     'user-issue-list-page',
     uid,
+    statusBucket,
     sort,
     pageSize,
     cursor?.id ?? 'first',
@@ -38,12 +42,13 @@ export async function fetchUserIssues(
 
   try {
     const fn = invokeBackendAction<
-      { cursor: IssueCursor | null; pageSize: number; sort: IssueSortOption; uid: string },
+      { cursor: IssueCursor | null; pageSize: number; sort: IssueSortOption; statusBucket: IssueStatusBucket; uid: string },
       { cursor: IssueCursor | null; hasMore: boolean; issues: Record<string, unknown>[] }
     >('listUserIssues', {
+      signal: options?.signal,
       timeoutMs: READ_REQUEST_TIMEOUT_MS,
     });
-    const result = await fn({ cursor, pageSize, sort, uid });
+    const result = await fn({ cursor, pageSize, sort, statusBucket, uid });
     const issues = result.issues.map((issue) => normalizeIssueRecord(String(issue.id ?? ''), issue));
     const page = {
       cursor: normalizeIssueCursor(result.cursor),

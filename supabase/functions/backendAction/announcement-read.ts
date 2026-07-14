@@ -2,7 +2,7 @@ import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 import { asNumber, asUuid, readCursor, readCursorDate } from "./utils.ts";
 
 async function listAnnouncements(payload: JsonRecord, auth: AuthContext, supabase: BackendSupabase) {
-  const pageSize = Math.min(Math.max(Math.round(asNumber(payload.pageSize, 10)), 1), 30);
+  const pageSize = Math.min(Math.max(Math.round(asNumber(payload.pageSize, 30)), 1), 50);
   const cursor = readCursor(payload);
   const { data, error } = await supabase.schema("app_api").rpc("backend_list_announcements", {
     actor_uid: auth.uid,

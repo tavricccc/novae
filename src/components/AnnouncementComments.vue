@@ -10,6 +10,7 @@
     :focus-comment-id="focusCommentId"
     :has-more="hasMore"
     :loading-more="loadingMore"
+    :load-more-error="loadMoreError"
     :on-load-more="loadMoreComments"
     :on-retry="loadComments"
     :on-delete-comment="deleteComment"
@@ -47,6 +48,7 @@ const {
   error,
   loadComments,
   loadMoreComments,
+  loadMoreError,
   hasMore,
   loaded,
   loading,

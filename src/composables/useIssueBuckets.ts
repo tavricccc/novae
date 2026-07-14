@@ -1,10 +1,11 @@
-import { computed, reactive, watch, type Ref } from 'vue';
+import { computed, onScopeDispose, reactive, watch, type Ref } from 'vue';
 import { useNetworkStatus } from '@/composables/useNetworkStatus';
 import { getIssueStatusBucket } from '@/lib/issue-timeline';
 import { sortIssues } from '@/lib/issue-sort';
 import { fetchIssuesPageByStatus } from '@/services/issues';
 import { isContentCacheFresh } from '@/services/content-read-cache';
 import type { IssueCursor, IssueFilter, IssueRecord, IssueSortOption, IssueStatusBucket } from '@/types';
+import { isAbortFailure } from '@/lib/request';
 
 interface BucketState {
   cursor: IssueCursor | null;
@@ -16,6 +17,8 @@ interface BucketState {
   loadingMore: boolean;
   refreshing: boolean;
   updatedAt: number;
+  statusBucket: IssueStatusBucket;
+  sortOption: IssueSortOption;
 }
 
 interface BucketDeps {
@@ -30,7 +33,7 @@ interface BucketDeps {
 const globalBucketCache = new Map<string, BucketState>();
 const globalBucketVersions = new WeakMap<BucketState, number>();
 
-function createBucketState(): BucketState {
+function createBucketState(statusBucket: IssueStatusBucket, sortOption: IssueSortOption): BucketState {
   return reactive({
     cursor: null,
     error: '',
@@ -41,6 +44,8 @@ function createBucketState(): BucketState {
     loadingMore: false,
     refreshing: false,
     updatedAt: 0,
+    statusBucket,
+    sortOption,
   });
 }
 
@@ -58,6 +63,8 @@ function mergeIssues(
 export function useIssueBuckets(deps: BucketDeps) {
   const { user, activeFilter, isAdmin, supportedIssueIds, currentPageSize, sortOption } = deps;
   const { isOnline } = useNetworkStatus();
+  let activeController: AbortController | null = null;
+  let activeBucket: BucketState | null = null;
 
   function getBucketKey(statusBucket: IssueStatusBucket) {
     return [
@@ -75,7 +82,7 @@ export function useIssueBuckets(deps: BucketDeps) {
     const cachedBucket = globalBucketCache.get(key);
     if (cachedBucket) return cachedBucket;
 
-    const bucket = createBucketState();
+    const bucket = createBucketState(statusBucket, sortOption.value);
     globalBucketCache.set(key, bucket);
     return bucket;
   }
@@ -99,6 +106,10 @@ export function useIssueBuckets(deps: BucketDeps) {
 
     const version = getBucketVersion(bucket);
     const cursor = options.append ? bucket.cursor : null;
+    if (activeBucket !== bucket) activeController?.abort();
+    const controller = new AbortController();
+    activeController = controller;
+    activeBucket = bucket;
     bucket.error = '';
     if (options.append) {
       bucket.loadingMore = true;
@@ -120,6 +131,7 @@ export function useIssueBuckets(deps: BucketDeps) {
           pageSize: currentPageSize.value,
           sort: sortOption.value,
           supportedIssueIds: supportedIssueIds.value,
+          signal: controller.signal,
         },
       );
       if (version !== getBucketVersion(bucket)) return;
@@ -131,8 +143,9 @@ export function useIssueBuckets(deps: BucketDeps) {
       bucket.initialized = true;
       bucket.error = '';
       bucket.updatedAt = Date.now();
-    } catch {
+    } catch (caught) {
       if (version !== getBucketVersion(bucket)) return;
+      if (isAbortFailure(caught)) return;
       if (bucket.issues.length === 0 || options.append) {
         bucket.error = isOnline.value
           ? options.append ? '載入更多提案失敗，請稍後再試。' : '提案載入失敗，請稍後再試。'
@@ -144,12 +157,17 @@ export function useIssueBuckets(deps: BucketDeps) {
         bucket.loadingMore = false;
         bucket.refreshing = false;
       }
+      if (activeController === controller) {
+        activeController = null;
+        activeBucket = null;
+      }
     }
   }
 
   function activateBucket(statusBucket: IssueStatusBucket) {
     const bucket = getBucketState(statusBucket);
     if (activeFilter.value === 'my-proposals' || bucket.loading || bucket.refreshing) return;
+    if (activeController && activeBucket !== bucket) activeController.abort();
     if (bucket.initialized && isContentCacheFresh(bucket.updatedAt)) return;
     void loadBucket(statusBucket, { silent: bucket.initialized });
   }
@@ -164,13 +182,17 @@ export function useIssueBuckets(deps: BucketDeps) {
   }
 
   function loadMoreBucket(statusBucket: IssueStatusBucket) {
-    void loadBucket(statusBucket, { append: true });
+    return loadBucket(statusBucket, { append: true });
   }
 
   function patchCachedIssues(issueId: string, updater: (issue: IssueRecord) => IssueRecord) {
     globalBucketCache.forEach((bucket) => {
       if (!bucket.issues.some((issue) => issue.id === issueId)) return;
-      bucket.issues = bucket.issues.map((issue) => issue.id === issueId ? updater(issue) : issue);
+      bucket.issues = sortIssues(
+        bucket.issues.map((issue) => issue.id === issueId ? updater(issue) : issue),
+        bucket.statusBucket,
+        bucket.sortOption,
+      );
       bucket.updatedAt = Date.now();
     });
   }
@@ -212,6 +234,8 @@ export function useIssueBuckets(deps: BucketDeps) {
       }));
     });
   });
+
+  onScopeDispose(() => activeController?.abort());
 
   return {
     activeState,

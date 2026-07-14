@@ -2,7 +2,9 @@ import { computed, onBeforeUnmount, reactive, ref, watch, type Ref } from 'vue';
 import { normalizeSearchText } from '@/lib/search';
 import { getDerivedIssueStatus } from '@/lib/issue-status';
 import { fetchIssuesForTitleSearch } from '@/services/issues';
-import type { IssueFilter, IssueRecord, IssueSortOption, IssueStatusBucket } from '@/types';
+import type { IssueCursor, IssueFilter, IssueRecord, IssueSortOption, IssueStatusBucket } from '@/types';
+import { sortIssues } from '@/lib/issue-sort';
+import { isAbortFailure } from '@/lib/request';
 
 const SEARCH_DEBOUNCE_MS = 700;
 const MIN_GLOBAL_SEARCH_LENGTH = 3;
@@ -21,11 +23,15 @@ export function useIssueSearch(options: {
     loading: false,
     error: '',
     limited: false,
+    cursor: null as IssueCursor | null,
+    hasMore: false,
+    loadingMore: false,
     issues: [] as IssueRecord[],
   });
 
   let debounceTimer: ReturnType<typeof window.setTimeout> | null = null;
   let requestToken = 0;
+  let requestController: AbortController | null = null;
   let searchPool: IssueRecord[] = [];
 
   const normalizedSearchQuery = computed(() => normalizeSearchText(searchQuery.value));
@@ -47,6 +53,8 @@ export function useIssueSearch(options: {
 
   function cancelPendingSearch() {
     requestToken += 1;
+    requestController?.abort();
+    requestController = null;
   }
 
   function resetSearchResults() {
@@ -55,6 +63,9 @@ export function useIssueSearch(options: {
     searchState.loading = false;
     searchState.error = '';
     searchState.limited = false;
+    searchState.cursor = null;
+    searchState.hasMore = false;
+    searchState.loadingMore = false;
   }
 
   function resetSearchPool() {
@@ -149,29 +160,88 @@ export function useIssueSearch(options: {
       }
 
       const currentToken = ++requestToken;
+      requestController?.abort();
+      const controller = new AbortController();
+      requestController = controller;
 
       try {
         searchState.loading = true;
         const result = await fetchIssuesForTitleSearch(uid, filter, statusBucket, titleQuery, {
           isAdmin: nextIsAdmin,
+          cursor: null,
+          signal: controller.signal,
           sort,
           supportedIssueIds: options.supportedIssueIds.value,
         });
         if (currentToken !== requestToken) return;
         searchPool = result.issues;
+        searchState.cursor = result.cursor;
+        searchState.hasMore = result.hasMore;
         searchState.limited = result.limited;
         applySearchFilter(titleQuery);
         searchState.error = '';
-      } catch {
+      } catch (caught) {
+        if (isAbortFailure(caught)) return;
         if (currentToken !== requestToken) return;
         searchState.error = '搜尋失敗，請稍後再試。';
       } finally {
         if (currentToken === requestToken) {
           searchState.loading = false;
         }
+        if (requestController === controller) requestController = null;
       }
     },
   );
+
+  async function loadMoreSearchResults() {
+    if (
+      searchState.loading
+      || searchState.loadingMore
+      || !searchState.hasMore
+      || !searchState.cursor
+    ) return;
+
+    const filter = options.activeFilter.value;
+    const uid = options.userUid.value;
+    const titleQuery = normalizedDebouncedSearchQuery.value;
+    if (filter === 'my-proposals' || !uid || !titleQuery) return;
+
+    const currentToken = requestToken;
+    requestController?.abort();
+    const controller = new AbortController();
+    requestController = controller;
+    searchState.loadingMore = true;
+    searchState.error = '';
+    try {
+      const result = await fetchIssuesForTitleSearch(
+        uid,
+        filter,
+        options.statusBucket.value,
+        titleQuery,
+        {
+          cursor: searchState.cursor,
+          isAdmin: options.isAdmin.value,
+          signal: controller.signal,
+          sort: options.sortOption.value,
+          supportedIssueIds: options.supportedIssueIds.value,
+        },
+      );
+      if (currentToken !== requestToken) return;
+      const issueMap = new Map(searchPool.map((issue) => [issue.id, issue]));
+      result.issues.forEach((issue) => issueMap.set(issue.id, issue));
+      searchPool = sortIssues(Array.from(issueMap.values()), options.statusBucket.value, options.sortOption.value);
+      searchState.cursor = result.cursor;
+      searchState.hasMore = result.hasMore;
+      searchState.limited = result.limited;
+      applySearchFilter(titleQuery);
+    } catch (caught) {
+      if (isAbortFailure(caught)) return;
+      searchState.error = '載入更多搜尋結果失敗，請稍後再試。';
+    } finally {
+      if (currentToken === requestToken) searchState.loadingMore = false;
+      if (requestController === controller) requestController = null;
+    }
+  }
 
   watch(options.supportedIssueIds, refreshSearchSupportState);
 
@@ -192,6 +262,7 @@ export function useIssueSearch(options: {
     searchHint,
     searchResultCount,
     searchState,
+    loadMoreSearchResults,
     filterIssues,
     patchSearchIssue,
     addSearchIssue,

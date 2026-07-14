@@ -63,13 +63,12 @@
               {{ currentError }}
             </div>
 
-            <SkeletonTable
-              v-if="currentLoadingMore"
-              :rows="3"
-              :show-author="showAuthorCol"
-              :is-admin="isAdmin"
+            <FeedLoadMoreControl
+              :has-more="hasMoreCurrentData"
+              :loading="currentLoadingMore"
+              :error="Boolean(currentError)"
+              @load-more="loadMoreCurrentData"
             />
-
             <div ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
           </template>
         </div>
@@ -93,8 +92,8 @@ import BoardControls from '@/components/BoardControls.vue';
 import IssueBoardTable from '@/components/IssueBoardTable.vue';
 import IssueComposer from '@/components/IssueComposer.vue';
 import EmptyStatePanel from '@/components/ui/EmptyStatePanel.vue';
+import FeedLoadMoreControl from '@/components/ui/FeedLoadMoreControl.vue';
 import PageLoadFailure from '@/components/ui/PageLoadFailure.vue';
-import SkeletonTable from '@/components/ui/SkeletonTable.vue';
 import { useIssueBoardData } from '@/composables/useIssueBoardData';
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll';
 import { useMinimumLoading } from '@/composables/useMinimumLoading';
@@ -151,7 +150,6 @@ const {
   currentLoadingMore,
   currentError,
   isSearching,
-  isGlobalMode,
   searchHint,
   showEmptySearchResult,
   hasMoreCurrentData,
@@ -189,7 +187,7 @@ const infiniteScrollDisabled = computed(() =>
   !hasMoreCurrentData.value
   || currentLoading.value
   || currentLoadingMore.value
-  || (isGlobalMode.value && activeFilter.value !== 'my-proposals')
+  || Boolean(currentError.value)
 );
 async function retryCurrentData() {
   await resetAppConnection();
@@ -212,6 +210,7 @@ registerActiveNavigationRefreshHandler(handleManualRefresh);
 const { sentinel: loadMoreSentinel } = useInfiniteScroll({
   disabled: infiniteScrollDisabled,
   onLoadMore: loadMoreCurrentData,
+  root: boardScrollRef,
 });
 const emptyStateDescription = computed(() => {
   if (showEmptySearchResult.value) {

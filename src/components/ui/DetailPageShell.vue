@@ -1,14 +1,14 @@
 <template>
   <section class="min-h-0 px-1 pb-3 sm:px-2 sm:pb-5">
     <article
-      class="panel flex min-h-[calc(100dvh-var(--app-header-height)-var(--app-bottom-nav-height)-env(safe-area-inset-top)-1rem)] flex-col overflow-visible md:min-h-[calc(100dvh-2.5rem)]"
+      v-if="isDesktopViewport"
+      class="panel hidden min-h-[calc(100dvh-2.5rem)] flex-col overflow-visible md:flex"
       :aria-label="detailsLabel"
     >
-      <header class="flex items-start gap-3 px-4 py-4 sm:px-5">
+      <header class="flex items-start gap-3 px-5 py-4">
         <button
           type="button"
           class="button-icon shrink-0"
-          :class="{ 'max-md:hidden': !showMobileBackButton }"
           :aria-label="backLabel"
           :title="backLabel"
           @click="emit('back')"
@@ -21,26 +21,78 @@
       </header>
 
       <div class="grid min-w-0 flex-1 border-t border-ink-100/70 dark:border-ink-800/70 md:grid-cols-[minmax(0,3fr)_minmax(20rem,2fr)]">
-        <div class="min-w-0 px-4 py-4 sm:px-5 sm:py-5 md:pr-6">
-          <slot name="details" :compact="!isDesktopViewport" :scroll-content="false" />
-          <slot name="actions" :compact="!isDesktopViewport" />
+        <div class="min-w-0 px-5 py-5 pr-6">
+          <slot name="details" :compact="false" :scroll-content="false" />
+          <slot name="actions" :compact="false" />
         </div>
 
         <aside
-          ref="commentsSectionRef"
-          class="min-w-0 border-t border-ink-100/70 px-4 py-4 dark:border-ink-800/70 sm:px-5 sm:py-5 md:border-l md:border-t-0"
+          class="min-w-0 border-l border-ink-100/70 px-5 py-5 dark:border-ink-800/70"
           :aria-label="commentsLabel"
         >
           <slot name="comments" :compact-header="false" />
         </aside>
       </div>
     </article>
+
+    <article
+      v-else
+      class="panel flex h-[calc(100dvh-var(--app-header-height)-var(--app-bottom-nav-height)-env(safe-area-inset-top)-1rem)] min-h-0 flex-col overflow-hidden md:hidden"
+      :aria-label="detailsLabel"
+    >
+      <header class="flex shrink-0 items-start gap-3 px-4 py-3.5">
+        <button
+          v-if="showMobileBackButton"
+          type="button"
+          class="button-icon shrink-0"
+          :aria-label="backLabel"
+          :title="backLabel"
+          @click="emit('back')"
+        >
+          <AppIcon name="chevron-left" :size="5" />
+        </button>
+        <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2 pt-1.5">
+          <slot name="header" />
+        </div>
+        <PillSegmentedControl
+          v-model="activeTab"
+          :options="tabOptions"
+          show-inactive-labels
+          class="shrink-0 self-center"
+        />
+      </header>
+
+      <Transition name="panel-switch" mode="out-in">
+        <div
+          v-if="activeTab === 'details'"
+          key="details"
+          class="flex min-h-0 flex-1 flex-col border-t border-ink-100/70 dark:border-ink-800/70"
+        >
+          <div class="min-h-0 flex-1 overflow-y-auto px-4 py-4 overscroll-contain">
+            <slot name="details" :compact="true" :scroll-content="false" />
+          </div>
+          <div class="shrink-0 bg-surface px-4 pb-4 dark:bg-surface">
+            <slot name="actions" :compact="true" />
+          </div>
+        </div>
+
+        <div
+          v-else
+          key="comments"
+          class="min-h-0 flex-1 border-t border-ink-100/70 px-4 py-4 dark:border-ink-800/70"
+          :aria-label="commentsLabel"
+        >
+          <slot name="comments" :compact-header="true" />
+        </div>
+      </Transition>
+    </article>
   </section>
 </template>
 
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
+import PillSegmentedControl from '@/components/ui/PillSegmentedControl.vue';
 
 type DetailPageTab = 'details' | 'comments';
 
@@ -68,32 +120,32 @@ defineSlots<{
   header(): unknown;
 }>();
 
-const commentsSectionRef = ref<HTMLElement | null>(null);
+const activeTab = ref<DetailPageTab>(props.initialTab);
 const isDesktopViewport = ref(
   typeof window === 'undefined' ? false : window.matchMedia('(min-width: 768px)').matches,
 );
 let desktopMediaQuery: MediaQueryList | null = null;
 
-function syncDesktopViewport(event?: MediaQueryListEvent) {
-  isDesktopViewport.value = event?.matches ?? desktopMediaQuery?.matches ?? window.innerWidth >= 768;
-}
-
-async function revealInitialSection(tab: DetailPageTab) {
-  if (tab !== 'comments' || isDesktopViewport.value) return;
-  await nextTick();
-  commentsSectionRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
+const tabOptions = computed(() => [
+  { value: 'details' as const, label: props.detailsLabel, title: `查看${props.detailsLabel}` },
+  { value: 'comments' as const, label: props.commentsLabel, title: `查看${props.commentsLabel}` },
+]);
 
 watch(
   () => props.initialTab,
-  (tab) => void revealInitialSection(tab),
+  (tab) => {
+    activeTab.value = tab;
+  },
 );
+
+function syncDesktopViewport(event?: MediaQueryListEvent) {
+  isDesktopViewport.value = event?.matches ?? desktopMediaQuery?.matches ?? window.innerWidth >= 768;
+}
 
 onMounted(() => {
   desktopMediaQuery = window.matchMedia('(min-width: 768px)');
   syncDesktopViewport();
   desktopMediaQuery.addEventListener('change', syncDesktopViewport);
-  void revealInitialSection(props.initialTab);
 });
 
 onBeforeUnmount(() => {

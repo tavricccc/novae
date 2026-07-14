@@ -1,5 +1,5 @@
 <template>
-  <section class="relative flex min-h-0 flex-col">
+  <section class="relative flex min-h-0 flex-col" :class="{ 'h-full': compactHeader }">
     <div
       class="flex shrink-0 items-center justify-between gap-3 border-b border-ink-100 pb-2 dark:border-ink-800"
       :class="{ 'max-md:hidden': compactHeader }"
@@ -26,7 +26,11 @@
       </span>
     </div>
 
-    <div ref="scrollContainerRef" class="min-h-0 max-h-[32rem] overflow-y-auto py-2 pr-1">
+    <div
+      ref="scrollContainerRef"
+      class="min-h-0 overflow-y-auto py-2 pr-1 overscroll-contain"
+      :class="compactHeader ? 'flex-1' : 'max-h-[32rem]'"
+    >
       <SkeletonCommentList v-if="visibleLoading" />
 
       <EmptyStatePanel
@@ -65,7 +69,12 @@
           @reply="openReplyComposer(comment.id)"
           @update-replies-expanded="updateRepliesExpanded"
         />
-        <SkeletonCommentList v-if="loadingMore" class="mt-2" :count="2" />
+        <FeedLoadMoreControl
+          :has-more="hasMore"
+          :loading="loadingMore"
+          :error="Boolean(loadMoreError)"
+          @load-more="onLoadMore"
+        />
         <div v-if="hasMore" ref="loadMoreSentinel" class="h-1" aria-hidden="true"></div>
       </div>
     </div>
@@ -112,6 +121,7 @@ import CommentItem from '@/components/CommentItem.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import AppIcon from '@/components/ui/AppIcon.vue';
 import EmptyStatePanel from '@/components/ui/EmptyStatePanel.vue';
+import FeedLoadMoreControl from '@/components/ui/FeedLoadMoreControl.vue';
 import SkeletonCommentList from '@/components/ui/SkeletonCommentList.vue';
 import { useMinimumLoading } from '@/composables/useMinimumLoading';
 import { useInfiniteScroll } from '@/composables/useInfiniteScroll';
@@ -128,6 +138,7 @@ const props = withDefaults(defineProps<{
   loading: boolean;
   hasMore?: boolean;
   loadingMore?: boolean;
+  loadMoreError?: string;
   submitError: string;
   submitting: boolean;
   targetId: string;
@@ -144,6 +155,7 @@ const props = withDefaults(defineProps<{
   focusCommentId: '',
   hasMore: false,
   loadingMore: false,
+  loadMoreError: '',
   onLoadMore: async () => undefined,
 });
 
@@ -154,10 +166,13 @@ const expandedReplyCommentIds = ref<Set<string>>(new Set());
 const scrollContainerRef = ref<HTMLElement | null>(null);
 let focusInProgress = false;
 const { visibleLoading } = useMinimumLoading(toRef(props, 'loading'));
-const infiniteScrollDisabled = computed(() => props.loading || props.loadingMore || !props.hasMore);
+const infiniteScrollDisabled = computed(() =>
+  props.loading || props.loadingMore || Boolean(props.loadMoreError) || !props.hasMore
+);
 const { sentinel: loadMoreSentinel } = useInfiniteScroll({
   disabled: infiniteScrollDisabled,
   onLoadMore: props.onLoadMore,
+  root: scrollContainerRef,
   rootMargin: '240px 0px',
 });
 
