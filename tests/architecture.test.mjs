@@ -1114,6 +1114,7 @@ test('entry and comment limits are enforced across UI, Edge, and a new migration
   const detailShell = await read('src/components/ui/DetailPageShell.vue');
   const issueComposer = await read('src/components/IssueComposer.vue');
   const announcementComposer = await read('src/components/AnnouncementComposerDialog.vue');
+  const facilityComposer = await read('src/components/FacilityComposer.vue');
   const feedbackBar = await read('src/components/ActionFeedbackBar.vue');
   const responsiveStyles = await read('src/styles/responsive.css');
   const baseStyles = await read('src/styles/base.css');
@@ -1136,6 +1137,15 @@ test('entry and comment limits are enforced across UI, Edge, and a new migration
   assert.match(issueComposer, /entry-composer__scroll/u);
   assert.match(announcementComposer, /entry-composer__scroll/u);
   assert.match(responsiveStyles, /\.entry-composer__scroll \{[\s\S]*margin-inline: -0\.5rem;[\s\S]*padding-inline: 0\.5rem;/u);
+  assert.match(responsiveStyles, /\.entry-composer__footer \{/u);
+  assert.match(responsiveStyles, /\.entry-composer__actions \{/u);
+  assert.match(responsiveStyles, /\.entry-composer__action \{[\s\S]*height: var\(--control-height\);[\s\S]*font-weight: 600;/u);
+  [issueComposer, announcementComposer, facilityComposer].forEach((composer) => {
+    assert.match(composer, /class="entry-composer__footer"/u);
+    assert.match(composer, /class="entry-composer__actions"/u);
+    assert.doesNotMatch(composer, /entry-composer__action button-contextual/u);
+    assert.equal((composer.match(/entry-composer__action button-secondary/gu) ?? []).length, 2);
+  });
   assert.match(feedbackBar, /action-feedback-card[\s\S]*min-h-14 w-full/u);
   assert.match(baseStyles, /\.action-feedback-viewport \{[\s\S]*padding-left: max\(var\(--app-viewport-gutter\), env\(safe-area-inset-left\)\);[\s\S]*padding-right: max\(var\(--app-viewport-gutter\), env\(safe-area-inset-right\)\)/u);
   assert.match(baseStyles, /body\.dialog-open \.action-feedback-viewport \{[\s\S]*top: calc\(env\(safe-area-inset-top\) \+ 6\.75rem\)/u);
@@ -1195,7 +1205,8 @@ test('navigation and contextual creation share the same responsive information a
   assert.match(facilitiesView, /create-label="新增設備"[\s\S]*@create="composerOpen = true"/u);
   assert.match(announcementsView, /v-if="isAdmin"[\s\S]*aria-label="新增公告"/u);
   assert.match(issueComposer, /class="button-dialog-close/u);
-  assert.match(issueComposer, /type="submit" class="[^"]*button-contextual/u);
+  assert.match(issueComposer, /type="submit" class="entry-composer__action button-secondary"/u);
+  assert.doesNotMatch(issueComposer, /entry-composer__action button-contextual/u);
   assert.match(controls, /\.button-contextual \{[\s\S]*bg-surface[\s\S]*box-shadow: var\(--shadow-card\)/u);
   assert.match(controls, /\.button-dialog-close \{[\s\S]*bg-surface[\s\S]*box-shadow: var\(--shadow-card\)/u);
   assert.ok(settingsPanel.indexOf('我的提案') < settingsPanel.indexOf('統計'));

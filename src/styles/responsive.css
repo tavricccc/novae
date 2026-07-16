@@ -33,12 +33,60 @@
   --dialog-safe-padding: var(--panel-padding);
 }
 
+.entry-composer__footer {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(var(--color-outline) / 0.16);
+}
+
+.entry-composer__hint {
+  display: none;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  color: rgb(var(--color-on-surface-variant));
+}
+
+.entry-composer__actions {
+  display: flex;
+  align-items: stretch;
+  gap: 0.625rem;
+  width: 100%;
+}
+
 .entry-composer__action {
+  flex: 1 1 0%;
+  height: var(--control-height);
   min-height: var(--control-height);
-  padding-block: 0.625rem;
+  min-width: 0;
+  padding: 0.625rem 1.25rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .entry-composer__footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .entry-composer__hint {
+    display: block;
+  }
+
+  .entry-composer__actions {
+    width: auto;
+  }
+
+  .entry-composer__action {
+    flex: none;
+    min-width: 6.5rem;
+  }
 }
 
 .entry-composer__scroll {

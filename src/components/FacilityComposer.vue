@@ -17,9 +17,12 @@
           @image-picked="images.handleImagePicked" @remove-image="removeImage"
         />
         <p v-if="error || images.uploadError.value" class="text-xs font-semibold text-error">{{ error || images.uploadError.value }}</p>
-        <div class="flex justify-end gap-2 border-t border-ink-100 pt-4 dark:border-ink-800">
-          <button type="button" class="button-secondary" @click="close">取消</button>
-          <button type="submit" class="button-contextual px-4" :disabled="submitting || images.uploading.value"><BusyButtonContent :busy="submitting" label="確認送出" busy-label="送出中" /></button>
+        <div class="entry-composer__footer">
+          <p class="entry-composer__hint">請確認問題地點與說明後再送出。</p>
+          <div class="entry-composer__actions">
+            <button type="button" class="entry-composer__action button-secondary" @click="close">取消</button>
+            <button type="submit" class="entry-composer__action button-secondary" :disabled="submitting || images.uploading.value"><BusyButtonContent :busy="submitting" label="確認送出" busy-label="送出中" /></button>
+          </div>
         </div>
       </form>
     </section>

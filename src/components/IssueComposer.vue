@@ -78,20 +78,20 @@
         </p>
 
         <!-- Footer Actions -->
-        <div class="border-t border-ink-100 dark:border-ink-800 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between shrink-0 gap-4">
-          <p class="text-xs text-ink-500 dark:text-ink-400 font-medium hidden sm:block">
+        <div class="entry-composer__footer">
+          <p class="entry-composer__hint">
             建議提出精確的提案。
           </p>
-          <div class="flex items-center gap-2.5 w-full sm:w-auto">
+          <div class="entry-composer__actions">
             <button
               type="button"
-              class="entry-composer__action button-secondary flex-1 px-5 sm:flex-none"
+              class="entry-composer__action button-secondary"
               :disabled="submitting || uploading"
               @click="handleClose"
             >
               取消
             </button>
-            <button type="submit" class="entry-composer__action button-contextual flex-1 px-5 sm:flex-none" :disabled="submitting || uploading" :aria-busy="submitting || undefined">
+            <button type="submit" class="entry-composer__action button-secondary" :disabled="submitting || uploading" :aria-busy="submitting || undefined">
               <BusyButtonContent :busy="submitting" label="確認發布" busy-label="發布中" />
             </button>
           </div>
