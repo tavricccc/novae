@@ -23,7 +23,7 @@
 ## Supabase
 
 - `supabase/config.toml` — schema 暴露與 Functions JWT 模式
-- `supabase/migrations/` — 基線 + 增量 SQL（schema／RLS／RPC／Realtime Broadcast／清理／成本限流硬化／設備與 RBAC／輸入長度、附件型別、圖片網址快取、統一 feed 分頁與集合式留言回覆讀取）；`202607150003_facilities_rbac.sql` 建立設備與 RBAC，`202607150004_backfill_legacy_platform_admins.sql` 承接既有管理員，`202607150005_clarify_role_scopes.sql` 固定平台最高權限，`202607150006_category_scoped_proposal_access.sql` 建立可複選的 config 分類管理權限，`202607150007_access_lookup_and_facility_status.sql` 加入精確帳號查找並修正設備狀態 RPC，`202607160001_configurable_retention_cleanup.sql` 由 config 控制已結案內容與營運資料保留期，`202607160002_content_revisions.sql` 建立提案／公告／設備的批次內容版本，`202607160003_harden_retention_deletion_flow.sql` 以批次 outbox 補齊保留期刪除同步並移除舊 maintenance overload，`202607160004_issue_supporter_notifications.sql` 在提案刪除前保存附議者通知名單，細節見 git
+- `supabase/migrations/` — 基線 + 增量 SQL（schema／RLS／RPC／Realtime Broadcast／清理／成本限流硬化／設備與 RBAC／輸入長度、附件型別、圖片網址快取、統一 feed 分頁與集合式留言回覆讀取）；`202607150003_facilities_rbac.sql` 建立設備與 RBAC，`202607150004_backfill_legacy_platform_admins.sql` 承接既有管理員，`202607150005_clarify_role_scopes.sql` 固定平台最高權限，`202607150006_category_scoped_proposal_access.sql` 建立可複選的 config 分類管理權限，`202607150007_access_lookup_and_facility_status.sql` 加入精確帳號查找並修正設備狀態 RPC，`202607160001_configurable_retention_cleanup.sql` 由 config 控制已結案內容與營運資料保留期，`202607160002_content_revisions.sql` 建立提案／公告／設備的批次內容版本，`202607160003_harden_retention_deletion_flow.sql` 以批次 outbox 補齊保留期刪除同步並移除舊 maintenance overload，`202607160005_issue_supporter_notifications.sql` 在提案刪除前保存附議者通知名單，細節見 git
 - `supabase/functions/backendAction/` — 受控 action 閘道
   - `index.ts` — origin 驗證、CORS、Firebase 驗證、冪等、分派；公開限流由 Cloudflare Worker 先處理
   - `action-registry.ts` / `response.ts` / `rate-limit.ts` / `types.ts` / `utils.ts` / `validation.ts` / `auth.ts`

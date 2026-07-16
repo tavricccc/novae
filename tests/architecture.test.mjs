@@ -810,7 +810,7 @@ test('personal notification writes and pushes are scoped to the recipient', asyn
   const securityMigration = await read('supabase/migrations/202607050001_supabase_baseline.sql');
   const atomicOutboxMigration = await read('supabase/migrations/202607050006_atomic_content_outbox.sql');
   const announcementCommentNotificationMigration = await read('supabase/migrations/202607090005_announcement_comment_author_notifications.sql');
-  const issueSupporterNotificationMigration = await read('supabase/migrations/202607160004_issue_supporter_notifications.sql');
+  const issueSupporterNotificationMigration = await read('supabase/migrations/202607160005_issue_supporter_notifications.sql');
 
   assert.match(atomicOutboxMigration, /'issue\.comment_created'/u);
   assert.match(atomicOutboxMigration, /'issue_author_uid', issue_record\.author_uid/u);
