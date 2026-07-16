@@ -1,13 +1,13 @@
 # Design QA
 
-- Source visual truth: `C:/Users/tavri/AppData/Local/Temp/codex-clipboard-9c603d5f-78ad-469f-9685-6b1f53403aab.png`
+- Source visual truth: `C:/Users/tavri/Downloads/6482B557-BFF0-4305-A78B-E2E6A391E1BF.png`
 - Implementation screenshot: unavailable
-- Viewport: desktop, approximately 1917 × 983
-- State: issue composer open; settings grouping and board action bar also changed from the written brief
+- Viewport: mobile, screenshot resolution 943 × 2048
+- State: authenticated settings page with the mobile bottom navigation visible
 
 ## Full-view comparison evidence
 
-The source screenshot was inspected at original resolution. It shows composer field shadows clipped at the horizontal edges, black filled close/confirmation controls, and oversized action controls relative to the segmented status control.
+The source screenshot was inspected at original resolution. The settings content is wider than the mobile viewport: account cards, notification cards, switches, and lower settings rows are clipped along the right edge.
 
 No rendered implementation screenshot was captured because this repository explicitly prohibits in-app browser previews. Static verification cannot substitute for a visual comparison.
 
@@ -15,29 +15,25 @@ No rendered implementation screenshot was captured because this repository expli
 
 Focused source regions inspected:
 
-- Composer title field left and right edges.
-- Composer close button.
-- Composer footer actions.
-- Board action-bar proportions described by the user.
+- Account card right edge and switch-account button.
+- Push notification switch at the right edge.
+- Notification preference cards and switches.
+- Bottom navigation alignment against the visible viewport.
 
 Implementation comparison is unavailable without a rendered capture.
 
 ## Findings and fixes applied
 
-- P1: Added horizontal breathing room inside desktop composer scroll regions so field radii and card-style shadows are not clipped.
-- P2: Replaced black contextual create controls with surface-colored 32px pills using the existing card shadow token.
-- P2: Moved contextual create controls to the far-right end of the action bar.
-- P2: Replaced composer close and confirmation controls with surface-colored, card-shadow controls.
-- P2: Split the settings page into a common feature group and a lower-frequency resource group.
-- P2: Simplified contextual create controls to icon-only circular buttons while preserving accessible labels and tooltips.
-- P1: Constrained the mobile settings page, scroll container, cards, and row children to the viewport width; flexible text columns now shrink instead of expanding the page.
+- P1: Constrained both route-transition flex wrappers with `min-width: 0`, `width: 100%`, `max-width: 100%`, and horizontal overflow clipping. Long account content can no longer expand the route container beyond the mobile viewport.
+- P2: Rewrote settings descriptions with shorter, consistent product language to reduce wrapping and visual density.
 
 ## Comparison history
 
-1. Source-only review identified the clipping, density, ordering, grouping, and color mismatches above.
-2. Code changes and architecture assertions were added. Type checking, linting, production build, unused-symbol checking, and architecture tests pass.
-3. Post-fix visual evidence is unavailable because browser preview is disallowed by project instructions.
-4. A follow-up pass simplified create controls and hardened the mobile settings width calculation. Static verification remains green, but rendered comparison is still unavailable.
+1. Source-only review identified viewport overflow at the route-container level.
+2. An earlier component-level constraint was insufficient because the parent transition flex item could still grow from intrinsic content width.
+3. The shared route wrappers were constrained and architecture assertions were added.
+4. Type checking, linting, production build, unused-symbol checking, Edge checks, and all architecture tests pass.
+5. Post-fix visual evidence remains unavailable because browser preview is disallowed by project instructions.
 
 ## Final result
 

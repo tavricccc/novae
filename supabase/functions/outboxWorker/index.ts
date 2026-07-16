@@ -47,6 +47,10 @@ function asString(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
 }
 
+function asStringArray(value: unknown) {
+  return Array.isArray(value) ? value.map((item) => asString(item)).filter(Boolean) : [];
+}
+
 function preview(value: unknown) {
   const text = asString(value).replace(/\s+/gu, " ").trim();
   return text.slice(0, 80);
@@ -260,15 +264,10 @@ async function resolveNotification(
     notification = { ...notification, actor_photo_url: actorPhotoUrl };
   }
 
-  if (
-    event.event_type === "issue.comment_created"
-    || event.event_type === "issue.status_changed"
-    || event.event_type === "issue.deleted"
-    || event.event_type === "support.goal_met"
-  ) {
+  if (event.event_type === "issue.comment_created") {
     const recipientUid = await findIssueAuthorUid(supabase, event);
     if (!recipientUid) return null;
-    if (recipientUid === event.actor_uid && event.event_type !== "support.goal_met") return null;
+    if (recipientUid === event.actor_uid) return null;
     return { ...notification, recipient_uid: recipientUid };
   }
 
@@ -529,6 +528,38 @@ async function createNotificationsForEvent(
     const recipients = [...new Set([authorUid, ...(data ?? []).map((row) => asString(row.uid))].filter(Boolean))];
     for (const recipientUid of recipients) {
       const notification = { ...base, recipient_uid: recipientUid, id: await deterministicNotificationId(event.id, recipientUid) };
+      const inserted = await insertNotification(supabase, notification);
+      if (inserted) await sendPushesWithoutBlockingOutbox(supabase, notification);
+    }
+    return { hasNotification: recipients.length > 0 };
+  }
+  if (
+    event.event_type === "issue.status_changed"
+    || event.event_type === "support.goal_met"
+    || event.event_type === "issue.deleted"
+  ) {
+    let base = notificationForEvent(event);
+    if (!base) return { hasNotification: false };
+    const actorPhotoUrl = await findCachedAvatarUrl(supabase, event.actor_uid);
+    if (actorPhotoUrl) base = { ...base, actor_photo_url: actorPhotoUrl };
+
+    const authorUid = await findIssueAuthorUid(supabase, event);
+    let supporterUids = asStringArray(event.payload.supporter_uids);
+    if (event.event_type !== "issue.deleted") {
+      const { data, error } = await supabase.schema("app_private").from("supports")
+        .select("uid").eq("issue_id", event.target_id);
+      if (error) throw error;
+      supporterUids = (data ?? []).map((row) => asString(row.uid)).filter(Boolean);
+    }
+
+    const recipients = [...new Set([authorUid, ...supporterUids].filter(Boolean))]
+      .filter((uid) => event.event_type === "support.goal_met" || uid !== event.actor_uid);
+    for (const recipientUid of recipients) {
+      const notification = {
+        ...base,
+        recipient_uid: recipientUid,
+        id: await deterministicNotificationId(event.id, recipientUid),
+      };
       const inserted = await insertNotification(supabase, notification);
       if (inserted) await sendPushesWithoutBlockingOutbox(supabase, notification);
     }

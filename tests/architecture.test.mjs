@@ -810,6 +810,7 @@ test('personal notification writes and pushes are scoped to the recipient', asyn
   const securityMigration = await read('supabase/migrations/202607050001_supabase_baseline.sql');
   const atomicOutboxMigration = await read('supabase/migrations/202607050006_atomic_content_outbox.sql');
   const announcementCommentNotificationMigration = await read('supabase/migrations/202607090005_announcement_comment_author_notifications.sql');
+  const issueSupporterNotificationMigration = await read('supabase/migrations/202607160004_issue_supporter_notifications.sql');
 
   assert.match(atomicOutboxMigration, /'issue\.comment_created'/u);
   assert.match(atomicOutboxMigration, /'issue_author_uid', issue_record\.author_uid/u);
@@ -819,6 +820,8 @@ test('personal notification writes and pushes are scoped to the recipient', asyn
   assert.match(backendAction, /rpc\("backend_delete_issue_with_upload_targets"/u);
   assert.match(securityMigration, /'issue\.deleted'/u);
   assert.match(securityMigration, /'author_uid', issue_record\.author_uid/u);
+  assert.match(issueSupporterNotificationMigration, /jsonb_agg\(supporter\.uid order by supporter\.created_at\)/u);
+  assert.match(issueSupporterNotificationMigration, /'supporter_uids', supporter_uids/u);
   assert.match(outboxWorker, /async function findIssueAuthorUid/u);
   assert.match(outboxWorker, /async function findAnnouncementCommentRecipientUid/u);
   assert.match(outboxWorker, /asString\(event\.payload\.issue_author_uid\)\s*\|\|\s*asString\(event\.payload\.author_uid\)/u);
@@ -826,6 +829,10 @@ test('personal notification writes and pushes are scoped to the recipient', asyn
   assert.match(outboxWorker, /async function resolveNotification/u);
   assert.match(outboxWorker, /recipientUid === event\.actor_uid/u);
   assert.match(outboxWorker, /recipient_uid: recipientUid/u);
+  assert.match(outboxWorker, /from\("supports"\)[\s\S]*select\("uid"\)\.eq\("issue_id", event\.target_id\)/u);
+  assert.match(outboxWorker, /asStringArray\(event\.payload\.supporter_uids\)/u);
+  assert.match(outboxWorker, /new Set\(\[authorUid, \.\.\.supporterUids\]/u);
+  assert.match(outboxWorker, /event\.event_type === "support\.goal_met" \|\| uid !== event\.actor_uid/u);
   assert.match(outboxWorker, /query = query\.eq\("uid", recipientUid\)/u);
   assert.doesNotMatch(outboxWorker, /srp-admin|topic_admin/u);
   assert.doesNotMatch(outboxWorker, /title: "新提案待審核"|title: "新提案待處理"/u);
@@ -1118,6 +1125,8 @@ test('primary navigation preloads route chunks and page transitions do not overl
   const responsiveStyles = await read('src/styles/responsive.css');
 
   assert.match(app, /<Transition name="page-content" mode="out-in">/u);
+  assert.match(app, /relative flex min-h-0 min-w-0 w-full max-w-full flex-1 overflow-x-hidden/u);
+  assert.match(app, /class="min-h-0 min-w-0 w-full max-w-full flex-1 overflow-x-hidden"/u);
   assert.match(app, /requestIdleCallback/u);
   assert.match(app, /preloadPrimaryRouteComponents/u);
   assert.match(appShell, /@pointerover\.capture="handleNavigationIntent"/u);
@@ -1158,7 +1167,7 @@ test('navigation and contextual creation share the same responsive information a
   assert.match(facilitiesView, /create-label="新增設備"[\s\S]*@create="composerOpen = true"/u);
   assert.match(announcementsView, /v-if="isAdmin"[\s\S]*aria-label="新增公告"/u);
   assert.match(issueComposer, /class="button-dialog-close/u);
-  assert.match(issueComposer, /type="submit" class="button-contextual/u);
+  assert.match(issueComposer, /type="submit" class="[^"]*button-contextual/u);
   assert.match(controls, /\.button-contextual \{[\s\S]*bg-surface[\s\S]*box-shadow: var\(--shadow-card\)/u);
   assert.match(controls, /\.button-dialog-close \{[\s\S]*bg-surface[\s\S]*box-shadow: var\(--shadow-card\)/u);
   assert.ok(settingsPanel.indexOf('我的提案') < settingsPanel.indexOf('統計'));

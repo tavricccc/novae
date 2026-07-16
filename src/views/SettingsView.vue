@@ -109,27 +109,27 @@ const personalNotificationOptions: Array<{
   {
     key: 'comments',
     label: '留言通知',
-    description: '你的提案或公告收到留言時，在站內與推播通知提醒。',
+    description: '提案或公告收到新留言時接收通知。',
   },
   {
     key: 'issueUpdates',
     label: '提案更新',
-    description: '你參與的提案狀態變更、達標或刪除時，在站內與推播通知提醒。',
+    description: '你提出或附議的提案有重要進度時接收通知。',
   },
   {
     key: 'facilityUpdates',
     label: '設備更新',
-    description: '你建立或標記遇到的設備狀態變更時，在站內與推播通知提醒。',
+    description: '你建立或標記「我也遇到」的設備有進度時接收通知。',
   },
 ];
 
 const pushStatusDescription = computed(() => {
-  if (!pushInitialized.value && pushLoading.value) return '正在讀取此裝置的推播狀態。';
-  if (pushRequiresPwaInstall.value) return '手機與平板需先將平台加入主畫面，再從主畫面開啟通知功能。';
-  if (!pushSupported.value) return '此瀏覽器或裝置無法接收推播通知。';
-  if (pushPermission.value === 'denied') return '請到瀏覽器或系統設定允許通知後，再回來開啟。';
-  if (pushEnabled.value) return '這個開關只控制目前這台裝置是否收到推播通知。';
-  return '開啟後，這台裝置可以在背景收到推播通知。';
+  if (!pushInitialized.value && pushLoading.value) return '正在確認這台裝置的通知狀態。';
+  if (pushRequiresPwaInstall.value) return '加入主畫面後，即可開啟推播通知。';
+  if (!pushSupported.value) return '目前的瀏覽器或裝置不支援推播通知。';
+  if (pushPermission.value === 'denied') return '通知權限已關閉，請前往系統設定重新允許。';
+  if (pushEnabled.value) return '重要動態會依照下方偏好送達這台裝置。';
+  return '開啟後，重要動態會即時送達這台裝置。';
 });
 
 const pushActionLabel = computed(() => {

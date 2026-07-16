@@ -6,7 +6,7 @@
     >
       <div>
         <p class="text-base font-semibold tracking-[0.015em] text-ink-950 dark:text-ink-50">我的</p>
-        <p class="mt-0.5 text-xs text-ink-500 dark:text-ink-400">帳號與通知偏好</p>
+        <p class="mt-0.5 text-xs text-ink-500 dark:text-ink-400">帳號、通知與應用設定</p>
       </div>
       <button
         v-if="showClose"
@@ -126,7 +126,7 @@
               </span>
               <span>
                 <span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">我的提案</span>
-                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看自己提出的所有提案</span>
+                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">你提出的提案與最新進度</span>
               </span>
             </span>
             <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
@@ -143,13 +143,13 @@
               </span>
               <span>
                 <span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">統計</span>
-                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看平台維運與使用概況</span>
+                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">平台使用與維運概況</span>
               </span>
             </span>
             <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
           </RouterLink>
           <RouterLink v-if="canManageRoles" to="/admin/access" class="settings-row gap-3" @click="emit('close')">
-            <span class="flex min-w-0 items-center gap-3"><span class="flex h-9 w-9 items-center justify-center text-ink-500"><AppIcon name="shield-check" :size="4" /></span><span><span class="block text-sm font-semibold">角色管理</span><span class="mt-0.5 block text-xs text-ink-500">管理平台角色與權限</span></span></span><AppIcon name="chevron-right" :size="4" class="text-ink-400" />
+            <span class="flex min-w-0 items-center gap-3"><span class="flex h-9 w-9 items-center justify-center text-ink-500"><AppIcon name="shield-check" :size="4" /></span><span><span class="block text-sm font-semibold">角色管理</span><span class="mt-0.5 block text-xs text-ink-500">成員角色與權限</span></span></span><AppIcon name="chevron-right" :size="4" class="text-ink-400" />
           </RouterLink>
           <button
             type="button"
@@ -162,7 +162,7 @@
               </span>
               <span>
                 <span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">重啟 App</span>
-                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">重新載入最新狀態</span>
+                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">重新載入並取得最新版本</span>
               </span>
             </span>
             <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
@@ -186,7 +186,7 @@
               </span>
               <span>
                 <span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">更新紀錄</span>
-                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看最近功能調整與改善</span>
+                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">產品更新與改善紀錄</span>
               </span>
             </span>
             <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
@@ -194,21 +194,21 @@
           <a :href="PROJECT_WEBSITE_URL" target="_blank" rel="noreferrer" class="settings-row gap-3" @click="emit('close')">
             <span class="flex min-w-0 items-center gap-3">
               <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300"><AppIcon name="link" :size="4" :stroke-width="2" /></span>
-              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">Novae 官網</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">探索產品特色與校園導入方式</span></span>
+              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">Novae 官網</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">產品特色與導入資訊</span></span>
             </span>
             <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
           </a>
           <a :href="PROJECT_DOCS_URL" target="_blank" rel="noreferrer" class="settings-row gap-3" @click="emit('close')">
             <span class="flex min-w-0 items-center gap-3">
               <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300"><AppIcon name="changelog" :size="4" :stroke-width="2" /></span>
-              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">使用文件</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看功能、設定與操作說明</span></span>
+              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">使用文件</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">功能設定與操作指南</span></span>
             </span>
             <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
           </a>
           <a :href="PROJECT_GITHUB_URL" target="_blank" rel="noreferrer" class="settings-row gap-3" @click="emit('close')">
             <span class="flex min-w-0 items-center gap-3">
               <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300"><AppIcon name="code" :size="4" :stroke-width="2" /></span>
-              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">GitHub 專案</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看原始碼與最新進展</span></span>
+              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">GitHub 專案</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">原始碼與開發進度</span></span>
             </span>
             <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
           </a>
@@ -228,7 +228,7 @@
   <ConfirmDialog
     :open="logoutDialogOpen"
     title="確定要登出嗎？"
-    message="登出後需要重新驗證帳號才能繼續使用。"
+    message="登出後，需重新驗證身分才能使用平台。"
     confirm-label="確認登出"
     @cancel="logoutDialogOpen = false"
     @confirm="confirmLogout"

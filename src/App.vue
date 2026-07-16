@@ -7,10 +7,10 @@
     @retry="reloadApp({ reason: 'restart' })"
   />
   <AppShell v-else>
-    <div class="relative flex min-h-0 flex-1">
+    <div class="relative flex min-h-0 min-w-0 w-full max-w-full flex-1 overflow-x-hidden">
       <RouterView v-slot="{ Component, route: viewRoute }">
         <Transition name="page-content" mode="out-in">
-          <div :key="String(viewRoute.name ?? viewRoute.path)" class="min-h-0 flex-1">
+          <div :key="String(viewRoute.name ?? viewRoute.path)" class="min-h-0 min-w-0 w-full max-w-full flex-1 overflow-x-hidden">
             <Suspense>
               <component :is="Component" />
               <template #fallback>
