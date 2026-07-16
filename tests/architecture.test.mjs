@@ -1205,6 +1205,7 @@ test('navigation and contextual creation share the same responsive information a
 test('authenticated route pages share one content width and AppShell owns horizontal gutters', async () => {
   const baseStyles = await read('src/styles/base.css');
   const contentStyles = await read('src/styles/content.css');
+  const settingsPanel = await read('src/components/SettingsPanelContent.vue');
   const routePages = await Promise.all([
     'src/views/IssueBoardView.vue',
     'src/views/FacilitiesView.vue',
@@ -1216,11 +1217,13 @@ test('authenticated route pages share one content width and AppShell owns horizo
     'src/components/ui/DetailPageShell.vue',
   ].map(read));
 
-  assert.match(baseStyles, /\.route-page \{[\s\S]*max-width: 80rem;[\s\S]*width: 100%;/u);
+  assert.match(baseStyles, /\.route-page \{[\s\S]*max-width: 80rem;[\s\S]*min-width: 0;[\s\S]*width: 100%;/u);
   routePages.forEach((page) => assert.match(page, /class="[^"]*route-page/u));
-  assert.match(contentStyles, /\.settings-scroll--flat \{[\s\S]*@apply px-0 py-3/u);
+  assert.match(contentStyles, /\.settings-scroll--flat \{[\s\S]*@apply overflow-visible px-0 py-3/u);
+  assert.match(settingsPanel, /flat \? 'settings-panel--flat overflow-visible' : 'overflow-hidden'/u);
   assert.doesNotMatch(routePages[3], /px-0\.5|sm:px-1/u);
   assert.doesNotMatch(routePages[4], /:class="\{ 'px-1': true \}"/u);
+  assert.doesNotMatch(routePages[4], /overflow-x-hidden/u);
   assert.doesNotMatch(routePages[5], /space-y-5 px-2/u);
   assert.doesNotMatch(routePages[7], /px-1|sm:px-2/u);
 });

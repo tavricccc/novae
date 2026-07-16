@@ -315,9 +315,11 @@
   }
 
   .route-page {
+    box-sizing: border-box;
     margin-left: auto;
     margin-right: auto;
     max-width: 80rem;
+    min-width: 0;
     width: 100%;
   }
 

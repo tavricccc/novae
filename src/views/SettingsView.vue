@@ -1,5 +1,5 @@
 <template>
-  <section class="route-page page-bottom-safe min-h-0 min-w-0 flex-1 overflow-x-hidden">
+  <section class="route-page page-bottom-safe min-h-0 min-w-0 flex-1">
     <div v-if="loading" class="space-y-6 py-4">
       <!-- Account Skeleton -->
       <div class="flex items-center gap-3 pb-4 border-b border-ink-100 dark:border-ink-800/60">

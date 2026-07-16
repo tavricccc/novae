@@ -46,7 +46,6 @@ jobs:
             -X POST "https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/${function_namespace}-api" \
             -H "content-type: application/json" \
             -H "x-healthcheck-secret: ${WEBHOOK_SECRET}" \
-            -H "x-reconcile-config: true" \
             -H "x-novae-origin-secret: ${EDGE_ORIGIN_SECRET}" \
             --data '{"action":"healthcheck","payload":{}}')"
           status="$(printf '%s' "$response" | tail -n 1)"

@@ -43,7 +43,7 @@
   }
 
   .settings-scroll--flat {
-    @apply px-0 py-3;
+    @apply overflow-visible px-0 py-3;
   }
 
   .settings-group {

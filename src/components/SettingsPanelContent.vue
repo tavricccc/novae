@@ -1,5 +1,8 @@
 <template>
-  <div class="flex min-h-0 min-w-0 w-full max-w-full flex-col overflow-hidden" :class="contentClass">
+  <div
+    class="flex min-h-0 min-w-0 w-full max-w-full flex-col"
+    :class="[contentClass, flat ? 'settings-panel--flat overflow-visible' : 'overflow-hidden']"
+  >
     <div
       v-if="!flat"
       class="flex items-start justify-between gap-3 border-b border-ink-100 px-4 py-3 dark:border-ink-700"
