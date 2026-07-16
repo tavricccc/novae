@@ -4,6 +4,14 @@
     @apply overflow-visible border-0 bg-transparent;
   }
 
+  .scroll-shadow-bleed {
+    --scroll-shadow-bleed: 0.75rem;
+    margin-left: calc(var(--scroll-shadow-bleed) * -1);
+    margin-right: calc(var(--scroll-shadow-bleed) * -1);
+    padding-left: var(--scroll-shadow-bleed);
+    padding-right: var(--scroll-shadow-bleed);
+  }
+
   .issue-card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr));

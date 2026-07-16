@@ -14,7 +14,7 @@
       @clear-search="clearSearch"
     />
 
-    <div class="scrollbar-none min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden overscroll-contain pb-4">
+    <div class="scroll-shadow-bleed scrollbar-none min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden overscroll-contain pb-4">
       <PageLoadFailure
         v-if="error && facilities.length === 0"
         title="設備讀取失敗"
