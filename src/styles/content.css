@@ -12,6 +12,13 @@
     padding-right: var(--scroll-shadow-bleed);
   }
 
+  @media (min-width: 768px) {
+    .scroll-shadow-bleed {
+      margin-top: calc(var(--scroll-shadow-bleed) * -1);
+      padding-top: var(--scroll-shadow-bleed);
+    }
+  }
+
   .issue-card-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr));
