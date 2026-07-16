@@ -30,6 +30,16 @@
     padding: 0.625rem 1rem;
   }
 
+  .button-contextual {
+    @apply inline-flex h-8 min-h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border-0 bg-surface text-xs font-semibold tracking-[0.01em] text-ink-700 dark:bg-surface dark:text-ink-200 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none;
+    box-shadow: var(--shadow-card);
+  }
+
+  .button-dialog-close {
+    @apply relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-0 bg-surface text-ink-700 dark:bg-surface dark:text-ink-200 disabled:cursor-not-allowed disabled:opacity-40;
+    box-shadow: var(--shadow-card);
+  }
+
   .button-secondary {
     @apply inline-flex items-center justify-center whitespace-nowrap border-0 bg-surface text-sm font-medium tracking-[0.01em] text-ink-700 shadow-note hover:text-ink-900 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none dark:bg-surface dark:text-ink-200 dark:hover:text-ink-50;
     min-height: var(--control-height);
@@ -210,6 +220,8 @@
     }
 
     .button-secondary:hover:not(:disabled),
+    .button-contextual:hover:not(:disabled),
+    .button-dialog-close:hover:not(:disabled),
     .button-icon:hover:not(:disabled),
     .button-icon-pill:hover:not(:disabled),
     .button-toolbar:hover:not(:disabled),

@@ -33,11 +33,14 @@
   --dialog-safe-padding: var(--panel-padding);
 }
 
+.entry-composer__scroll {
+  margin-inline: -0.5rem;
+  padding-inline: 0.5rem;
+}
+
 @media (max-width: 767px) {
   .entry-composer__scroll {
-    margin-inline: -0.5rem;
     padding-bottom: 0.5rem;
-    padding-inline: 0.5rem;
   }
 
   .dialog-overlay:is([data-padding='none'], [data-padding='responsive']) {

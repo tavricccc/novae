@@ -14,7 +14,7 @@
         </div>
         <button
           type="button"
-          class="button-icon-filled shrink-0"
+          class="button-dialog-close shrink-0"
           :disabled="submitting || uploading"
           title="關閉"
           aria-label="關閉"
@@ -93,7 +93,7 @@
             </button>
             <button
               type="submit"
-              class="button-primary flex-1 px-5 text-sm font-semibold sm:flex-none"
+              class="button-contextual flex-1 px-5 sm:flex-none"
               :disabled="submitting || uploading || !title.trim() || (!content.trim() && editorImages.length === 0)"
               :aria-busy="submitting || undefined"
             >

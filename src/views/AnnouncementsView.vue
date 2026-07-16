@@ -5,7 +5,7 @@
       <button
         v-if="isAdmin"
         type="button"
-        class="button-primary flex h-8 min-w-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold"
+        class="button-contextual min-w-0 px-3"
         @click="openComposer"
       >
         <AppIcon name="plus" :size="4" />

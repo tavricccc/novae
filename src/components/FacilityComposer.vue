@@ -3,7 +3,7 @@
     <section ref="dialogRef" class="entry-composer panel panel-pad flex h-full w-full flex-col overflow-hidden rounded-none border-none md:fixed md:inset-0 md:h-screen" data-dialog-root tabindex="-1">
       <div class="flex items-center justify-between border-b border-ink-200 pb-4 dark:border-ink-800">
         <div><p class="text-xs font-semibold text-ink-500">新增</p><h2 class="mt-1 text-xl font-semibold">設備</h2></div>
-        <button class="button-icon-filled" aria-label="關閉" :disabled="submitting" @click="close"><AppIcon name="close" :size="5" /></button>
+        <button class="button-dialog-close" aria-label="關閉" :disabled="submitting" @click="close"><AppIcon name="close" :size="5" /></button>
       </div>
       <form class="entry-composer__scroll mt-5 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto" @submit.prevent="submit">
         <label class="space-y-1.5"><span class="field-label">問題標題</span><input v-model="form.title" class="field" maxlength="30" placeholder="簡短描述設備問題" /></label>
@@ -19,7 +19,7 @@
         <p v-if="error || images.uploadError.value" class="text-xs font-semibold text-error">{{ error || images.uploadError.value }}</p>
         <div class="flex justify-end gap-2 border-t border-ink-100 pt-4 dark:border-ink-800">
           <button type="button" class="button-secondary" @click="close">取消</button>
-          <button type="submit" class="button-primary" :disabled="submitting || images.uploading.value"><BusyButtonContent :busy="submitting" label="確認送出" busy-label="送出中" /></button>
+          <button type="submit" class="button-contextual px-4" :disabled="submitting || images.uploading.value"><BusyButtonContent :busy="submitting" label="確認送出" busy-label="送出中" /></button>
         </div>
       </form>
     </section>

@@ -1123,6 +1123,9 @@ test('navigation and contextual creation share the same responsive information a
   const issueBoard = await read('src/components/IssueBoard.vue');
   const facilitiesView = await read('src/views/FacilitiesView.vue');
   const announcementsView = await read('src/views/AnnouncementsView.vue');
+  const settingsPanel = await read('src/components/SettingsPanelContent.vue');
+  const issueComposer = await read('src/components/IssueComposer.vue');
+  const controls = await read('src/styles/controls.css');
 
   assert.match(appShell, /label: '提案'/u);
   assert.match(appShell, /:category-filter="mobileCategoryFilter"/u);
@@ -1135,9 +1138,19 @@ test('navigation and contextual creation share the same responsive information a
   assert.ok(desktopSidebar.indexOf('v-for="item in items"') < desktopSidebar.indexOf('to="/notifications"'));
   assert.ok(desktopSidebar.indexOf('to="/notifications"') < desktopSidebar.indexOf('to="/settings"'));
   assert.match(boardControls, /v-if="createLabel"[\s\S]*name="plus"/u);
+  assert.ok(boardControls.indexOf('name="search"') < boardControls.indexOf('v-if="createLabel"'));
+  assert.match(boardControls, /class="button-contextual/u);
   assert.match(issueBoard, /`新增到\$\{activeCategoryLabel\.value\}`/u);
   assert.match(facilitiesView, /create-label="新增設備"[\s\S]*@create="composerOpen = true"/u);
   assert.match(announcementsView, /v-if="isAdmin"[\s\S]*新增公告/u);
+  assert.match(issueComposer, /class="button-dialog-close/u);
+  assert.match(issueComposer, /type="submit" class="button-contextual/u);
+  assert.match(controls, /\.button-contextual \{[\s\S]*bg-surface[\s\S]*box-shadow: var\(--shadow-card\)/u);
+  assert.match(controls, /\.button-dialog-close \{[\s\S]*bg-surface[\s\S]*box-shadow: var\(--shadow-card\)/u);
+  assert.ok(settingsPanel.indexOf('我的提案') < settingsPanel.indexOf('統計'));
+  assert.ok(settingsPanel.indexOf('統計') < settingsPanel.indexOf('角色管理'));
+  assert.ok(settingsPanel.indexOf('角色管理') < settingsPanel.indexOf('重啟 App'));
+  assert.ok(settingsPanel.indexOf('重啟 App') < settingsPanel.indexOf('更多資源'));
   await assert.rejects(read('src/components/CreateActionMenu.vue'));
   await assert.rejects(read('src/composables/useCreateEntryActions.ts'));
 });

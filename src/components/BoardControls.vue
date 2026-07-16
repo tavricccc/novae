@@ -15,18 +15,6 @@
       </div>
 
       <div class="flex w-full shrink-0 flex-row items-center justify-end gap-1.5 sm:gap-2 md:w-auto">
-        <button
-          v-if="createLabel"
-          type="button"
-          class="button-primary mr-auto flex h-8 min-w-0 max-w-[9.5rem] shrink items-center gap-1.5 rounded-full px-3 text-xs font-semibold md:h-9 md:max-w-none md:px-4 md:text-sm"
-          :aria-label="createLabel"
-          :title="createLabel"
-          @click="$emit('create')"
-        >
-          <AppIcon name="plus" :size="4" :stroke-width="2.4" />
-          <span class="truncate">{{ createLabel }}</span>
-        </button>
-
         <PillSegmentedControl
           v-if="mode === 'facility' || activeFilter !== 'my-proposals'"
           v-model="statusTabModel"
@@ -120,6 +108,18 @@
             </div>
           </transition>
         </div>
+
+        <button
+          v-if="createLabel"
+          type="button"
+          class="button-contextual min-w-0 max-w-[9.5rem] shrink px-3 text-xs md:max-w-none"
+          :aria-label="createLabel"
+          :title="createLabel"
+          @click="$emit('create')"
+        >
+          <AppIcon name="plus" :size="4" :stroke-width="2.4" />
+          <span class="truncate">{{ createLabel }}</span>
+        </button>
       </div>
     </div>
   </div>

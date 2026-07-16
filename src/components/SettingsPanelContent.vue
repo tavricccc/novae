@@ -112,8 +112,8 @@
         </div>
       </section>
 
-      <section aria-label="其他頁面">
-        <p class="settings-group-title">其他</p>
+      <section aria-label="常用功能">
+        <p class="settings-group-title">功能</p>
         <div class="settings-group">
           <RouterLink
             to="/issues/my-proposals"
@@ -131,63 +131,6 @@
             </span>
             <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
           </RouterLink>
-          <a
-            :href="PROJECT_CHANGELOG_URL"
-            target="_blank"
-            rel="noreferrer"
-            class="settings-row gap-3"
-            @click="emit('close')"
-          >
-            <span class="flex min-w-0 items-center gap-3">
-              <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300">
-                <AppIcon name="changelog" :size="4" :stroke-width="2" />
-              </span>
-              <span>
-                <span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">更新紀錄</span>
-                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看最近功能調整與改善</span>
-              </span>
-            </span>
-            <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
-          </a>
-          <a
-            :href="PROJECT_WEBSITE_URL"
-            target="_blank"
-            rel="noreferrer"
-            class="settings-row gap-3"
-            @click="emit('close')"
-          >
-            <span class="flex min-w-0 items-center gap-3">
-              <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300"><AppIcon name="link" :size="4" :stroke-width="2" /></span>
-              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">Novae 官網</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">探索產品特色與校園導入方式</span></span>
-            </span>
-            <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
-          </a>
-          <a
-            :href="PROJECT_DOCS_URL"
-            target="_blank"
-            rel="noreferrer"
-            class="settings-row gap-3"
-            @click="emit('close')"
-          >
-            <span class="flex min-w-0 items-center gap-3">
-              <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300"><AppIcon name="changelog" :size="4" :stroke-width="2" /></span>
-              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">使用文件</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看功能、設定與操作說明</span></span>
-            </span>
-            <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
-          </a>
-          <a
-            :href="PROJECT_GITHUB_URL"
-            target="_blank"
-            rel="noreferrer"
-            class="settings-row gap-3"
-            @click="emit('close')"
-          >
-            <span class="flex min-w-0 items-center gap-3">
-              <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300"><AppIcon name="code" :size="4" :stroke-width="2" /></span>
-              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">GitHub 專案</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看原始碼與最新進展</span></span>
-            </span>
-            <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
-          </a>
           <RouterLink
             v-if="isAdmin"
             to="/dashboard"
@@ -224,6 +167,51 @@
             </span>
             <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
           </button>
+        </div>
+      </section>
+
+      <section aria-label="更多資源">
+        <p class="settings-group-title">更多</p>
+        <div class="settings-group">
+          <a
+            :href="PROJECT_CHANGELOG_URL"
+            target="_blank"
+            rel="noreferrer"
+            class="settings-row gap-3"
+            @click="emit('close')"
+          >
+            <span class="flex min-w-0 items-center gap-3">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300">
+                <AppIcon name="changelog" :size="4" :stroke-width="2" />
+              </span>
+              <span>
+                <span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">更新紀錄</span>
+                <span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看最近功能調整與改善</span>
+              </span>
+            </span>
+            <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
+          </a>
+          <a :href="PROJECT_WEBSITE_URL" target="_blank" rel="noreferrer" class="settings-row gap-3" @click="emit('close')">
+            <span class="flex min-w-0 items-center gap-3">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300"><AppIcon name="link" :size="4" :stroke-width="2" /></span>
+              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">Novae 官網</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">探索產品特色與校園導入方式</span></span>
+            </span>
+            <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
+          </a>
+          <a :href="PROJECT_DOCS_URL" target="_blank" rel="noreferrer" class="settings-row gap-3" @click="emit('close')">
+            <span class="flex min-w-0 items-center gap-3">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300"><AppIcon name="changelog" :size="4" :stroke-width="2" /></span>
+              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">使用文件</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看功能、設定與操作說明</span></span>
+            </span>
+            <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
+          </a>
+          <a :href="PROJECT_GITHUB_URL" target="_blank" rel="noreferrer" class="settings-row gap-3" @click="emit('close')">
+            <span class="flex min-w-0 items-center gap-3">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center text-ink-500 dark:text-ink-300"><AppIcon name="code" :size="4" :stroke-width="2" /></span>
+              <span><span class="block text-sm font-semibold text-ink-900 dark:text-ink-100">GitHub 專案</span><span class="mt-0.5 block text-xs text-ink-500 dark:text-ink-400">查看原始碼與最新進展</span></span>
+            </span>
+            <AppIcon name="chevron-right" :size="4" class="shrink-0 text-ink-400" :stroke-width="2.2" />
+          </a>
         </div>
       </section>
 
