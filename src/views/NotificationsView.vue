@@ -1,5 +1,5 @@
 <template>
-  <section class="route-page route-page-surface-inset page-bottom-safe min-h-0 flex-1 py-2">
+  <section class="route-page page-bottom-safe min-h-0 flex-1 py-2">
     <div class="min-h-0 flex-1">
       <Transition name="panel-switch" mode="out-in">
         <div :key="notificationPanelKey">

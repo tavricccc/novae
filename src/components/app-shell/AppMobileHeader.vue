@@ -1,6 +1,6 @@
 <template>
   <header class="app-header fixed inset-x-0 top-0 z-40 w-full backdrop-blur-md transition-colors duration-300 md:hidden">
-    <div class="app-header__inner mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-6">
+    <div class="app-header__inner app-viewport-frame mx-auto flex max-w-7xl items-center justify-between">
       <div class="flex min-w-0 items-center gap-3">
         <button
           v-if="showBackButton"

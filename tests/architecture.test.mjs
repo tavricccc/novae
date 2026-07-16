@@ -1136,7 +1136,8 @@ test('entry and comment limits are enforced across UI, Edge, and a new migration
   assert.match(issueComposer, /entry-composer__scroll/u);
   assert.match(announcementComposer, /entry-composer__scroll/u);
   assert.match(responsiveStyles, /\.entry-composer__scroll \{[\s\S]*margin-inline: -0\.5rem;[\s\S]*padding-inline: 0\.5rem;/u);
-  assert.match(feedbackBar, /w-fit max-w-\[min\(22rem,calc\(100vw-2rem\)\)\]/u);
+  assert.match(feedbackBar, /action-feedback-card[\s\S]*min-h-14 w-full/u);
+  assert.match(baseStyles, /\.action-feedback-viewport \{[\s\S]*padding-left: max\(var\(--app-viewport-gutter\), env\(safe-area-inset-left\)\);[\s\S]*padding-right: max\(var\(--app-viewport-gutter\), env\(safe-area-inset-right\)\)/u);
   assert.match(baseStyles, /body\.dialog-open \.action-feedback-viewport \{[\s\S]*top: calc\(env\(safe-area-inset-top\) \+ 6\.75rem\)/u);
 });
 
@@ -1208,6 +1209,10 @@ test('navigation and contextual creation share the same responsive information a
 test('authenticated route pages share one content width and AppShell owns horizontal gutters', async () => {
   const baseStyles = await read('src/styles/base.css');
   const contentStyles = await read('src/styles/content.css');
+  const appShell = await read('src/components/AppShell.vue');
+  const feedbackBar = await read('src/components/ActionFeedbackBar.vue');
+  const emptyState = await read('src/components/ui/EmptyStatePanel.vue');
+  const pageLoadFailure = await read('src/components/ui/PageLoadFailure.vue');
   const settingsPanel = await read('src/components/SettingsPanelContent.vue');
   const routePages = await Promise.all([
     'src/views/IssueBoardView.vue',
@@ -1220,11 +1225,17 @@ test('authenticated route pages share one content width and AppShell owns horizo
     'src/components/ui/DetailPageShell.vue',
   ].map(read));
 
-  assert.match(baseStyles, /\.route-page \{[\s\S]*max-width: 80rem;[\s\S]*min-width: 0;[\s\S]*width: 100%;/u);
-  assert.match(baseStyles, /\.route-page-surface-inset \{[\s\S]*padding-left: 0\.75rem;[\s\S]*padding-right: 0\.75rem;/u);
+  assert.match(baseStyles, /--app-content-max-width: 80rem;/u);
+  assert.match(baseStyles, /--app-viewport-gutter: 1\.5rem;/u);
+  assert.match(baseStyles, /\.app-viewport-frame \{[\s\S]*padding-left: max\(var\(--app-viewport-gutter\), env\(safe-area-inset-left\)\);[\s\S]*padding-right: max\(var\(--app-viewport-gutter\), env\(safe-area-inset-right\)\);/u);
+  assert.match(baseStyles, /\.route-page \{[\s\S]*max-width: var\(--app-content-max-width\);[\s\S]*min-width: 0;[\s\S]*width: 100%;/u);
+  assert.match(appShell, /<main class="app-viewport-frame min-h-0 flex-1">/u);
   routePages.forEach((page) => assert.match(page, /class="[^"]*route-page/u));
-  [routePages[3], routePages[4], routePages[5], routePages[6], routePages[7]]
-    .forEach((page) => assert.match(page, /class="[^"]*route-page-surface-inset/u));
+  routePages.forEach((page) => assert.doesNotMatch(page, /route-page-surface-inset/u));
+  assert.doesNotMatch(contentStyles, /\.issue-card-grid \{[^}]*padding:/u);
+  assert.match(emptyState, /class="flex w-full min-w-0/u);
+  assert.match(pageLoadFailure, /class="route-page panel panel-pad flex w-full min-w-0/u);
+  assert.match(feedbackBar, /action-feedback-card[\s\S]*min-h-14 w-full/u);
   assert.match(contentStyles, /\.settings-scroll--flat \{[\s\S]*@apply overflow-visible px-0 py-3/u);
   assert.match(settingsPanel, /flat \? 'settings-panel--flat overflow-visible' : 'overflow-hidden'/u);
   assert.match(settingsPanel, /flat[\s\S]*\? 'settings-scroll--flat overflow-visible'[\s\S]*: 'overflow-x-hidden overflow-y-auto'/u);

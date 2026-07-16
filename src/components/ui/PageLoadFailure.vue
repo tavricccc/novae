@@ -1,5 +1,5 @@
 <template>
-  <div class="panel panel-pad mx-auto flex max-w-xl flex-col items-center py-14 text-center">
+  <div class="route-page panel panel-pad flex w-full min-w-0 flex-col items-center py-14 text-center">
     <span class="grid h-14 w-14 place-items-center rounded-2xl bg-warning-container text-warning shadow-note" aria-hidden="true">
       <AppIcon name="circle-alert" :size="7" :stroke-width="1.7" />
     </span>

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="mx-auto flex max-w-2xl flex-col items-center justify-center px-6 py-12 text-center"
+    class="flex w-full min-w-0 flex-col items-center justify-center px-6 py-12 text-center"
     :class="framed ? 'panel panel-pad' : ''"
   >
     <div

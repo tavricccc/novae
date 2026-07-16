@@ -1,86 +1,84 @@
 <template>
-  <section class="route-page route-page-surface-inset py-2 md:py-6">
-    <div class="mx-auto w-full max-w-3xl">
-      <form class="panel panel-pad" @submit.prevent="findUser">
-        <label for="access-user-lookup" class="field-label">新增管理員</label>
-        <div class="mt-2 flex gap-2">
-          <input
-            id="access-user-lookup"
-            v-model="lookup"
-            class="field min-w-0 flex-1"
-            autocomplete="off"
-            inputmode="email"
-            placeholder="輸入校內 Email 或 UID"
-            :disabled="loading || Boolean(savingUid)"
+  <section class="route-page py-2 md:py-6">
+    <form class="panel panel-pad" @submit.prevent="findUser">
+      <label for="access-user-lookup" class="field-label">新增管理員</label>
+      <div class="mt-2 flex gap-2">
+        <input
+          id="access-user-lookup"
+          v-model="lookup"
+          class="field min-w-0 flex-1"
+          autocomplete="off"
+          inputmode="email"
+          placeholder="輸入校內 Email 或 UID"
+          :disabled="loading || Boolean(savingUid)"
+        />
+        <button type="submit" class="button-primary shrink-0" :disabled="loading || Boolean(savingUid) || !lookup.trim()">
+          <BusyButtonContent :busy="loading" label="查找" busy-label="查找中" />
+        </button>
+      </div>
+      <p class="mt-2 text-xs leading-5 text-ink-500">只會精確查找一位已登入過的使用者，不會載入使用者清單。</p>
+    </form>
+
+    <EmptyStatePanel v-if="error" class="mt-4" title="無法查找使用者" :description="error" icon="warning" />
+
+    <article v-if="user" class="panel panel-pad mt-4">
+      <div class="flex items-center gap-3 border-b border-ink-100 pb-4 dark:border-ink-800">
+        <UserAvatar :photo-url="user.photoUrl" :name="user.name" size="md" />
+        <div class="min-w-0">
+          <h2 class="truncate text-base font-bold text-ink-900 dark:text-ink-100">{{ user.name }}</h2>
+          <p class="mt-0.5 truncate text-xs text-ink-500">{{ user.email || user.uid }}</p>
+          <p v-if="user.email" class="mt-0.5 truncate text-xs text-ink-400">{{ user.uid }}</p>
+        </div>
+      </div>
+
+      <div class="mt-5 space-y-5">
+        <div>
+          <p class="field-label mb-2">平台權限</p>
+          <SelectionOptionButton
+            label="平台管理員"
+            description="擁有所有分類、設備、公告、角色與統計權限。"
+            :selected="isPlatformAdmin"
+            :disabled="Boolean(savingUid)"
+            @select="togglePlatformAdmin"
           />
-          <button type="submit" class="button-primary shrink-0" :disabled="loading || Boolean(savingUid) || !lookup.trim()">
-            <BusyButtonContent :busy="loading" label="查找" busy-label="查找中" />
-          </button>
-        </div>
-        <p class="mt-2 text-xs leading-5 text-ink-500">只會精確查找一位已登入過的使用者，不會載入使用者清單。</p>
-      </form>
-
-      <EmptyStatePanel v-if="error" class="mt-4" title="無法查找使用者" :description="error" icon="warning" />
-
-      <article v-if="user" class="panel panel-pad mt-4">
-        <div class="flex items-center gap-3 border-b border-ink-100 pb-4 dark:border-ink-800">
-          <UserAvatar :photo-url="user.photoUrl" :name="user.name" size="md" />
-          <div class="min-w-0">
-            <h2 class="truncate text-base font-bold text-ink-900 dark:text-ink-100">{{ user.name }}</h2>
-            <p class="mt-0.5 truncate text-xs text-ink-500">{{ user.email || user.uid }}</p>
-            <p v-if="user.email" class="mt-0.5 truncate text-xs text-ink-400">{{ user.uid }}</p>
-          </div>
         </div>
 
-        <div class="mt-5 space-y-5">
-          <div>
-            <p class="field-label mb-2">平台權限</p>
+        <div>
+          <p class="field-label mb-2">提案分類</p>
+          <div class="grid gap-2">
             <SelectionOptionButton
-              label="平台管理員"
-              description="擁有所有分類、設備、公告、角色與統計權限。"
-              :selected="isPlatformAdmin"
-              :disabled="Boolean(savingUid)"
-              @select="togglePlatformAdmin"
+              v-for="category in ISSUE_CATEGORIES"
+              :key="category.id"
+              :label="`${category.label}管理員`"
+              :description="`只管理「${category.label}」分類。`"
+              :selected="isPlatformAdmin || user.managedIssueCategoryIds.includes(category.id)"
+              :disabled="Boolean(savingUid) || isPlatformAdmin"
+              @select="toggleCategory(category.id)"
             />
           </div>
+        </div>
 
-          <div>
-            <p class="field-label mb-2">提案分類</p>
-            <div class="grid gap-2">
-              <SelectionOptionButton
-                v-for="category in ISSUE_CATEGORIES"
-                :key="category.id"
-                :label="`${category.label}管理員`"
-                :description="`只管理「${category.label}」分類。`"
-                :selected="isPlatformAdmin || user.managedIssueCategoryIds.includes(category.id)"
-                :disabled="Boolean(savingUid) || isPlatformAdmin"
-                @select="toggleCategory(category.id)"
-              />
-            </div>
-          </div>
-
-          <div>
-            <p class="field-label mb-2">其他領域</p>
-            <div class="grid gap-2">
-              <SelectionOptionButton
-                label="設備管理員"
-                description="只處理及管理設備案件。"
-                :selected="isPlatformAdmin || user.roles.includes('general-affairs')"
-                :disabled="Boolean(savingUid) || isPlatformAdmin"
-                @select="toggleScopedRole('general-affairs')"
-              />
-              <SelectionOptionButton
-                label="公告管理員"
-                description="只新增、刪除公告及管理公告留言。"
-                :selected="isPlatformAdmin || user.roles.includes('announcement-manager')"
-                :disabled="Boolean(savingUid) || isPlatformAdmin"
-                @select="toggleScopedRole('announcement-manager')"
-              />
-            </div>
+        <div>
+          <p class="field-label mb-2">其他領域</p>
+          <div class="grid gap-2">
+            <SelectionOptionButton
+              label="設備管理員"
+              description="只處理及管理設備案件。"
+              :selected="isPlatformAdmin || user.roles.includes('general-affairs')"
+              :disabled="Boolean(savingUid) || isPlatformAdmin"
+              @select="toggleScopedRole('general-affairs')"
+            />
+            <SelectionOptionButton
+              label="公告管理員"
+              description="只新增、刪除公告及管理公告留言。"
+              :selected="isPlatformAdmin || user.roles.includes('announcement-manager')"
+              :disabled="Boolean(savingUid) || isPlatformAdmin"
+              @select="toggleScopedRole('announcement-manager')"
+            />
           </div>
         </div>
-      </article>
-    </div>
+      </div>
+    </article>
   </section>
 </template>
 
