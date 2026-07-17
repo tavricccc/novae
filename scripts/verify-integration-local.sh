@@ -62,13 +62,19 @@ TEMP_ENV="$(mktemp)"
 FUNCTION_ENV="$(mktemp)"
 FUNCTION_LOG="$(mktemp)"
 FUNCTION_PID=""
+UPSTASH_LOG="$(mktemp)"
+UPSTASH_PID=""
 
 cleanup() {
   if [[ -n "$FUNCTION_PID" ]] && kill -0 "$FUNCTION_PID" >/dev/null 2>&1; then
     kill "$FUNCTION_PID" >/dev/null 2>&1 || true
     wait "$FUNCTION_PID" >/dev/null 2>&1 || true
   fi
-  rm -f "$TEMP_ENV" "$FUNCTION_ENV" "$FUNCTION_LOG"
+  if [[ -n "$UPSTASH_PID" ]] && kill -0 "$UPSTASH_PID" >/dev/null 2>&1; then
+    kill "$UPSTASH_PID" >/dev/null 2>&1 || true
+    wait "$UPSTASH_PID" >/dev/null 2>&1 || true
+  fi
+  rm -f "$TEMP_ENV" "$FUNCTION_ENV" "$FUNCTION_LOG" "$UPSTASH_LOG"
   if [[ "$KEEP_RUNNING" != "true" ]]; then
     supabase stop >/dev/null 2>&1 || true
   fi
@@ -132,11 +138,28 @@ supabase db lint --local --level error --fail-on error
   printf 'SUPABASE_JWT_SECRET=%s\n' "$JWT_SECRET"
   printf 'SUPABASE_FUNCTIONS_URL=%s/functions/v1\n' "$API_URL"
   printf 'GOOGLE_SERVICE_ACCOUNT_JSON=not-json\n'
+  printf 'UPSTASH_REDIS_REST_URL=http://127.0.0.1:54329\n'
+  printf 'UPSTASH_REDIS_REST_TOKEN=integration-upstash-token\n'
 } >"$TEMP_ENV"
 chmod 600 "$TEMP_ENV"
 grep -v '^SUPABASE_' "$TEMP_ENV" >"$FUNCTION_ENV"
+sed -i 's#UPSTASH_REDIS_REST_URL=http://127.0.0.1:54329#UPSTASH_REDIS_REST_URL=http://host.docker.internal:54329#' "$FUNCTION_ENV"
 chmod 600 "$FUNCTION_ENV"
 ORIGIN_SECRET="$(grep '^EDGE_ORIGIN_SECRET=' "$TEMP_ENV" | head -n 1 | cut -d= -f2-)"
+
+echo "[integration] Starting isolated Upstash REST test server"
+"$DENO_COMMAND" run --allow-env --allow-net scripts/upstash-test-server.ts >"$UPSTASH_LOG" 2>&1 &
+UPSTASH_PID="$!"
+for _ in $(seq 1 30); do
+  status="$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:54329 -d '["GET","ready"]' || true)"
+  [[ "$status" == "200" ]] && break
+  sleep 1
+done
+if [[ "${status:-}" != "200" ]]; then
+  cat "$UPSTASH_LOG" >&2
+  echo "Local Upstash REST test server did not become ready." >&2
+  exit 1
+fi
 
 echo "[integration] Serving Edge Functions with local database credentials"
 supabase functions serve --env-file "$FUNCTION_ENV" --no-verify-jwt >"$FUNCTION_LOG" 2>&1 &

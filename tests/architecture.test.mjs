@@ -261,6 +261,7 @@ test('backendAction registry owns action metadata and frontend action names', as
   const registry = await read('supabase/functions/backendAction/action-registry.ts');
   const frontendContract = await read('src/services/backend-action-contract.ts');
   const workerPolicies = JSON.parse(await read('config/backend-actions.config.json'));
+  const rateLimits = JSON.parse(await read('config/rate-limits.config.json'));
   const workerRateLimit = await read('cloudflare/src/rate-limit.ts');
   const index = await read('supabase/functions/backendAction/index.ts');
   const execution = await read('supabase/functions/backendAction/execution.ts');
@@ -289,8 +290,12 @@ test('backendAction registry owns action metadata and frontend action names', as
     );
     assert.equal(workerPolicies[actionName]?.group, rateLimitGroup, `${actionName} has a mismatched Worker rate limit group`);
   }
+  for (const [actionName, policy] of Object.entries(workerPolicies)) {
+    if (!policy.extraLimit) continue;
+    assert.ok(rateLimits[policy.extraLimit], `${actionName} references a missing business limit`);
+  }
   assert.match(workerRateLimit, /BACKEND_ACTION_POLICIES/u);
-  assert.match(workerRateLimit, /claimActionRateLimits/u);
+  assert.match(workerRateLimit, /claimActionRateLimit/u);
 
   assert.match(registry, /function idempotentWrite/u);
   assert.match(registry, /idempotent: true,\s+requiresRequestId: true/u);
@@ -397,6 +402,10 @@ test('cost-sensitive ingress and provider operations are bounded before work', a
   const backendAction = await read('supabase/functions/backendAction/index.ts');
   const worker = await read('cloudflare/src/index.ts');
   const workerRateLimit = await read('cloudflare/src/rate-limit.ts');
+  const backendRateLimit = await read('supabase/functions/backendAction/rate-limit.ts');
+  const workerTypes = await read('cloudflare/src/types.ts');
+  const wrangler = await read('cloudflare/wrangler.toml');
+  const deployBackend = await read('.github/workflows/deploy-backend.yml');
   const cloudinary = await read('supabase/functions/_shared/cloudinary.ts');
   const cloudinaryWebhook = await read('supabase/functions/cloudinaryWebhook/index.ts');
   const hardening = await read('supabase/migrations/202607150001_rate_limit_cost_hardening.sql');
@@ -412,9 +421,9 @@ test('cost-sensitive ingress and provider operations are bounded before work', a
   assert.match(cloudinary, /transformation: `c_limit,w_\$\{maxDimension\},h_\$\{maxDimension\}`/u);
   assert.match(uploads, /upload_preset: CLOUDINARY_IMAGE_UPLOAD_PRESET/u);
   assert.doesNotMatch(uploads, /claimFixedWindowRateLimitUnits/u);
-  assert.match(workerRateLimit, /unitsPath.*payload\.images/u);
-  assert.match(workerRateLimit, /claims\.push\(/u);
-  assert.match(workerRateLimit, /await claimRateLimits\(env, claims\)/u);
+  assert.match(backendRateLimit, /unitsPath.*payload\.images/u);
+  assert.match(backendRateLimit, /claimBackendActionBusinessLimit/u);
+  assert.match(backendRateLimit, /claimFixedWindowRateLimits/u);
   assert.match(googleOauth, /cachedTokens = new Map/u);
   assert.match(googleOauth, /scopeCacheKey/u);
   assert.match(resourceHardening, /backend_get_access_context/u);
@@ -431,13 +440,24 @@ test('cost-sensitive ingress and provider operations are bounded before work', a
   assert.doesNotMatch(syncUser, /requestRateLimitIdentifier/u);
   assert.match(worker, /claimSyncIngress/u);
   assert.match(worker, /claimCloudinaryIngress/u);
-  assert.match(worker, /claimActionRateLimits/u);
-  assert.match(workerRateLimit, /rate-limit-provider-unavailable/u);
+  assert.match(worker, /claimActionIngress/u);
+  assert.match(worker, /claimActionRateLimit/u);
+  assert.match(workerRateLimit, /\.limit\(\{ key \}\)/u);
+  assert.doesNotMatch(`${workerRateLimit}\n${workerTypes}`, /UPSTASH_REDIS/u);
+  assert.match(wrangler, /\[\[env\.production\.ratelimits\]\]/u);
+  assert.match(wrangler, /\[\[env\.development\.ratelimits\]\]/u);
+  const gatewayDeploy = deployBackend.slice(
+    deployBackend.indexOf('- name: Deploy Cloudflare API Gateway'),
+    deployBackend.indexOf('- name: Smoke test Cloudflare API Gateway'),
+  );
+  assert.doesNotMatch(gatewayDeploy, /\$\{\{ secrets\.UPSTASH_REDIS/u);
+  assert.match(gatewayDeploy, /secret delete "\$obsolete_key"/u);
+  assert.match(syncUser, /claimFixedWindowRateLimit/u);
   assert.ok(
     backendAction.indexOf('getBackendActionDefinition(action)')
       < backendAction.indexOf('requireAuth(supabase, request)'),
   );
-  assert.doesNotMatch(backendAction, /claimBackendActionRateLimit/u);
+  assert.match(backendRateLimit, /RATE_LIMITS\.issueCreateDaily/u);
   assert.match(hardening, /pg_advisory_xact_lock/u);
   assert.match(hardening, /max_devices constant integer := 10/u);
   assert.match(hardening, /revoke select on app_private\.realtime_events from authenticated/u);
@@ -898,6 +918,20 @@ test('personal notification writes and pushes are scoped to the recipient', asyn
   assert.match(notificationDisplay, /notification\.commentTitle/u);
   assert.match(notificationDisplay, /notification\.statusChangedBody/u);
   assert.match(notificationDisplay, /LEGACY_STATUS_SUFFIX/u);
+});
+
+test('timestamps stay UTC at rest and render in the device time zone', async () => {
+  const format = await read('src/lib/format.ts');
+  const utcMigration = await read('supabase/migrations/202607180002_enforce_utc_database_timezone.sql');
+  const migrationFiles = (await listFiles('supabase/migrations'))
+    .filter((file) => file.pathname.endsWith('.sql'));
+  const migrationSource = (await Promise.all(migrationFiles.map((file) => readFile(file, 'utf8')))).join('\n');
+
+  assert.match(format, /resolvedOptions\(\)\.timeZone/u);
+  assert.match(format, /timeZone: getDeviceTimeZone\(\)/u);
+  assert.match(utcMigration, /alter database %I set timezone to %L/u);
+  assert.match(utcMigration, /current_database\(\)[\s\S]*'UTC'/u);
+  assert.doesNotMatch(migrationSource, /\btimestamp(?:\(\d+\))?\s+(?!with\s+time\s+zone)/iu);
 });
 
 test('private issue data and upload URLs stay behind backend authorization', async () => {

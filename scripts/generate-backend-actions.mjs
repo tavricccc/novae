@@ -3,12 +3,18 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const config = JSON.parse(await readFile(path.join(projectRoot, 'config', 'backend-actions.config.json'), 'utf8'));
+const [config, rateLimits] = await Promise.all([
+  readFile(path.join(projectRoot, 'config', 'backend-actions.config.json'), 'utf8').then(JSON.parse),
+  readFile(path.join(projectRoot, 'config', 'rate-limits.config.json'), 'utf8').then(JSON.parse),
+]);
 const groups = new Set(['read', 'general-write', 'sensitive-write', 'admin-write', 'upload-write', 'upload-resolve']);
 
 for (const [name, policy] of Object.entries(config)) {
   if (!name || !policy || typeof policy !== 'object' || !groups.has(policy.group)) {
     throw new Error(`Invalid backend action policy: ${name}`);
+  }
+  if (policy.extraLimit && !Object.hasOwn(rateLimits, policy.extraLimit)) {
+    throw new Error(`Unknown backend action extra limit: ${name}.${policy.extraLimit}`);
   }
 }
 
@@ -17,7 +23,12 @@ export const BACKEND_ACTION_POLICIES = ${JSON.stringify(config, null, 2)} as con
 
 export type BackendActionPolicyName = keyof typeof BACKEND_ACTION_POLICIES;
 `;
-const output = path.join(projectRoot, 'cloudflare', 'generated', 'backend-actions.ts');
-await mkdir(path.dirname(output), { recursive: true });
-await writeFile(output, rendered, 'utf8');
-console.info('Generated Cloudflare backend action policies.');
+const outputs = [
+  path.join(projectRoot, 'cloudflare', 'generated', 'backend-actions.ts'),
+  path.join(projectRoot, 'supabase', 'functions', '_shared', 'backend-action-policies.ts'),
+];
+await Promise.all(outputs.map(async (output) => {
+  await mkdir(path.dirname(output), { recursive: true });
+  await writeFile(output, rendered, 'utf8');
+}));
+console.info('Generated Cloudflare and Supabase backend action policies.');

@@ -3,104 +3,68 @@
 
 export const RATE_LIMITS = {
   "issueCreateDaily": {
-    "limit": 30,
+    "limit": 10,
     "errorCode": "rate-limit.issue-create"
   },
   "facilityCreateDaily": {
-    "limit": 30,
+    "limit": 10,
     "errorCode": "rate-limit.facility-create"
   },
-  "facilityAffectedToggleHourly": {
-    "limit": 600,
-    "errorCode": "rate-limit.facility-affected"
-  },
-  "facilityStatusUpdateHourly": {
-    "limit": 180,
-    "errorCode": "rate-limit.facility-status"
+  "announcementCreateDaily": {
+    "limit": 20,
+    "errorCode": "rate-limit.admin-operation"
   },
   "commentCreateHourly": {
-    "limit": 200,
+    "limit": 60,
     "errorCode": "rate-limit.comment-create"
   },
   "imageUploadDaily": {
-    "limit": 200,
+    "limit": 50,
     "errorCode": "rate-limit.image-upload-daily"
   },
-  "imageUploadWriteSecond": {
-    "limit": 6,
-    "errorCode": "rate-limit.image-write"
-  },
-  "imageUploadWriteHourly": {
-    "limit": 120,
-    "errorCode": "rate-limit.image-write"
-  },
   "loginSyncHourly": {
-    "limit": 300,
-    "errorCode": "rate-limit.login-sync"
-  },
-  "loginSyncIngressSecond": {
-    "limit": 3,
-    "errorCode": "rate-limit.login-sync"
-  },
-  "loginSyncIngressHourly": {
-    "limit": 60,
+    "limit": 20,
     "errorCode": "rate-limit.login-sync"
   },
   "avatarCacheDaily": {
-    "limit": 60,
+    "limit": 10,
     "errorCode": "rate-limit.avatar-update"
   },
   "supportToggleHourly": {
-    "limit": 600,
+    "limit": 120,
     "errorCode": "rate-limit.support"
   },
+  "facilityAffectedToggleHourly": {
+    "limit": 120,
+    "errorCode": "rate-limit.facility-affected"
+  },
+  "facilityStatusUpdateHourly": {
+    "limit": 60,
+    "errorCode": "rate-limit.facility-status"
+  },
   "announcementLikeHourly": {
-    "limit": 600,
+    "limit": 120,
     "errorCode": "rate-limit.announcement-interaction"
   },
   "pushTokenWriteHourly": {
-    "limit": 120,
+    "limit": 30,
     "errorCode": "rate-limit.push-token"
   },
-  "backendActionReadHourly": {
-    "limit": 900,
-    "errorCode": "rate-limit.read"
-  },
-  "backendActionReadSecond": {
-    "limit": 8,
-    "errorCode": "rate-limit.read"
-  },
-  "backendActionWriteHourly": {
-    "limit": 300,
+  "preferenceWriteHourly": {
+    "limit": 60,
     "errorCode": "rate-limit.operation"
   },
-  "backendActionWriteSecond": {
-    "limit": 3,
-    "errorCode": "rate-limit.operation"
-  },
-  "backendActionSensitiveWriteHourly": {
+  "moderationWriteHourly": {
     "limit": 120,
-    "errorCode": "rate-limit.operation"
-  },
-  "backendActionSensitiveWriteSecond": {
-    "limit": 2,
-    "errorCode": "rate-limit.operation"
-  },
-  "backendActionAdminWriteHourly": {
-    "limit": 180,
     "errorCode": "rate-limit.admin-operation"
   },
-  "backendActionAdminWriteSecond": {
-    "limit": 2,
+  "roleWriteHourly": {
+    "limit": 120,
     "errorCode": "rate-limit.admin-operation"
   },
-  "backendActionUploadResolveHourly": {
-    "limit": 300,
-    "errorCode": "rate-limit.image-read"
-  },
-  "backendActionUploadResolveSecond": {
-    "limit": 4,
-    "errorCode": "rate-limit.image-read"
+  "destructiveWriteHourly": {
+    "limit": 30,
+    "errorCode": "rate-limit.operation"
   },
   "backendHealthcheckMinute": {
     "limit": 12,
@@ -109,14 +73,6 @@ export const RATE_LIMITS = {
   "backendHealthcheckSecond": {
     "limit": 2,
     "errorCode": "rate-limit.healthcheck"
-  },
-  "cloudinaryWebhookMinute": {
-    "limit": 300,
-    "errorCode": "rate-limit.image-sync"
-  },
-  "cloudinaryWebhookSecond": {
-    "limit": 10,
-    "errorCode": "rate-limit.image-sync"
   },
   "workerRunMinute": {
     "limit": 30,

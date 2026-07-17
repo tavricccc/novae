@@ -1,5 +1,6 @@
 import { asRecord, asString } from "../_shared/http.ts";
 import { hasPermission } from "./auth.ts";
+import { claimBackendActionBusinessLimit } from "./rate-limit.ts";
 import type { BackendActionDefinition } from "./action-registry.ts";
 import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 
@@ -16,6 +17,7 @@ async function runWithIdempotency(
     throw new Error("validation-required");
   }
   if (!requestId || !definition.idempotent) {
+    await claimBackendActionBusinessLimit(action, payload, auth.uid);
     return await execute();
   }
 
@@ -35,6 +37,7 @@ async function runWithIdempotency(
 
   let response: JsonRecord;
   try {
+    await claimBackendActionBusinessLimit(action, payload, auth.uid);
     response = await execute();
   } catch (error) {
     await supabase

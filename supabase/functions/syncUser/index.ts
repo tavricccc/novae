@@ -4,6 +4,8 @@ import { requireEligibleFirebaseUser } from "../_shared/firebase-auth.ts";
 import { getGoogleAccessToken } from "../_shared/google-oauth.ts";
 import { errorMessage, errorStatus, handleCorsPreflight, jsonResponse, publicErrorBody, requireMethod } from "../_shared/http.ts";
 import { requireOriginSecret } from "../_shared/origin.ts";
+import { RATE_LIMITS } from "../_shared/rate-limits.ts";
+import { claimFixedWindowRateLimit, utcHourWindow } from "../_shared/upstash-rate-limit.ts";
 
 function parseCustomAttributes(value: string) {
   try {
@@ -34,6 +36,7 @@ Deno.serve(async (request) => {
   try {
     const projectId = requireEnv("FIREBASE_PROJECT_ID");
     const user = await requireEligibleFirebaseUser(request);
+    await claimFixedWindowRateLimit(user.uid, "auth.sync", utcHourWindow(), RATE_LIMITS.loginSyncHourly);
 
     const accessToken = await getGoogleAccessToken([
       "https://www.googleapis.com/auth/identitytoolkit",

@@ -2,116 +2,44 @@ import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, '..');
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function assertPositiveInteger(value, errorMsg) {
-  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) {
-    throw new Error(errorMsg);
-  }
+  if (typeof value !== 'number' || !Number.isInteger(value) || value <= 0) throw new Error(errorMsg);
   return value;
 }
 
 function assertNonEmptyString(value, errorMsg) {
-  if (typeof value !== 'string' || value.trim() === '') {
-    throw new Error(errorMsg);
-  }
+  if (typeof value !== 'string' || value.trim() === '') throw new Error(errorMsg);
   return value;
 }
 
 function assertNumberRange(value, min, max, errorMsg) {
-  if (typeof value !== 'number' || value < min || value > max) {
-    throw new Error(errorMsg);
-  }
+  if (typeof value !== 'number' || value < min || value > max) throw new Error(errorMsg);
   return value;
 }
 
-async function readRateLimitsConfig(projectRoot) {
-  const configPath = path.join(projectRoot, 'config', 'rate-limits.config.json');
-  const apiErrorsPath = path.join(projectRoot, 'config', 'api-errors.config.json');
+async function readRateLimitsConfig() {
   const [raw, apiErrors] = await Promise.all([
-    readFile(configPath, 'utf8').then(JSON.parse),
-    readFile(apiErrorsPath, 'utf8').then(JSON.parse),
+    readFile(path.join(projectRoot, 'config', 'rate-limits.config.json'), 'utf8').then(JSON.parse),
+    readFile(path.join(projectRoot, 'config', 'api-errors.config.json'), 'utf8').then(JSON.parse),
   ]);
+  const imageUploads = raw.imageUploads ?? {};
+  const imageCompression = raw.imageCompression ?? {};
+  const limits = {};
 
-  const issueCreateDaily = raw.issueCreateDaily || {};
-  const facilityCreateDaily = raw.facilityCreateDaily || {};
-  const facilityAffectedToggleHourly = raw.facilityAffectedToggleHourly || {};
-  const facilityStatusUpdateHourly = raw.facilityStatusUpdateHourly || {};
-  const commentCreateHourly = raw.commentCreateHourly || {};
-  const imageUploadDaily = raw.imageUploadDaily || {};
-  const imageUploadWriteSecond = raw.imageUploadWriteSecond || {};
-  const imageUploadWriteHourly = raw.imageUploadWriteHourly || {};
-  const loginSyncHourly = raw.loginSyncHourly || {};
-  const loginSyncIngressSecond = raw.loginSyncIngressSecond || {};
-  const loginSyncIngressHourly = raw.loginSyncIngressHourly || {};
-  const avatarCacheDaily = raw.avatarCacheDaily || {};
-  const supportToggleHourly = raw.supportToggleHourly || {};
-  const announcementLikeHourly = raw.announcementLikeHourly || {};
-  const pushTokenWriteHourly = raw.pushTokenWriteHourly || {};
-  const backendActionReadHourly = raw.backendActionReadHourly || {};
-  const backendActionReadSecond = raw.backendActionReadSecond || {};
-  const backendActionWriteHourly = raw.backendActionWriteHourly || {};
-  const backendActionWriteSecond = raw.backendActionWriteSecond || {};
-  const backendActionSensitiveWriteHourly = raw.backendActionSensitiveWriteHourly || {};
-  const backendActionSensitiveWriteSecond = raw.backendActionSensitiveWriteSecond || {};
-  const backendActionAdminWriteHourly = raw.backendActionAdminWriteHourly || {};
-  const backendActionAdminWriteSecond = raw.backendActionAdminWriteSecond || {};
-  const backendActionUploadResolveHourly = raw.backendActionUploadResolveHourly || {};
-  const backendActionUploadResolveSecond = raw.backendActionUploadResolveSecond || {};
-  const backendHealthcheckMinute = raw.backendHealthcheckMinute || {};
-  const backendHealthcheckSecond = raw.backendHealthcheckSecond || {};
-  const cloudinaryWebhookMinute = raw.cloudinaryWebhookMinute || {};
-  const cloudinaryWebhookSecond = raw.cloudinaryWebhookSecond || {};
-  const workerRunMinute = raw.workerRunMinute || {};
-  const workerRunSecond = raw.workerRunSecond || {};
-  const imageUploads = raw.imageUploads || {};
-  const imageCompression = raw.imageCompression || {};
-
-  function readLimitConfig(name, value) {
-    const errorCode = assertNonEmptyString(value.errorCode, `${name}.errorCode 必須是非空字串。`);
-    if (!Object.hasOwn(apiErrors, errorCode)) {
-      throw new Error(`${name}.errorCode 必須存在於 api-errors.config.json。`);
-    }
-    return {
-      limit: assertPositiveInteger(value.limit, `${name}.limit 必須是正整數。`),
+  for (const [name, value] of Object.entries(raw)) {
+    if (name === 'imageUploads' || name === 'imageCompression') continue;
+    const errorCode = assertNonEmptyString(value?.errorCode, `${name}.errorCode 必須是非空字串。`);
+    if (!Object.hasOwn(apiErrors, errorCode)) throw new Error(`${name}.errorCode 必須存在於 api-errors.config.json。`);
+    limits[name] = {
+      limit: assertPositiveInteger(value?.limit, `${name}.limit 必須是正整數。`),
       errorCode,
     };
   }
 
-  const limits = {
-    issueCreateDaily: readLimitConfig('issueCreateDaily', issueCreateDaily),
-    facilityCreateDaily: readLimitConfig('facilityCreateDaily', facilityCreateDaily),
-    facilityAffectedToggleHourly: readLimitConfig('facilityAffectedToggleHourly', facilityAffectedToggleHourly),
-    facilityStatusUpdateHourly: readLimitConfig('facilityStatusUpdateHourly', facilityStatusUpdateHourly),
-    commentCreateHourly: readLimitConfig('commentCreateHourly', commentCreateHourly),
-    imageUploadDaily: readLimitConfig('imageUploadDaily', imageUploadDaily),
-    imageUploadWriteSecond: readLimitConfig('imageUploadWriteSecond', imageUploadWriteSecond),
-    imageUploadWriteHourly: readLimitConfig('imageUploadWriteHourly', imageUploadWriteHourly),
-    loginSyncHourly: readLimitConfig('loginSyncHourly', loginSyncHourly),
-    loginSyncIngressSecond: readLimitConfig('loginSyncIngressSecond', loginSyncIngressSecond),
-    loginSyncIngressHourly: readLimitConfig('loginSyncIngressHourly', loginSyncIngressHourly),
-    avatarCacheDaily: readLimitConfig('avatarCacheDaily', avatarCacheDaily),
-    supportToggleHourly: readLimitConfig('supportToggleHourly', supportToggleHourly),
-    announcementLikeHourly: readLimitConfig('announcementLikeHourly', announcementLikeHourly),
-    pushTokenWriteHourly: readLimitConfig('pushTokenWriteHourly', pushTokenWriteHourly),
-    backendActionReadHourly: readLimitConfig('backendActionReadHourly', backendActionReadHourly),
-    backendActionReadSecond: readLimitConfig('backendActionReadSecond', backendActionReadSecond),
-    backendActionWriteHourly: readLimitConfig('backendActionWriteHourly', backendActionWriteHourly),
-    backendActionWriteSecond: readLimitConfig('backendActionWriteSecond', backendActionWriteSecond),
-    backendActionSensitiveWriteHourly: readLimitConfig('backendActionSensitiveWriteHourly', backendActionSensitiveWriteHourly),
-    backendActionSensitiveWriteSecond: readLimitConfig('backendActionSensitiveWriteSecond', backendActionSensitiveWriteSecond),
-    backendActionAdminWriteHourly: readLimitConfig('backendActionAdminWriteHourly', backendActionAdminWriteHourly),
-    backendActionAdminWriteSecond: readLimitConfig('backendActionAdminWriteSecond', backendActionAdminWriteSecond),
-    backendActionUploadResolveHourly: readLimitConfig('backendActionUploadResolveHourly', backendActionUploadResolveHourly),
-    backendActionUploadResolveSecond: readLimitConfig('backendActionUploadResolveSecond', backendActionUploadResolveSecond),
-    backendHealthcheckMinute: readLimitConfig('backendHealthcheckMinute', backendHealthcheckMinute),
-    backendHealthcheckSecond: readLimitConfig('backendHealthcheckSecond', backendHealthcheckSecond),
-    cloudinaryWebhookMinute: readLimitConfig('cloudinaryWebhookMinute', cloudinaryWebhookMinute),
-    cloudinaryWebhookSecond: readLimitConfig('cloudinaryWebhookSecond', cloudinaryWebhookSecond),
-    workerRunMinute: readLimitConfig('workerRunMinute', workerRunMinute),
-    workerRunSecond: readLimitConfig('workerRunSecond', workerRunSecond),
+  return {
+    ...limits,
     imageUploads: {
       issueMaxImages: assertPositiveInteger(imageUploads.issueMaxImages, 'imageUploads.issueMaxImages 必須是正整數。'),
       facilityMaxImages: assertPositiveInteger(imageUploads.facilityMaxImages, 'imageUploads.facilityMaxImages 必須是正整數。'),
@@ -124,18 +52,12 @@ async function readRateLimitsConfig(projectRoot) {
       maxSourceMegabytes: assertPositiveInteger(imageCompression.maxSourceMegabytes, 'imageCompression.maxSourceMegabytes 必須是正整數。'),
       maxSourceBytes: assertPositiveInteger(imageCompression.maxSourceMegabytes, '') * 1024 * 1024,
       maxDimension: assertPositiveInteger(imageCompression.maxDimension, 'imageCompression.maxDimension 必須是正整數。'),
-      webpQuality: assertNumberRange(imageCompression.webpQuality, 0.01, 1.0, 'imageCompression.webpQuality 必須在 0.01 與 1.0 之間。'),
+      webpQuality: assertNumberRange(imageCompression.webpQuality, 0.01, 1, 'imageCompression.webpQuality 必須在 0.01 與 1.0 之間。'),
       outputScales: Array.isArray(imageCompression.outputScales)
-        ? imageCompression.outputScales.map((scale, i) => assertNumberRange(scale, 0.01, 1.0, `imageCompression.outputScales[${i}] 必須在 0.01 與 1.0 之間。`))
+        ? imageCompression.outputScales.map((scale, index) => assertNumberRange(scale, 0.01, 1, `imageCompression.outputScales[${index}] 必須在 0.01 與 1.0 之間。`))
         : [],
     },
   };
-
-  if (limits.imageCompression.outputScales.length === 0) {
-    throw new Error('imageCompression.outputScales 必須包含至少一個比例項目。');
-  }
-
-  return limits;
 }
 
 function renderRateLimitsTs(limits) {
@@ -149,21 +71,18 @@ export type RateLimits = typeof RATE_LIMITS;
 }
 
 try {
-  const config = await readRateLimitsConfig(projectRoot);
-  const rendered = renderRateLimitsTs(config);
-
+  const limits = await readRateLimitsConfig();
+  if (limits.imageCompression.outputScales.length === 0) throw new Error('imageCompression.outputScales 必須包含至少一個比例項目。');
+  const rendered = renderRateLimitsTs(limits);
   const outputPaths = [
     path.join(projectRoot, 'src', 'generated', 'rate-limits.ts'),
     path.join(projectRoot, 'supabase', 'functions', '_shared', 'rate-limits.ts'),
-    path.join(projectRoot, 'cloudflare', 'generated', 'rate-limits.ts'),
   ];
-
   await Promise.all(outputPaths.map(async (outputPath) => {
     await mkdir(path.dirname(outputPath), { recursive: true });
     await writeFile(outputPath, rendered, 'utf8');
   }));
-
-  console.info('Generated rate limits and image compression configuration.');
+  console.info('Generated frontend and Supabase rate limits.');
 } catch (error) {
   console.error('Failed to generate rate limits config:', error.message);
   process.exit(1);

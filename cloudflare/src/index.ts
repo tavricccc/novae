@@ -7,7 +7,8 @@ import {
   readBody,
 } from './http';
 import {
-  claimActionRateLimits,
+  claimActionIngress,
+  claimActionRateLimit,
   claimCloudinaryIngress,
   claimSyncIngress,
   claimSyncUser,
@@ -65,8 +66,9 @@ async function handleAction(request: Request, env: Env, requestId: string) {
   const parsed = parseJsonRecord(body);
   const action = typeof parsed.action === 'string' ? parsed.action : '';
   if (!action) return apiErrorResponse(request, env, requestId, 'invalid-action');
+  await claimActionIngress(env, clientIp(request));
   const uid = await requireFirebaseUid(request, env);
-  await claimActionRateLimits(env, uid, action, parsed);
+  await claimActionRateLimit(env, uid, action);
   return await forward(request, env, 'api', body, requestId);
 }
 

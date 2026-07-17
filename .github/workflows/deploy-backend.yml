@@ -229,13 +229,14 @@ jobs:
           EDGE_ORIGIN_SECRET: ${{ secrets.EDGE_ORIGIN_SECRET }}
           FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID || secrets.FIREBASE_PROJECT_ID }}
           SUPABASE_FUNCTIONS_BASE_URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1
-          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
-          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
         run: |
           environment="${{ github.ref_name == 'main' && 'production' || 'development' }}"
-          node -e "const fs=require('node:fs'); const keys=['ALLOWED_ORIGINS','CLOUDINARY_WEBHOOK_SECRET','EDGE_FUNCTION_NAMESPACE','EDGE_ORIGIN_SECRET','FIREBASE_PROJECT_ID','SUPABASE_FUNCTIONS_BASE_URL','UPSTASH_REDIS_REST_TOKEN','UPSTASH_REDIS_REST_URL']; fs.writeFileSync('/tmp/novae-worker-secrets.json', JSON.stringify(Object.fromEntries(keys.map((key) => [key, process.env[key]]))))"
+          node -e "const fs=require('node:fs'); const keys=['ALLOWED_ORIGINS','CLOUDINARY_WEBHOOK_SECRET','EDGE_FUNCTION_NAMESPACE','EDGE_ORIGIN_SECRET','FIREBASE_PROJECT_ID','SUPABASE_FUNCTIONS_BASE_URL']; fs.writeFileSync('/tmp/novae-worker-secrets.json', JSON.stringify(Object.fromEntries(keys.map((key) => [key, process.env[key]]))))"
           npx -y wrangler@4.111.0 deploy --config cloudflare/wrangler.toml --env "$environment"
           npx -y wrangler@4.111.0 secret bulk /tmp/novae-worker-secrets.json --config cloudflare/wrangler.toml --env "$environment"
+          for obsolete_key in UPSTASH_REDIS_REST_TOKEN UPSTASH_REDIS_REST_URL; do
+            npx -y wrangler@4.111.0 secret delete "$obsolete_key" --config cloudflare/wrangler.toml --env "$environment" >/dev/null 2>&1 || true
+          done
           npx -y wrangler@4.111.0 deploy --config cloudflare/wrangler.toml --env "$environment"
           rm -f /tmp/novae-worker-secrets.json
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { errorEnvelope, errorResponse } from "../../supabase/functions/backendAction/response.ts";
-import { RateLimitError } from "../../supabase/functions/_shared/upstash-rate-limit.ts";
+import { claimFixedWindowRateLimit, RateLimitError, utcHourWindow } from "../../supabase/functions/_shared/upstash-rate-limit.ts";
 
 Deno.test("API errors expose stable codes without backend-localized messages", async () => {
   const envelope = errorEnvelope(new Error("title-required"), "request-123");
@@ -32,4 +32,14 @@ Deno.test("rate-limit errors include machine-readable retry metadata", async () 
     requestId: "request-rate-limit",
     success: false,
   });
+});
+
+Deno.test("Upstash business limits allow the configured quota and reject overflow", async () => {
+  const identifier = `integration-rate-${crypto.randomUUID()}`;
+  const config = { errorCode: "rate-limit.issue-create" as const, limit: 1 };
+  await claimFixedWindowRateLimit(identifier, "integration.issue-create", utcHourWindow(), config);
+  await assert.rejects(
+    () => claimFixedWindowRateLimit(identifier, "integration.issue-create", utcHourWindow(), config),
+    (error: unknown) => error instanceof RateLimitError && error.message === "rate-limit.issue-create",
+  );
 });
