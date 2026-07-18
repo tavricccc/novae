@@ -9,7 +9,7 @@
   <AppShell v-else>
     <div class="route-stage relative flex h-full min-h-0 min-w-0 w-full max-w-full flex-1 flex-col">
       <RouterView v-slot="{ Component, route: viewRoute }">
-        <Transition name="route-swap">
+        <Transition name="route-swap" mode="out-in">
           <div
             :key="String(viewRoute.name ?? viewRoute.path)"
             class="route-content-frame flex h-full min-h-0 min-w-0 w-full max-w-full flex-1 flex-col"

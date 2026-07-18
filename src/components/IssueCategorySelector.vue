@@ -25,7 +25,6 @@
         v-if="open"
         class="absolute left-0 z-[100] mt-2 w-max min-w-[11rem] max-w-[calc(100vw-2rem)]"
         size="default"
-        style="--dropdown-transform-origin: top left"
       >
         <div class="dropdown-label mb-1.5 whitespace-nowrap">{{ t('access.proposalCategoryAccess') }}</div>
         <div class="space-y-0.5">

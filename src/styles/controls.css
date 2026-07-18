@@ -128,11 +128,6 @@
     padding: 0.125rem;
   }
 
-  .segmented-control__indicator {
-    transition: transform var(--motion-duration) var(--motion-ease-move);
-    will-change: transform;
-  }
-
   .scrollbar-none {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -149,20 +144,21 @@
       transform var(--motion-duration-fast) var(--motion-ease),
       background-color var(--motion-duration) var(--motion-ease),
       color var(--motion-duration) var(--motion-ease),
-      box-shadow var(--motion-duration) var(--motion-ease);
+      box-shadow var(--motion-duration) var(--motion-ease),
+      width var(--motion-duration-panel) var(--motion-ease-enter);
     min-height: 1.75rem;
     border-radius: 9999px;
     padding-block: 0.25rem;
   }
 
   .segmented-control__button--active {
-    padding-inline: 0.5rem;
-    width: 5.25rem;
+    padding-inline: 0.625rem;
+    width: 7rem;
   }
 
   .segmented-control__button--compact {
     padding-inline: 0.5rem;
-    width: 5.25rem;
+    width: 2rem;
   }
 
   .tag {

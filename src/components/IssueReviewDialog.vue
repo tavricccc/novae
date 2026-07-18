@@ -25,35 +25,33 @@
       "
     />
 
-    <div class="mt-5 space-y-4" :style="stepMotionStyle">
-      <Transition name="dialog-step" mode="out-in">
-        <!-- Moderation choice (Step 1) -->
-        <div v-if="step === 1" key="selection">
-          <p class="field-label mb-2">{{ t("issue.review.result") }}</p>
-          <div class="grid gap-2">
-            <SelectionOptionButton
-              v-for="option in reviewOptions"
-              :key="option.value"
-              :label="option.label"
-              :description="option.description"
-              :selected="reviewDecision === option.value"
-              @select="reviewDecision = option.value"
-            />
-          </div>
+    <div class="mt-5 space-y-4">
+      <!-- Moderation choice (Step 1) -->
+      <div v-if="step === 1">
+        <p class="field-label mb-2">{{ t("issue.review.result") }}</p>
+        <div class="grid gap-2">
+          <SelectionOptionButton
+            v-for="option in reviewOptions"
+            :key="option.value"
+            :label="option.label"
+            :description="option.description"
+            :selected="reviewDecision === option.value"
+            @select="reviewDecision = option.value"
+          />
         </div>
-        <!-- Rejection reason input (Step 2) -->
-        <CountedTextareaField
-          v-else-if="step === 2"
-          key="reason"
-          v-model="rejectionReason"
-          input-id="review-rejection-reason"
-          :label="t('issue.review.rejectionReason')"
-          :max-length="500"
-          :warning-length="450"
-          :placeholder="t('notification.rejectionReasonHelp')"
-          :disabled="saving"
-        />
-      </Transition>
+      </div>
+
+      <!-- Rejection reason input (Step 2) -->
+      <CountedTextareaField
+        v-else-if="step === 2"
+        v-model="rejectionReason"
+        input-id="review-rejection-reason"
+        :label="t('issue.review.rejectionReason')"
+        :max-length="500"
+        :warning-length="450"
+        :placeholder="t('notification.rejectionReasonHelp')"
+        :disabled="saving"
+      />
     </div>
 
     <InlineMessage v-if="errorMsg" class="mt-3">{{ errorMsg }}</InlineMessage>
@@ -92,7 +90,6 @@ import BusyButtonContent from "@/components/ui/atoms/BusyButtonContent.vue";
 import AppButton from "@/components/ui/atoms/AppButton.vue";
 import SelectionOptionButton from "@/components/ui/molecules/SelectionOptionButton.vue";
 import { useActionFeedback } from "@/composables/useActionFeedback";
-import { useDialogStepMotion } from "@/composables/useDialogStepMotion";
 import { moderateIssueStatus } from "@/services/issues";
 import type { IssueRecord } from "@/types";
 import { useI18n } from "@/i18n";
@@ -121,7 +118,7 @@ const reviewOptions = [
   },
 ];
 
-const { goToStep, resetStep, step, stepMotionStyle } = useDialogStepMotion();
+const step = ref(1);
 const reviewDecision = ref<"approved" | "rejected">("approved");
 const rejectionReason = ref(props.issue.review_rejection_reason ?? "");
 const saving = ref(false);
@@ -147,7 +144,7 @@ function handlePrimaryClick() {
     if (reviewDecision.value === "approved") {
       submitReview();
     } else {
-      goToStep(2);
+      step.value = 2;
     }
   } else if (step.value === 2) {
     submitReview();
@@ -158,7 +155,7 @@ function handleSecondaryClick() {
   if (step.value === 1) {
     handleClose();
   } else {
-    goToStep(1);
+    step.value = 1;
     errorMsg.value = "";
   }
 }
@@ -205,7 +202,7 @@ watch(
   () => props.open,
   (newOpen) => {
     if (newOpen) {
-      resetStep();
+      step.value = 1;
       reviewDecision.value = "approved";
       rejectionReason.value = props.issue.review_rejection_reason ?? "";
       errorMsg.value = "";

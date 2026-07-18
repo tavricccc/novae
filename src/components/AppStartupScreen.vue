@@ -2,7 +2,7 @@
   <section class="startup-screen" :role="stalled ? 'alert' : 'status'" :aria-live="stalled ? 'assertive' : 'polite'" :aria-label="ariaLabel">
     <div class="startup-screen__surface">
       <div class="startup-screen__brand" aria-hidden="true">
-        <BrandMark animated custom-class="startup-screen__mark" />
+        <BrandMark custom-class="startup-screen__mark" />
       </div>
 
       <div class="startup-screen__copy">
@@ -11,13 +11,11 @@
         <p v-if="message" class="startup-screen__message">{{ message }}</p>
       </div>
 
-      <Transition name="startup-state" mode="out-in">
-        <div v-if="stalled" key="recovery" class="startup-screen__recovery">
-          <p>{{ t('common.theAppFailedToStartTryAgain') }}</p>
-          <AppButton variant="primary" @click="emit('retry')">{{ t('common.retry') }}</AppButton>
-        </div>
-        <LoadingSpinner v-else key="loading" :size="6" class="startup-screen__loader" />
-      </Transition>
+      <div v-if="stalled" class="startup-screen__recovery">
+        <p>{{ t('common.theAppFailedToStartTryAgain') }}</p>
+        <AppButton variant="primary" @click="emit('retry')">{{ t('common.retry') }}</AppButton>
+      </div>
+      <LoadingSpinner v-else :size="6" class="startup-screen__loader" />
     </div>
   </section>
 </template>
@@ -161,19 +159,6 @@ const schoolName = SCHOOL_NAME;
   margin: 0;
 }
 
-.startup-state-enter-active,
-.startup-state-leave-active {
-  transition:
-    opacity var(--motion-duration) var(--motion-ease-enter),
-    filter var(--motion-duration) var(--motion-ease-enter);
-}
-
-.startup-state-enter-from,
-.startup-state-leave-to {
-  filter: blur(2px);
-  opacity: 0;
-}
-
 @media (prefers-color-scheme: dark) {
   .startup-screen {
     background: rgb(var(--color-page-background));
@@ -197,24 +182,6 @@ const schoolName = SCHOOL_NAME;
 @media (prefers-reduced-motion: reduce) {
   .startup-screen__surface {
     animation: none;
-  }
-
-  .startup-state-enter-active,
-  .startup-state-leave-active {
-    transition: opacity var(--motion-duration-fast) var(--motion-ease-enter);
-  }
-
-  .startup-state-enter-from,
-  .startup-state-leave-to {
-    filter: none;
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .startup-screen__brand {
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    background: rgb(var(--color-surface));
   }
 }
 </style>

@@ -94,12 +94,6 @@
     @apply border-0 bg-surface text-ink-800 shadow-control dark:bg-surface dark:text-ink-100;
   }
 
-  .support-progress-fill {
-    transform-origin: left center;
-    transition: transform var(--motion-duration) var(--motion-ease-move);
-    will-change: transform;
-  }
-
   .interactive-surface:disabled,
   .interactive-surface[aria-disabled='true'] {
     @apply opacity-50 shadow-none;

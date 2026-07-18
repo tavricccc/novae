@@ -1,6 +1,6 @@
 <template>
   <span
-    class="flex h-5 w-5 shrink-0 items-center justify-center transition-[color,opacity,transform] duration-[var(--motion-duration-fast)] ease-[var(--motion-ease-enter)]"
+    class="flex h-5 w-5 shrink-0 items-center justify-center transition-all"
     :class="selected
       ? 'scale-100 text-ink-900 opacity-100 dark:text-ink-100'
       : 'scale-75 text-ink-900 opacity-0 dark:text-ink-100'"

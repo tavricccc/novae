@@ -27,12 +27,6 @@
     @apply relative flex h-12 w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-center text-ink-500 dark:text-ink-400;
   }
 
-  .app-bottom-nav__indicator {
-    transform-origin: center;
-    transition: transform var(--motion-duration) var(--motion-ease-move);
-    will-change: transform;
-  }
-
   .app-bottom-nav__item:active:not([aria-disabled='true']) {
     border-radius: 9999px;
     background-color: rgb(var(--color-secondary-container) / 0.82);
@@ -87,6 +81,7 @@
 
   .app-sidebar {
     width: var(--app-sidebar-panel-width);
+    transition: width var(--motion-duration-panel) var(--motion-ease-enter);
   }
 
   .app-sidebar__scrim {

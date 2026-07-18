@@ -20,7 +20,7 @@ export function useIssueSupport(
   const supportProgressStyle = computed(() => {
     const i = issue.value;
     const progress = getSupportProgressPercent(supportCount.value, i.support_goal);
-    return { transform: `scaleX(${progress / 100})` };
+    return { width: `${progress}%` };
   });
 
   const supportRemainingLabel = computed(() => getSupportRemainingLabel(remainingDays.value));

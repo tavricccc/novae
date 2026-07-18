@@ -40,7 +40,6 @@
               v-if="isSortOpen"
               class="absolute z-[100] mt-2 max-md:left-0 max-md:right-0 max-md:w-auto md:right-0 md:left-auto md:w-max md:min-w-[10rem]"
               size="default"
-              style="--dropdown-transform-origin: top right"
             >
               <div class="dropdown-label mb-1.5 whitespace-nowrap">{{ t('common.sortBy') }}</div>
               <div class="space-y-0.5">
@@ -78,7 +77,6 @@
               v-if="isSearchOpen"
               class="absolute z-[100] mt-2 max-md:left-0 max-md:right-0 max-md:w-auto md:right-0 md:left-auto md:w-80"
               size="search"
-              style="--dropdown-transform-origin: top right"
             >
               <form class="relative" role="search" @submit.prevent="emit('submitSearch')">
                 <AppIcon name="search" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400 dark:text-ink-500" />

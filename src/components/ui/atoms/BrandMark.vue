@@ -1,6 +1,6 @@
 <template>
   <svg
-    :class="['brand-mark', { 'brand-mark--animated': animated }, customClass]"
+    :class="['brand-mark', customClass]"
     viewBox="0 0 120 100"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
@@ -17,11 +17,9 @@
 <script setup lang="ts">
 withDefaults(
   defineProps<{
-    animated?: boolean;
     customClass?: string;
   }>(),
   {
-    animated: false,
     customClass: '',
   }
 );
@@ -43,15 +41,23 @@ withDefaults(
   stroke-linejoin: round;
   stroke-dasharray: 242;
   stroke-dashoffset: 0;
-}
-
-.brand-mark--animated .brand-mark-path {
-  animation: brand-draw 900ms var(--motion-ease-enter) 100ms both;
+  /* 初次載入動畫 */
+  animation: brand-draw 1300ms cubic-bezier(0.45, 0, 0.2, 1) 150ms both;
 }
 
 /* 深色模式維持中性高對比，不再使用金色。 */
 :global(html.dark) .brand-mark {
   color: #f5f4f2;
+}
+
+/* 懸停時重播動畫：
+   1. 當滑鼠懸停在標誌本身
+   2. 當滑鼠懸停在標誌所在的超連結 a 上
+   3. 當滑鼠懸停在標誌所在的 h1 標題上 */
+.brand-mark:hover .brand-mark-path,
+:global(a:hover) .brand-mark .brand-mark-path,
+:global(h1:hover) .brand-mark .brand-mark-path {
+  animation: brand-draw-again 850ms cubic-bezier(0.45, 0, 0.2, 1) both;
 }
 
 @keyframes brand-draw {
@@ -63,9 +69,12 @@ withDefaults(
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .brand-mark--animated .brand-mark-path {
-    animation: none;
+@keyframes brand-draw-again {
+  from {
+    stroke-dashoffset: 242;
+  }
+  to {
+    stroke-dashoffset: 0;
   }
 }
 </style>

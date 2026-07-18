@@ -1257,7 +1257,7 @@ test('primary navigation keeps desktop chrome while mobile routes use a source-a
   assert.match(routeComponents, /preloadRequests/u);
   assert.match(routeComponents, /for \(const routeName of routeNames\)/u);
   assert.doesNotMatch(responsiveStyles, /\.page-content-(?:enter|leave)/u);
-  assert.match(app, /class="route-stage[^"\n]*h-full[\s\S]*<Transition name="route-swap">/u);
+  assert.match(app, /class="route-stage[^"\n]*h-full[\s\S]*<Transition name="route-swap" mode="out-in"/u);
   assert.match(app, /class="route-content-frame[^"\n]*flex h-full[^"\n]*flex-col/u);
   assert.match(appShell, /:data-bottom-nav="showMobileBottomNavigation/u);
   assert.match(appShell, /:data-sidebar="isAllowedUser/u);
@@ -1269,9 +1269,8 @@ test('primary navigation keeps desktop chrome while mobile routes use a source-a
   assert.match(baseStyles, /\.route-content-frame \{[\s\S]*-webkit-backface-visibility: hidden;[\s\S]*backface-visibility: hidden/u);
   assert.match(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.route-content-frame \{[\s\S]*padding-bottom: var\(--app-bottom-nav-height\)/u);
   assert.doesNotMatch(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.app-main-content \{[\s\S]{0,160}calc\(var\(--app-bottom-nav-height\) \+ 1rem\)/u);
-  assert.match(baseStyles, /\.route-swap-enter-active,[\s\S]*opacity 160ms[\s\S]*transform 160ms/u);
-  assert.match(baseStyles, /\.route-swap-leave-active \{[\s\S]*position: absolute/u);
-  assert.match(baseStyles, /\.route-swap-enter-from \{[\s\S]*translate3d\(0, 3px, 0\) scale\(0\.998\)/u);
+  assert.match(baseStyles, /\.route-swap-enter-active,[\s\S]*opacity 180ms[\s\S]*transform 180ms/u);
+  assert.match(baseStyles, /\.route-swap-enter-from \{[\s\S]*translate3d\(0, 6px, 0\)/u);
   assert.doesNotMatch(baseStyles, /route-(?:push|pop)/u);
   assert.match(baseStyles, /\.app-root\[data-sidebar='false'\] \.app-main-content/u);
   assert.match(appShell, /<ViewportFrame as="main" class="flex min-h-0 flex-1 flex-col">/u);
@@ -1679,10 +1678,10 @@ test('reusable UI primitives own buttons, surfaces, lists, dropdowns, controls, 
   assert.match(commentComposer, /control-frame/u);
   assert.match(commentComposer, /<EditorSurface[\s\S]*tone="muted"[\s\S]*<ImageRemoveButton/u);
   assert.match(contentCardSkeleton, /<SurfacePanel[\s\S]*class="issue-card skeleton-card"/u);
-  assert.match(segmentedControl, /SEGMENT_WIDTH_REM = 5\.25/u);
+  assert.match(segmentedControl, /ACTIVE_SEGMENT_WIDTH_REM = 7/u);
   assert.match(segmentedControl, /:style="containerStyle"/u);
-  assert.match(controls, /\.segmented-control__button--active \{[\s\S]*width: 5\.25rem/u);
-  assert.match(controls, /\.segmented-control__button--compact \{[\s\S]*width: 5\.25rem/u);
+  assert.match(controls, /\.segmented-control__button--active \{[\s\S]*width: 7rem/u);
+  assert.match(controls, /\.segmented-control__button--compact \{[\s\S]*width: 2rem/u);
   assert.match(notifications, /<ListSurfaceRow[\s\S]*interactive[\s\S]*class="notification-group-row"/u);
   assert.match(notifications, /<ListSurfaceRow[\s\S]*as="div"[\s\S]*class="notification-group-row"/u);
   assert.match(settingsView, /v-if="loading"[\s\S]*<SurfacePanel variant="list"/u);

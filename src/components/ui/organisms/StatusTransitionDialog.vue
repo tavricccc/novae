@@ -13,43 +13,41 @@
       :description="t(step === 1 ? selectDescription : resultDescription)"
     />
 
-    <div class="mt-5 space-y-4" :style="stepMotionStyle">
-      <Transition name="dialog-step" mode="out-in">
-        <div v-if="step === 1" key="selection">
-          <p class="field-label mb-2">{{ t("common.chooseTheNextStatus") }}</p>
-          <div class="grid gap-2">
-            <SelectionOptionButton
-              v-for="option in options"
-              :key="option.value"
-              :label="t(option.label)"
-              :description="t(option.description)"
-              :selected="status === option.value"
-              :disabled="saving"
-              @select="status = option.value"
-            />
-          </div>
-          <InlineAlert
-            v-if="statusWarnings[status]"
-            as="p"
-            tone="warning"
-            compact
-            class="mt-4"
-          >
-            {{ t(statusWarnings[status]) }}
-          </InlineAlert>
+    <div class="mt-5 space-y-4">
+      <div v-if="step === 1">
+        <p class="field-label mb-2">{{ t("common.chooseTheNextStatus") }}</p>
+        <div class="grid gap-2">
+          <SelectionOptionButton
+            v-for="option in options"
+            :key="option.value"
+            :label="t(option.label)"
+            :description="t(option.description)"
+            :selected="status === option.value"
+            :disabled="saving"
+            @select="status = option.value"
+          />
         </div>
-        <CountedTextareaField
-          v-else
-          key="result"
-          v-model="result"
-          :input-id="resultInputId"
-          :label="t(resultLabel)"
-          :max-length="resultMaxLength"
-          :warning-length="resultWarningLength"
-          :placeholder="t(resultPlaceholder)"
-          :disabled="saving"
-        />
-      </Transition>
+        <InlineAlert
+          v-if="statusWarnings[status]"
+          as="p"
+          tone="warning"
+          compact
+          class="mt-4"
+        >
+          {{ t(statusWarnings[status]) }}
+        </InlineAlert>
+      </div>
+
+      <CountedTextareaField
+        v-else
+        v-model="result"
+        :input-id="resultInputId"
+        :label="t(resultLabel)"
+        :max-length="resultMaxLength"
+        :warning-length="resultWarningLength"
+        :placeholder="t(resultPlaceholder)"
+        :disabled="saving"
+      />
     </div>
 
     <InlineMessage v-if="localError || error" class="mt-3">
@@ -90,7 +88,6 @@ import DialogActionRow from "@/components/ui/molecules/DialogActionRow.vue";
 import DialogHeading from "@/components/ui/molecules/DialogHeading.vue";
 import DialogShell from "@/components/ui/organisms/DialogShell.vue";
 import SelectionOptionButton from "@/components/ui/molecules/SelectionOptionButton.vue";
-import { useDialogStepMotion } from "@/composables/useDialogStepMotion";
 import { useI18n } from "@/i18n";
 
 interface StatusOption {
@@ -138,7 +135,7 @@ const emit = defineEmits<{
 const status = ref("");
 const result = ref("");
 const localError = ref("");
-const { goToStep, resetStep, step, stepMotionStyle } = useDialogStepMotion();
+const step = ref(1);
 const requiresResult = computed(() =>
   props.resultStatuses.includes(status.value),
 );
@@ -154,7 +151,7 @@ function handlePrimary() {
   localError.value = "";
   if (!status.value) return;
   if (step.value === 1 && requiresResult.value) {
-    goToStep(2);
+    step.value = 2;
     return;
   }
   const trimmedResult = result.value.trim();
@@ -167,7 +164,7 @@ function handlePrimary() {
 
 function handleSecondary() {
   if (step.value === 2) {
-    goToStep(1);
+    step.value = 1;
     localError.value = "";
     return;
   }
@@ -191,7 +188,7 @@ watch(
       : (props.options[0]?.value ?? "");
     result.value = props.initialResult;
     localError.value = "";
-    resetStep();
+    step.value = 1;
   },
   { immediate: true },
 );

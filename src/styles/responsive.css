@@ -187,23 +187,23 @@
 }
 
 .dialog-enter-active {
-  transition: opacity var(--motion-duration-dialog) var(--motion-ease-enter);
+  transition: opacity 0.36s var(--motion-ease-enter);
 }
 
 .dialog-leave-active {
-  transition: opacity var(--motion-duration) var(--motion-ease-exit);
+  transition: opacity 0.22s var(--motion-ease-exit);
 }
 
 .dialog-enter-active [data-dialog-root] {
   transition:
-    opacity var(--motion-duration-dialog) var(--motion-ease-enter),
-    transform var(--motion-duration-dialog) var(--motion-ease-enter);
+    opacity 0.36s var(--motion-ease-enter),
+    transform 0.36s var(--motion-ease-enter);
 }
 
 .dialog-leave-active [data-dialog-root] {
   transition:
-    opacity var(--motion-duration) var(--motion-ease-exit),
-    transform var(--motion-duration) var(--motion-ease-exit);
+    opacity 0.22s var(--motion-ease-exit),
+    transform 0.22s var(--motion-ease-exit);
 }
 
 .dialog-enter-from,
@@ -218,13 +218,13 @@
 
 .dialog-leave-to [data-dialog-root] {
   opacity: 0;
-  transform: translateY(12px) scale(0.985);
+  transform: translateY(-6px) scale(0.99);
 }
 
 .popover-enter-active {
   transition:
-    opacity var(--motion-duration-popover) var(--motion-ease-enter),
-    transform var(--motion-duration-popover) var(--motion-ease-enter);
+    opacity var(--motion-duration-panel) var(--motion-ease-enter),
+    transform var(--motion-duration-panel) var(--motion-ease-enter);
 }
 
 .popover-leave-active {
@@ -240,88 +240,18 @@
 
 .popover-leave-to {
   opacity: 0;
-  transform: translateY(8px) scale(0.97);
-}
-
-.dialog-step-enter-active,
-.dialog-step-leave-active {
-  transition:
-    opacity var(--motion-duration) var(--motion-ease-move),
-    transform var(--motion-duration) var(--motion-ease-move);
-}
-
-.dialog-step-enter-from {
-  opacity: 0;
-  transform: translate3d(var(--dialog-step-enter-x, 2%), 0, 0);
-}
-
-.dialog-step-leave-to {
-  opacity: 0;
-  transform: translate3d(var(--dialog-step-leave-x, -2%), 0, 0);
+  transform: translateY(-4px) scale(0.985);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
-  }
-
-  .route-swap-enter-active,
-  .route-swap-leave-active,
-  .dialog-enter-active,
-  .dialog-leave-active,
-  .dialog-enter-active [data-dialog-root],
-  .dialog-leave-active [data-dialog-root],
-  .popover-enter-active,
-  .popover-leave-active,
-  .action-feedback-enter-active,
-  .action-feedback-leave-active,
-  .dialog-step-enter-active,
-  .dialog-step-leave-active {
-    transition-duration: var(--motion-duration-fast) !important;
-    transition-property: opacity !important;
-  }
-
-  .route-swap-enter-from,
-  .route-swap-leave-to,
-  .dialog-enter-from [data-dialog-root],
-  .dialog-leave-to [data-dialog-root],
-  .popover-enter-from,
-  .popover-leave-to,
-  .action-feedback-enter-from,
-  .action-feedback-leave-to,
-  .dialog-step-enter-from,
-  .dialog-step-leave-to {
-    filter: none !important;
-    transform: none !important;
-  }
-}
-
-@media (prefers-reduced-transparency: reduce) {
-  .app-header,
-  .app-bottom-nav,
-  .app-sidebar,
-  .action-feedback-card,
-  .dialog-overlay,
-  .segmented-control,
-  .backdrop-blur,
-  .backdrop-blur-sm,
-  .backdrop-blur-md,
-  .backdrop-blur-xl {
-    -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;
-    background-color: rgb(var(--color-surface)) !important;
-  }
-}
-
-@media (prefers-contrast: more) {
-  .app-header,
-  .app-bottom-nav,
-  .app-sidebar,
-  .action-feedback-card,
-  .dialog-overlay > [data-dialog-root],
-  .dropdown-panel,
-  .segmented-control {
-    border: 1px solid rgb(var(--color-outline) / 0.72) !important;
+    transition-delay: 0s !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
