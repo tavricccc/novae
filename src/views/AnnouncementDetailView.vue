@@ -1,5 +1,5 @@
 <template>
-  <RoutePageFrame as="div" layout="fill">
+  <RoutePageFrame as="div" bottom-safe layout="fill">
     <DetailRouteState
       :allowed="isAllowedUser"
       :loading="sessionLoading || loading"

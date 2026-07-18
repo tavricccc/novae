@@ -1249,6 +1249,7 @@ test('primary navigation keeps desktop chrome and persistent mobile navigation',
   const notificationNavigation = await read('src/composables/useNotificationNavigation.ts');
   const baseStyles = await read('src/styles/base.css');
   const navigationStyles = await read('src/styles/navigation.css');
+  const primitives = await read('src/styles/primitives.css');
   const responsiveStyles = await read('src/styles/responsive.css');
 
   assert.doesNotMatch(app, /Transition name="page-content"/u);
@@ -1275,7 +1276,11 @@ test('primary navigation keeps desktop chrome and persistent mobile navigation',
   assert.match(baseStyles, /\.route-stage \{[\s\S]*isolation: isolate/u);
   assert.doesNotMatch(baseStyles, /\.route-stage \{[\s\S]{0,120}(?:contain: paint|overflow: hidden)/u);
   assert.match(baseStyles, /\.route-content-frame \{[\s\S]*-webkit-backface-visibility: hidden;[\s\S]*backface-visibility: hidden/u);
-  assert.match(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.route-content-frame \{[\s\S]*padding-bottom: var\(--app-bottom-nav-height\)/u);
+  assert.doesNotMatch(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.route-content-frame \{[\s\S]*padding-bottom/u);
+  assert.match(primitives, /\.route-page-frame--flow,[\s\S]*\.route-page-frame--bottom-safe \{[\s\S]*padding-bottom: calc\(var\(--app-bottom-nav-height\) \+ 1rem\)/u);
+  assert.match(primitives, /\.route-scroll-through \{[\s\S]*scroll-padding-bottom: calc\(var\(--app-bottom-nav-height\) \+ 1rem\)/u);
+  assert.match(issueBoard, /route-scroll-through[\s\S]*overflow-y-auto/u);
+  assert.match(facilitiesView, /route-scroll-through[\s\S]*overflow-y-auto/u);
   assert.doesNotMatch(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.app-main-content \{[\s\S]{0,160}calc\(var\(--app-bottom-nav-height\) \+ 1rem\)/u);
   assert.match(baseStyles, /\.route-swap-enter-active,[\s\S]*opacity 180ms[\s\S]*transform 180ms/u);
   assert.match(baseStyles, /\.route-swap-enter-from \{[\s\S]*translate3d\(0, 6px, 0\)/u);
@@ -1542,7 +1547,7 @@ test('authenticated route pages share one content width and AppShell owns horizo
   routePages.forEach((page) => assert.match(page, /<RoutePageFrame/u));
   routePages.forEach((page) => assert.doesNotMatch(page, /\broute-page\b|page-bottom-safe/u));
   routePages.forEach((page) => assert.doesNotMatch(page, /app-viewport-gutter|safe-area-inset-(?:left|right)/u));
-  routePages.slice(7).forEach((page) => assert.match(page, /<RoutePageFrame as="div" layout="fill">/u));
+  routePages.slice(7).forEach((page) => assert.match(page, /<RoutePageFrame as="div" bottom-safe layout="fill">/u));
   assert.doesNotMatch(issueBoard, /app-viewport-gutter/u);
   assert.match(appShell, /app-main-content[^"\n]*overflow-y-auto overflow-x-hidden/u);
   assert.doesNotMatch(contentStyles, /\.issue-card-grid \{[^}]*padding:/u);

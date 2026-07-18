@@ -1,5 +1,5 @@
 <template>
-  <RoutePageFrame bottom-safe layout="fill">
+  <RoutePageFrame>
     <div v-if="loading" class="space-y-6 py-4">
       <!-- Account Skeleton -->
       <SurfacePanel variant="list" padding="md" class="flex items-center gap-3">

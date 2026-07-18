@@ -55,8 +55,14 @@
   }
 
   @media (max-width: 767px) {
+    .route-page-frame--flow,
     .route-page-frame--bottom-safe {
       padding-bottom: calc(var(--app-bottom-nav-height) + 1rem);
+    }
+
+    .route-scroll-through {
+      padding-bottom: calc(var(--app-bottom-nav-height) + 1rem);
+      scroll-padding-bottom: calc(var(--app-bottom-nav-height) + 1rem);
     }
   }
 

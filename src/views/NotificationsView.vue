@@ -1,5 +1,5 @@
 <template>
-  <RoutePageFrame bottom-safe layout="fill" padding="compact">
+  <RoutePageFrame padding="compact">
     <div class="min-h-0 flex-1">
       <div :key="notificationPanelKey">
         <SurfacePanel

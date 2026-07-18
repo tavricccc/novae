@@ -377,10 +377,6 @@
       padding-top: calc(var(--app-header-height) + env(safe-area-inset-top) + 0.25rem);
     }
 
-    .app-root[data-bottom-nav='true'] .route-content-frame {
-      padding-bottom: var(--app-bottom-nav-height);
-    }
-
   }
 
   body.dialog-open .app-main-content {
