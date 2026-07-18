@@ -5,7 +5,7 @@
   }
 
   .scroll-shadow-bleed {
-    --scroll-shadow-bleed: 0.75rem;
+    --scroll-shadow-bleed: 1.5rem;
     margin-left: calc(var(--scroll-shadow-bleed) * -1);
     margin-right: calc(var(--scroll-shadow-bleed) * -1);
     margin-top: calc(var(--scroll-shadow-bleed) * -1);

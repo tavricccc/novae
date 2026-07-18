@@ -1256,7 +1256,8 @@ test('primary navigation keeps desktop chrome while mobile routes use a source-a
   assert.match(routeComponents, /preloadRequests/u);
   assert.match(routeComponents, /for \(const routeName of routeNames\)/u);
   assert.doesNotMatch(responsiveStyles, /\.page-content-(?:enter|leave)/u);
-  assert.match(app, /class="route-stage[\s\S]*<Transition :name="viewRoute\.meta\.navigationTransition/u);
+  assert.match(app, /class="route-stage[^"\n]*h-full[\s\S]*<Transition name="route-swap" mode="out-in"/u);
+  assert.match(app, /class="route-content-frame[^"\n]*flex h-full[^"\n]*flex-col/u);
   assert.match(appShell, /:data-bottom-nav="showMobileBottomNavigation/u);
   assert.match(appShell, /:data-sidebar="isAllowedUser/u);
   assert.match(appShell, /<Transition name="mobile-nav">[\s\S]*v-if="showMobileBottomNavigation"/u);
@@ -1267,11 +1268,9 @@ test('primary navigation keeps desktop chrome while mobile routes use a source-a
   assert.match(baseStyles, /\.route-content-frame \{[\s\S]*-webkit-backface-visibility: hidden;[\s\S]*backface-visibility: hidden/u);
   assert.match(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.route-content-frame \{[\s\S]*padding-bottom: var\(--app-bottom-nav-height\)/u);
   assert.doesNotMatch(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.app-main-content \{[\s\S]{0,160}calc\(var\(--app-bottom-nav-height\) \+ 1rem\)/u);
-  assert.match(baseStyles, /\.route-push-enter-active,[\s\S]*contain: layout paint;[\s\S]*transition: transform 380ms cubic-bezier\(0\.32, 0\.72, 0, 1\)/u);
-  assert.match(baseStyles, /\.route-push-enter-from,[\s\S]*translate3d\(100%, 0, 0\)/u);
-  assert.match(baseStyles, /\.route-push-enter-active,\s*\.route-pop-leave-active \{\s*z-index: 2;\s*\}/u);
-  assert.match(baseStyles, /\.route-push-enter-active::before,[\s\S]*box-shadow: var\(--shadow-floating\);[\s\S]*width: 1px/u);
-  assert.match(baseStyles, /\.route-pop-enter-from[\s\S]*translate3d\(-20%, 0, 0\)/u);
+  assert.match(baseStyles, /\.route-swap-enter-active,[\s\S]*opacity 180ms[\s\S]*transform 180ms/u);
+  assert.match(baseStyles, /\.route-swap-enter-from \{[\s\S]*translate3d\(0, 6px, 0\)/u);
+  assert.doesNotMatch(baseStyles, /route-(?:push|pop)/u);
   assert.match(baseStyles, /\.app-root\[data-sidebar='false'\] \.app-main-content/u);
   assert.match(appShell, /<ViewportFrame as="main" class="flex min-h-0 flex-1 flex-col">/u);
   assert.match(navigationStyles, /\.mobile-nav-enter-from,[\s\S]*translateY\(18px\) scale\(0\.96\)/u);
@@ -1525,7 +1524,9 @@ test('authenticated route pages share one content width and AppShell owns horizo
   routePages.forEach((page) => assert.doesNotMatch(page, /route-page-surface-inset/u));
   routePages.forEach((page) => assert.doesNotMatch(page, /route-page[^"\n]*(?:px-|pl-|pr-|mx-|ml-|mr-|left-|right-|max-w-)/u));
   assert.doesNotMatch(issueBoard, /app-viewport-gutter/u);
+  assert.match(appShell, /app-main-content[^"\n]*overflow-y-auto overflow-x-hidden/u);
   assert.doesNotMatch(contentStyles, /\.issue-card-grid \{[^}]*padding:/u);
+  assert.match(contentStyles, /\.scroll-shadow-bleed \{[\s\S]*--scroll-shadow-bleed: 1\.5rem/u);
   assert.match(contentStyles, /\.scroll-shadow-bleed \{[\s\S]*margin-left: calc\(var\(--scroll-shadow-bleed\) \* -1\);[\s\S]*margin-top: calc\(var\(--scroll-shadow-bleed\) \* -1\);[\s\S]*padding-left: var\(--scroll-shadow-bleed\);[\s\S]*padding-top: var\(--scroll-shadow-bleed\);/u);
   [issueBoard, routePages[1]]
     .forEach((page) => assert.match(page, /scroll-shadow-bleed[\s\S]*overflow-y-auto overflow-x-hidden/u));
