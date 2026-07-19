@@ -104,12 +104,12 @@ const error = ref('');
 
 function newIssueCategory(): IssueCategoryDraft {
   return {
-    id: '', label: '', description: '', readAccess: '', authorVisible: null,
+    id: '', label: '', readAccess: '', authorVisible: null,
     supportEnabled: false, supportGoal: null, supportDeadlineDays: null,
     responseDeadlineDays: null, commentsEnabled: true,
   };
 }
-function newFacilityCategory(): FacilityCategoryDraft { return { id: '', label: '', description: '' }; }
+function newFacilityCategory(): FacilityCategoryDraft { return { id: '', label: '' }; }
 const issueCategories = ref<IssueCategoryDraft[]>([newIssueCategory()]);
 const facilityCategories = ref<FacilityCategoryDraft[]>([newFacilityCategory()]);
 function addIssueCategory() { issueCategories.value.push(newIssueCategory()); }

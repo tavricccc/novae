@@ -41,11 +41,6 @@
           <p class="mt-1 text-xs leading-5 text-ink-500">{{ t(idLocked ? 'categoryAdmin.idLockedHelp' : 'categoryAdmin.idHelp') }}</p>
         </div>
       </div>
-
-      <div>
-        <label :for="`${fieldId}-description`" class="field-label">{{ t('categoryAdmin.description') }}</label>
-        <textarea :id="`${fieldId}-description`" v-model="draft.description" class="field mt-1.5 min-h-24 resize-y" maxlength="240" />
-      </div>
     </div>
 
     <!-- Advanced rules group -->

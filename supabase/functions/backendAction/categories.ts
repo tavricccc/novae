@@ -9,7 +9,6 @@ const READ_ACCESS_VALUES = new Set(["school", "reviewed-school", "owner-admin"])
 export interface RuntimeIssueCategory {
   authorVisible: boolean;
   commentsEnabled: boolean;
-  description: string;
   id: string;
   isActive: boolean;
   isDefault: boolean;
@@ -23,7 +22,6 @@ export interface RuntimeIssueCategory {
 }
 
 export interface RuntimeFacilityCategory {
-  description: string;
   id: string;
   isActive: boolean;
   isDefault: boolean;
@@ -41,11 +39,10 @@ function nullablePositiveInteger(value: unknown) {
 function categoryIdentity(value: JsonRecord) {
   const id = asString(value.id).trim();
   const label = asString(value.label).trim();
-  const description = asString(value.description).trim();
-  if (!CATEGORY_ID_PATTERN.test(id) || label.length < 1 || label.length > 40 || description.length > 240) {
+  if (!CATEGORY_ID_PATTERN.test(id) || label.length < 1 || label.length > 40) {
     throw new Error("validation-required");
   }
-  return { id, label, description };
+  return { id, label };
 }
 
 function issueCategoryInput(value: unknown, sortOrder: number) {
@@ -79,7 +76,6 @@ function issueCategoryResponse(row: Record<string, unknown>): RuntimeIssueCatego
   return {
     authorVisible: row.author_visible === true,
     commentsEnabled: row.comments_enabled !== false,
-    description: asString(row.description),
     id: asString(row.id),
     isActive: row.is_active !== false,
     isDefault: row.is_default === true,
@@ -97,7 +93,6 @@ function issueCategoryResponse(row: Record<string, unknown>): RuntimeIssueCatego
 
 function facilityCategoryResponse(row: Record<string, unknown>): RuntimeFacilityCategory {
   return {
-    description: asString(row.description),
     id: asString(row.id),
     isActive: row.is_active !== false,
     isDefault: row.is_default === true,
@@ -190,7 +185,6 @@ async function saveIssueCategory(payload: JsonRecord, auth: AuthContext, supabas
     author_visible: input.authorVisible,
     comments_enabled: input.commentsEnabled,
     created_by: existing ? existing.created_by : auth.uid,
-    description: input.description,
     id: input.id,
     is_active: existing ? asBoolean(requested.isActive, existing.is_active !== false) : true,
     is_default: asBoolean(requested.isDefault, existing?.is_default === true),
@@ -224,7 +218,6 @@ async function saveFacilityCategory(payload: JsonRecord, auth: AuthContext, supa
   }
   const row = {
     created_by: existing ? existing.created_by : auth.uid,
-    description: input.description,
     id: input.id,
     is_active: existing ? asBoolean(requested.isActive, existing.is_active !== false) : true,
     is_default: asBoolean(requested.isDefault, existing?.is_default === true),

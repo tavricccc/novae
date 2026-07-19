@@ -152,17 +152,17 @@ integrationTest("runtime category setup and management enforce platform permissi
   const setup = asRecord(await callAction("completeInitialSetup", {
     issueCategories: [
       {
-        id: "public-issues", label: "公共議題", description: "", readAccess: "reviewed-school",
+        id: "public-issues", label: "公共議題", readAccess: "reviewed-school",
         authorVisible: false, supportEnabled: true, supportGoal: 50, supportDeadlineDays: 14,
         responseDeadlineDays: 7, commentsEnabled: true,
       },
       {
-        id: "rights-maintenance", label: "學生權益", description: "", readAccess: "owner-admin",
+        id: "rights-maintenance", label: "學生權益", readAccess: "owner-admin",
         authorVisible: true, supportEnabled: false, supportGoal: null, supportDeadlineDays: null,
         responseDeadlineDays: 7, commentsEnabled: true,
       },
     ],
-    facilityCategories: [{ id: "general", label: "一般設備", description: "" }],
+    facilityCategories: [{ id: "general", label: "一般設備" }],
     requestId: requestId("complete-setup"),
   }, admin.auth));
   assert.equal(setup.success, true);
@@ -171,10 +171,10 @@ integrationTest("runtime category setup and management enforce platform permissi
   const publicCategory = asRecord((management.issueCategories as unknown[])
     .find((value) => asRecord(value).id === "public-issues"));
   const savedIssue = asRecord(await callAction("saveIssueCategory", {
-    category: { ...publicCategory, description: "Runtime-managed integration category" },
+    category: { ...publicCategory, label: "公共議題-修改" },
     requestId: requestId("save-issue-category"),
   }, admin.auth));
-  assert.equal(asRecord(savedIssue.category).description, "Runtime-managed integration category");
+  assert.equal(asRecord(savedIssue.category).label, "公共議題-修改");
   await expectActionError("immutable-category-policy", () => callAction("saveIssueCategory", {
     category: { ...publicCategory, readAccess: "school" },
     requestId: requestId("immutable-category"),
@@ -185,8 +185,8 @@ integrationTest("runtime category setup and management enforce platform permissi
 
   const facilityCategory = asRecord((management.facilityCategories as unknown[])[0]);
   const savedFacility = asRecord(await callAction("saveFacilityCategory", {
-    category: { ...facilityCategory, description: "Runtime-managed facility category" },
+    category: { ...facilityCategory, label: "一般設備-修改" },
     requestId: requestId("save-facility-category"),
   }, admin.auth));
-  assert.equal(asRecord(savedFacility.category).description, "Runtime-managed facility category");
+  assert.equal(asRecord(savedFacility.category).label, "一般設備-修改");
 });

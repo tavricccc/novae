@@ -67,7 +67,7 @@ const kindOptions = computed<readonly PillSegmentedControlOption<'issue' | 'faci
 
 function newIssue(index: number): IssueCategoryConfig {
   return {
-    id: '', label: '', description: '', readAccess: 'school', authorVisible: true,
+    id: '', label: '', readAccess: 'school', authorVisible: true,
     supportEnabled: false, supportGoal: null, supportDeadlineDays: null,
     responseDeadlineDays: null, commentsEnabled: true, isActive: true,
     isDefault: issueCategories.value.length === 0, sortOrder: index,
@@ -76,7 +76,7 @@ function newIssue(index: number): IssueCategoryConfig {
 
 function newFacility(index: number): FacilityCategoryConfig {
   return {
-    id: '', label: '', description: '', isActive: true,
+    id: '', label: '', isActive: true,
     isDefault: facilityCategories.value.length === 0, sortOrder: index,
   };
 }

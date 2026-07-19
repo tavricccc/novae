@@ -53,17 +53,6 @@
               {{ t(isIdValid ? 'categoryAdmin.idHelp' : 'categoryAdmin.idFormatError') }}
             </p>
           </div>
-
-          <div>
-            <label for="wizard-description" class="field-label">{{ t('categoryAdmin.description') }}</label>
-            <textarea
-              id="wizard-description"
-              v-model="form.description"
-              class="field mt-1.5 min-h-20 resize-y"
-              maxlength="240"
-              :placeholder="t('categoryAdmin.descriptionPlaceholder')"
-            />
-          </div>
         </div>
 
         <!-- Step 2: Privacy (Only for Issue) -->
@@ -147,11 +136,6 @@
               <p class="text-sm font-bold text-ink-900 dark:text-ink-100 mt-0.5">
                 {{ form.label }} <span class="text-xs text-ink-500 font-normal">({{ form.id }})</span>
               </p>
-            </div>
-            
-            <div v-if="form.description">
-              <p class="text-xs text-ink-400 font-semibold">{{ t('categoryAdmin.description') }}</p>
-              <p class="text-xs text-ink-700 dark:text-ink-300 mt-0.5 line-clamp-2">{{ form.description }}</p>
             </div>
 
             <template v-if="kind === 'issue'">
@@ -292,7 +276,6 @@ const totalSteps = computed(() => props.kind === 'issue' ? 4 : 2);
 const form = reactive({
   id: '',
   label: '',
-  description: '',
   readAccess: 'school' as IssueReadAccess,
   authorVisible: true,
   supportEnabled: false,
@@ -362,7 +345,6 @@ watch(() => props.open, (newVal) => {
     userEditedId.value = false;
     form.id = '';
     form.label = '';
-    form.description = '';
     form.readAccess = 'school';
     form.authorVisible = true;
     form.supportEnabled = false;
@@ -432,7 +414,6 @@ async function submit() {
       result = await saveIssueCategory({
         id: form.id,
         label: form.label,
-        description: form.description,
         readAccess: form.readAccess,
         authorVisible: form.authorVisible,
         supportEnabled: form.supportEnabled,
@@ -448,7 +429,6 @@ async function submit() {
       result = await saveFacilityCategory({
         id: form.id,
         label: form.label,
-        description: form.description,
         isActive: form.isActive,
         isDefault: form.isDefault,
         sortOrder: props.sortOrder,

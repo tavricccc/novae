@@ -255,13 +255,13 @@ interface AppPrivateTables {
   announcements: Table<AnnouncementRow>;
   comments: Table<CommentRow>;
   issue_categories: Table<{
-    id: string; label: string; description: string; read_access: string; author_visible: boolean;
+    id: string; label: string; read_access: string; author_visible: boolean;
     support_enabled: boolean; support_goal: number | null; support_deadline_days: number | null;
     response_deadline_days: number | null; comments_enabled: boolean; is_active: boolean;
     is_default: boolean; sort_order: number; created_by: string; created_at: string; updated_at: string;
   }>;
   facility_categories: Table<{
-    id: string; label: string; description: string; is_active: boolean; is_default: boolean;
+    id: string; label: string; is_active: boolean; is_default: boolean;
     sort_order: number; created_by: string; created_at: string; updated_at: string;
   }>;
   content_revisions: Table<ContentRevisionRow>;
