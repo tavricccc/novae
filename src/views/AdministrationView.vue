@@ -22,14 +22,20 @@
         />
       </div>
 
-      <CategoryWorkflowPanel v-if="activeTab === 'categories'" />
-      <MemberAccessPanel v-else />
+      <CategoryWorkflowPanel
+        v-if="visitedTabs.has('categories')"
+        v-show="activeTab === 'categories'"
+      />
+      <MemberAccessPanel
+        v-if="visitedTabs.has('members')"
+        v-show="activeTab === 'members'"
+      />
     </div>
   </RoutePageFrame>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import CategoryWorkflowPanel from '@/components/admin/CategoryWorkflowPanel.vue';
 import MemberAccessPanel from '@/components/admin/MemberAccessPanel.vue';
@@ -43,6 +49,9 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const activeTab = computed<AdministrationTab>(() => route.query.tab === 'members' ? 'members' : 'categories');
+const visitedTabs = reactive(new Set<AdministrationTab>([activeTab.value]));
+
+watch(activeTab, (tab) => { visitedTabs.add(tab); });
 
 function setTab(tab: AdministrationTab) {
   if (activeTab.value === tab) return;

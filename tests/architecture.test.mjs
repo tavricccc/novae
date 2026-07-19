@@ -1468,6 +1468,7 @@ test('navigation and contextual creation share the same responsive information a
   const facilitiesView = await read('src/views/FacilitiesView.vue');
   const announcementsView = await read('src/views/AnnouncementsView.vue');
   const settingsPanel = await read('src/components/SettingsPanelContent.vue');
+  const administrationView = await read('src/views/AdministrationView.vue');
   const issueComposer = await read('src/components/IssueComposer.vue');
   const composerShell = await read('src/components/ui/organisms/EntryComposerShell.vue');
   const controls = await read('src/styles/controls.css');
@@ -1499,6 +1500,9 @@ test('navigation and contextual creation share the same responsive information a
   assert.ok(settingsPanel.indexOf('dashboard.statistics') < settingsPanel.indexOf('adminCenter.openManagement'));
   assert.ok(settingsPanel.indexOf('adminCenter.openManagement') < settingsPanel.indexOf('settings.restartApp'));
   assert.ok(settingsPanel.indexOf('settings.restartApp') < settingsPanel.indexOf('settings.moreResources'));
+  assert.match(administrationView, /reactive\(new Set<AdministrationTab>\(\[activeTab\.value\]\)\)/u);
+  assert.match(administrationView, /v-if="visitedTabs\.has\('categories'\)"[\s\S]*v-show="activeTab === 'categories'"/u);
+  assert.match(administrationView, /v-if="visitedTabs\.has\('members'\)"[\s\S]*v-show="activeTab === 'members'"/u);
   await assert.rejects(read('src/components/CreateActionMenu.vue'));
   await assert.rejects(read('src/composables/useCreateEntryActions.ts'));
 });
