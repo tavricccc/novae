@@ -13,6 +13,7 @@
   -webkit-backdrop-filter: blur(12px) saturate(0.88);
   position: fixed;
   inset: 0;
+  opacity: var(--sheet-backdrop-opacity, 1);
   pointer-events: none;
   z-index: 0;
 }
@@ -29,9 +30,14 @@
 }
 
 .dialog-overlay > [data-dialog-root] {
+  --dialog-motion-scale: 1;
+  --dialog-motion-y: 0px;
+  backface-visibility: hidden;
   max-height: 100%;
   min-height: 0;
   position: relative;
+  transform: translate3d(0, var(--dialog-motion-y), 0) scale(var(--dialog-motion-scale));
+  transform-origin: 50% 50%;
   z-index: 1;
 }
 
@@ -180,7 +186,7 @@
 }
 
 .dialog-overlay[data-presentation='sheet'] {
-  --dialog-backdrop-alpha: calc(0.56 - var(--sheet-drag-progress, 0) * 0.38);
+  --sheet-backdrop-opacity: calc(1 - var(--sheet-drag-progress, 0) * 0.68);
   align-items: flex-end;
   justify-content: center;
   padding: 0 max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
@@ -191,14 +197,15 @@
   height: auto;
   max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top) - 1rem));
   overflow: hidden;
-  transform: translate3d(0, var(--sheet-drag-offset, 0px), 0);
+  transform: translate3d(0, calc(var(--sheet-drag-offset, 0px) + var(--dialog-motion-y)), 0) scale(var(--dialog-motion-scale));
+  transform-origin: 50% 100%;
   width: 100%;
 }
 
 .bottom-sheet-surface {
   position: relative;
   touch-action: pan-x;
-  transition: transform 280ms var(--motion-ease-enter);
+  transition: transform var(--motion-duration-panel) var(--motion-ease-spring);
 }
 
 .bottom-sheet-surface--dragging {
@@ -260,8 +267,8 @@
 .action-feedback-leave-active {
   transition:
     opacity var(--motion-duration) var(--motion-ease-enter),
-    transform var(--motion-duration-panel) var(--motion-ease-enter),
-    filter var(--motion-duration) var(--motion-ease-enter);
+    transform var(--motion-duration-panel) var(--motion-ease-spring);
+  will-change: transform, opacity;
 }
 
 .action-feedback-leave-active {
@@ -272,85 +279,122 @@
 .action-feedback-enter-from,
 .action-feedback-leave-to {
   opacity: 0;
-  transform: translateY(14px) scale(0.97);
-  filter: blur(3px);
+  transform: translate3d(0, 14px, 0) scale(0.97);
 }
 
 @media (max-width: 767px) {
   .action-feedback-enter-from,
   .action-feedback-leave-to {
-    transform: translateY(-12px) scale(0.97);
+    transform: translate3d(0, -12px, 0) scale(0.97);
   }
 }
 
+.dialog-enter-active {
+  /* Vue measures the transition root, not its descendants. This non-visual
+     transition keeps the child backdrop and surface classes alive. */
+  transition: visibility 640ms linear;
+}
+
+.dialog-overlay[data-backdrop='none'].dialog-enter-active {
+  transition: background-color 480ms var(--motion-ease-enter) 80ms;
+}
+
+.dialog-overlay[data-backdrop='none'].dialog-leave-active {
+  transition: background-color 240ms var(--motion-ease-exit);
+}
+
+.dialog-leave-active {
+  transition: visibility 280ms linear;
+}
+
 .dialog-enter-active .dialog-backdrop {
-  transition:
-    opacity 0.24s var(--motion-ease-enter) 0.09s,
-    backdrop-filter 0.24s var(--motion-ease-enter) 0.09s,
-    -webkit-backdrop-filter 0.24s var(--motion-ease-enter) 0.09s;
+  transition: opacity 400ms var(--motion-ease-enter) 160ms;
+  will-change: opacity;
 }
 
 .dialog-leave-active .dialog-backdrop {
-  transition:
-    opacity 0.18s var(--motion-ease-exit),
-    backdrop-filter 0.18s var(--motion-ease-exit),
-    -webkit-backdrop-filter 0.18s var(--motion-ease-exit);
+  transition: opacity 240ms var(--motion-ease-exit);
+  will-change: opacity;
 }
 
 .dialog-enter-active [data-dialog-root] {
   transition:
-    opacity 0.3s var(--motion-ease-enter) 0.06s,
-    transform 0.3s var(--motion-ease-enter) 0.06s;
+    opacity 360ms var(--motion-ease-enter) 120ms,
+    transform 500ms var(--motion-ease-spring) 120ms;
+  will-change: transform, opacity;
 }
 
 .dialog-leave-active [data-dialog-root] {
   transition:
-    opacity 0.22s var(--motion-ease-exit),
-    transform 0.22s var(--motion-ease-exit);
+    opacity 220ms var(--motion-ease-exit),
+    transform 260ms var(--motion-ease-exit);
+  will-change: transform, opacity;
 }
 
 .dialog-enter-from .dialog-backdrop,
 .dialog-leave-to .dialog-backdrop {
   opacity: 0;
-  backdrop-filter: blur(0) saturate(1);
-  -webkit-backdrop-filter: blur(0) saturate(1);
+}
+
+.dialog-overlay[data-backdrop='none'].dialog-enter-from,
+.dialog-overlay[data-backdrop='none'].dialog-leave-to {
+  background-color: transparent;
+}
+
+.dialog-enter-from[data-backdrop='none'] [data-dialog-root] {
+  --dialog-motion-scale: 0.99;
+  --dialog-motion-y: 8px;
 }
 
 .dialog-enter-from [data-dialog-root] {
+  --dialog-motion-scale: 0.94;
+  --dialog-motion-y: 16px;
   opacity: 0;
-  transform: translateY(12px) scale(0.985);
 }
 
 .dialog-leave-to [data-dialog-root] {
+  --dialog-motion-scale: 0.975;
+  --dialog-motion-y: -4px;
   opacity: 0;
-  transform: translateY(-6px) scale(0.99);
+}
+
+.dialog-enter-from[data-presentation='sheet'] [data-dialog-root] {
+  --dialog-motion-scale: 0.985;
+  --dialog-motion-y: 24px;
+}
+
+.dialog-leave-to[data-presentation='sheet'] [data-dialog-root] {
+  --dialog-motion-scale: 0.99;
+  --dialog-motion-y: 20px;
 }
 
 .popover-enter-active {
   transition:
     opacity var(--motion-duration-panel) var(--motion-ease-enter),
-    transform var(--motion-duration-panel) var(--motion-ease-enter);
+    transform var(--motion-duration-panel) var(--motion-ease-spring);
+  will-change: transform, opacity;
 }
 
 .popover-leave-active {
   transition:
-    opacity var(--motion-duration-fast) var(--motion-ease-exit),
-    transform var(--motion-duration-fast) var(--motion-ease-exit);
+    opacity 220ms var(--motion-ease-exit),
+    transform 240ms var(--motion-ease-exit);
+  will-change: transform, opacity;
 }
 
 .popover-enter-from {
   opacity: 0;
-  transform: translateY(8px) scale(0.97);
+  transform: translate3d(0, 8px, 0) scale(0.96);
 }
 
 .popover-leave-to {
   opacity: 0;
-  transform: translateY(-4px) scale(0.985);
+  transform: translate3d(0, -3px, 0) scale(0.985);
 }
 
 .detail-tab-enter-active,
 .detail-tab-leave-active {
-  transition: opacity 180ms var(--motion-ease-enter);
+  transition: opacity var(--motion-duration) var(--motion-ease-enter);
 }
 
 .detail-tab-leave-active {

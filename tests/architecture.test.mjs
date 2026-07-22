@@ -1417,18 +1417,18 @@ test('primary navigation keeps desktop chrome and persistent mobile navigation',
   assert.match(issueBoard, /route-scroll-through[\s\S]*overflow-auto/u);
   assert.match(facilitiesView, /route-scroll-through[\s\S]*overflow-auto/u);
   assert.doesNotMatch(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.app-main-content \{[\s\S]{0,160}calc\(var\(--app-bottom-nav-height\) \+ 1rem\)/u);
-  assert.match(baseStyles, /\.route-fade-enter-active,[\s\S]*\.route-forward-enter-active,[\s\S]*inset-inline-start 240ms[\s\S]*opacity 220ms/u);
-  assert.match(baseStyles, /\.route-fade-leave-active,[\s\S]*\.route-forward-leave-active,[\s\S]*inset-inline-start 180ms[\s\S]*opacity 160ms/u);
+  assert.match(baseStyles, /\.route-fade-enter-active,[\s\S]*\.route-forward-enter-active,[\s\S]*transition: opacity 380ms/u);
+  assert.match(baseStyles, /\.route-fade-leave-active,[\s\S]*\.route-forward-leave-active,[\s\S]*transition: opacity 280ms/u);
   assert.doesNotMatch(baseStyles, /\.route-(?:fade|forward|back)-(?:enter|leave)-active[\s\S]{0,220}position: absolute/u);
-  assert.match(baseStyles, /\.route-fade-enter-from,[\s\S]*\.route-fade-leave-to \{[\s\S]*opacity: 0;/u);
-  assert.match(baseStyles, /\.route-forward-enter-from \{[\s\S]*inset-inline-start: 0\.75rem[\s\S]*opacity: 0/u);
-  assert.match(baseStyles, /\.route-back-enter-from \{[\s\S]*inset-inline-start: -0\.5rem[\s\S]*opacity: 0/u);
+  assert.match(baseStyles, /\.route-fade-enter-from,[\s\S]*\.route-back-leave-to \{[\s\S]*opacity: 0;/u);
+  assert.match(baseStyles, /\.route-forward-enter-from,[\s\S]*\.route-back-enter-from,[\s\S]*opacity: 0/u);
+  assert.doesNotMatch(baseStyles, /route-(?:fade|forward|back)[\s\S]{0,180}inset-inline-start/u);
   assert.doesNotMatch(baseStyles, /route-(?:swap|push|pop)|route-(?:fade|forward|back)[\s\S]{0,180}transform/u);
   assert.doesNotMatch(mobileBottomNav, /indicatorStyle|translate3d|getBoundingClientRect|setNavElement/u);
   assert.match(navigationStyles, /\.app-bottom-nav__item--active \{[\s\S]*bg-ink-100\/90[\s\S]*shadow-control/u);
   assert.match(baseStyles, /\.app-root\[data-sidebar='false'\] \.app-main-content/u);
   assert.match(appShell, /<ViewportFrame as="main" class="flex min-h-0 flex-1 flex-col">/u);
-  assert.match(navigationStyles, /\.mobile-nav-enter-from,[\s\S]*translateY\(18px\) scale\(0\.96\)/u);
+  assert.match(navigationStyles, /\.mobile-nav-enter-from,[\s\S]*translate3d\(0, 18px, 0\) scale\(0\.96\)/u);
   assert.match(hierarchy, /name === 'issue-detail' && isMyProposals[\s\S]*NESTED_DETAIL_NAVIGATION_DEPTH/u);
   assert.match(hierarchy, /state\?\.navigationOrigin !== 'notifications'[\s\S]*router\.back\(\)/u);
   assert.match(notificationNavigation, /state: NOTIFICATION_NAVIGATION_STATE/u);
@@ -1444,12 +1444,12 @@ test('primary navigation keeps desktop chrome and persistent mobile navigation',
   assert.doesNotMatch(mobileHeader, /<AppButton\s+v-if="showBackButton"/u);
   assert.doesNotMatch(mobileHeader, /header-title|`title:|`category:/u);
   assert.match(baseStyles, /\.app-header__back \{[\s\S]*height: var\(--tap-target\);[\s\S]*min-width: var\(--tap-target\);[\s\S]*width: var\(--tap-target\)/u);
-  assert.match(navigationStyles, /\.app-header__back-slot \{[\s\S]*width: 0;[\s\S]*opacity: 0;[\s\S]*width 240ms/u);
+  assert.match(navigationStyles, /\.app-header__back-slot \{[\s\S]*width: 0;[\s\S]*opacity: 0;[\s\S]*width var\(--motion-duration-panel\) var\(--motion-ease-spring\)/u);
   assert.match(navigationStyles, /\.app-header__back-slot--visible \{[\s\S]*width: var\(--tap-target\);[\s\S]*margin-right: 0\.5rem;[\s\S]*opacity: 1;/u);
   assert.match(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.app-main-content \{\s*padding-bottom: 0;/u);
   assert.match(detailShell, /detail-tab-stage[\s\S]*<Transition name="detail-tab">/u);
   assert.doesNotMatch(detailShell, /detailTabTransitionName/u);
-  assert.match(responsiveStyles, /\.detail-tab-enter-active,[\s\S]*opacity 180ms/u);
+  assert.match(responsiveStyles, /\.detail-tab-enter-active,[\s\S]*opacity var\(--motion-duration\)/u);
   assert.doesNotMatch(responsiveStyles, /detail-tab[\s\S]{0,180}translateX/u);
   assert.match(baseStyles, /@media \(max-width: 767px\) \{[\s\S]*--app-header-height: 3rem/u);
   assert.doesNotMatch(detailShell, /v-else[\s\S]{0,120}class="panel/u);
@@ -1922,6 +1922,7 @@ test('reusable UI primitives own buttons, surfaces, lists, dropdowns, controls, 
   const tableGridPicker = await read('src/components/ui/molecules/TableGridPicker.vue');
   const dialogOverlay = await read('src/components/ui/molecules/DialogOverlay.vue');
   const dialogShell = await read('src/components/ui/organisms/DialogShell.vue');
+  const bottomSheetDrag = await read('src/composables/useBottomSheetDrag.ts');
   const responsiveStyles = await read('src/styles/responsive.css');
   const confirmDialog = await read('src/components/ConfirmDialog.vue');
   const entryComposer = await read('src/components/ui/organisms/EntryComposerShell.vue');
@@ -1958,6 +1959,7 @@ test('reusable UI primitives own buttons, surfaces, lists, dropdowns, controls, 
     '.surface-control',
     '.surface-card',
     '.surface-floating',
+    '.progress-fill',
     '.switch-indicator',
     '.switch-indicator--checked',
     '.inline-alert',
@@ -1999,7 +2001,7 @@ test('reusable UI primitives own buttons, surfaces, lists, dropdowns, controls, 
   assert.match(skeletonBlock, /<component :is="as" class="skeleton-block" aria-hidden="true">/u);
   assert.match(decodedImage, /<LoadingSpinner[\s\S]*decoding="async"[\s\S]*@load="handleLoad"/u);
   assert.match(decodedImage, /await image\.decode\(\)[\s\S]*image\.naturalWidth === 0[\s\S]*ready\.value = true/u);
-  assert.match(componentStyles, /\.decoded-image__media \{[\s\S]*opacity: 0;[\s\S]*transition: opacity 140ms/u);
+  assert.match(componentStyles, /\.decoded-image__media \{[\s\S]*opacity: 0;[\s\S]*transition: opacity var\(--motion-duration\)/u);
   assert.match(componentStyles, /\.decoded-image--ready \.decoded-image__media \{[\s\S]*opacity: 1;/u);
   assert.match(baseStyles, /--motion-ease-spring: linear\([^)]+\);[\s\S]*--press-scale: 1\.07;/u);
   assert.match(baseStyles, /--press-scale: 1\.07;/u);
@@ -2048,7 +2050,13 @@ test('reusable UI primitives own buttons, surfaces, lists, dropdowns, controls, 
   assert.match(dialogShell, /<DialogOverlay[\s\S]*ref="dialogRef"[\s\S]*useBodyScrollLock[\s\S]*useDialogFocus/u);
   assert.match(dialogOverlay, /:data-backdrop="isFullScreen \? 'none' : 'dimmed'"[\s\S]*class="dialog-backdrop"/u);
   assert.match(responsiveStyles, /\.dialog-backdrop \{[\s\S]*blur\(12px\) saturate\(0\.88\)[\s\S]*position: fixed;[\s\S]*inset: 0;/u);
-  assert.match(responsiveStyles, /\.dialog-enter-active \.dialog-backdrop \{[\s\S]*0\.09s/u);
+  assert.match(responsiveStyles, /\.dialog-enter-active \{[\s\S]*visibility 640ms/u);
+  assert.match(responsiveStyles, /\.dialog-enter-active \.dialog-backdrop \{[\s\S]*opacity 400ms[\s\S]*160ms/u);
+  assert.doesNotMatch(responsiveStyles, /\.dialog-enter-active \.dialog-backdrop \{[\s\S]{0,240}backdrop-filter/u);
+  assert.match(responsiveStyles, /\.dialog-enter-active \[data-dialog-root\] \{[\s\S]*transform 500ms var\(--motion-ease-spring\)/u);
+  assert.match(bottomSheetDrag, /cancelAnimationFrame[\s\S]*requestAnimationFrame/u);
+  assert.match(bottomSheetDrag, /function flushPendingOffset[\s\S]*scheduleOffset\(nextOffset\)/u);
+  assert.match(primitives, /\.progress-fill \{[\s\S]*transform-origin: 0 50%;[\s\S]*transform 560ms/u);
   assert.match(confirmDialog, /<DialogShell[\s\S]*described-by="confirm-dialog-message"/u);
   assert.match(confirmDialog, /<DialogActionRow>[\s\S]*<AppButton/u);
   assert.match(confirmDialog, /<DialogHeading[\s\S]*description-id="confirm-dialog-message"/u);

@@ -51,11 +51,11 @@
     --motion-ease-exit: cubic-bezier(0.32, 0, 0.67, 0);
     --motion-ease-press: cubic-bezier(0.2, 0.8, 0.2, 1);
     --motion-ease-spring: linear(0, 0.44 14%, 0.78 27%, 1.03 48%, 0.985 66%, 1.004 82%, 1);
-    --motion-duration-fast: 0.14s;
-    --motion-duration: 0.22s;
-    --motion-duration-panel: 0.32s;
-    --motion-duration-press: 0.16s;
-    --motion-duration-release: 0.38s;
+    --motion-duration-fast: 0.18s;
+    --motion-duration: 0.28s;
+    --motion-duration-panel: 0.42s;
+    --motion-duration-press: 0.18s;
+    --motion-duration-release: 0.48s;
     --press-scale: 1.07;
     --surface-gap: 0.375rem;
     --radius-inner: 1rem;
@@ -361,48 +361,28 @@
   .route-fade-enter-active,
   .route-forward-enter-active,
   .route-back-enter-active {
-    inset-inline-start: 0;
     position: relative;
     z-index: 2;
-    transition:
-      inset-inline-start 240ms var(--motion-ease-enter),
-      opacity 220ms var(--motion-ease-enter);
+    transition: opacity 380ms var(--motion-ease-enter);
+    will-change: opacity;
   }
 
   .route-fade-leave-active,
   .route-forward-leave-active,
   .route-back-leave-active {
-    inset-inline-start: 0;
     position: relative;
     z-index: 1;
     pointer-events: none;
-    transition:
-      inset-inline-start 180ms var(--motion-ease-exit),
-      opacity 160ms var(--motion-ease-exit);
+    transition: opacity 280ms var(--motion-ease-exit);
+    will-change: opacity;
   }
 
   .route-fade-enter-from,
-  .route-fade-leave-to {
-    opacity: 0;
-  }
-
-  .route-forward-enter-from {
-    inset-inline-start: 0.75rem;
-    opacity: 0;
-  }
-
-  .route-forward-leave-to {
-    inset-inline-start: -0.25rem;
-    opacity: 0;
-  }
-
-  .route-back-enter-from {
-    inset-inline-start: -0.5rem;
-    opacity: 0;
-  }
-
+  .route-fade-leave-to,
+  .route-forward-enter-from,
+  .route-forward-leave-to,
+  .route-back-enter-from,
   .route-back-leave-to {
-    inset-inline-start: 0.5rem;
     opacity: 0;
   }
 
@@ -414,13 +394,6 @@
     .route-back-enter-active,
     .route-back-leave-active {
       transition-duration: 1ms;
-    }
-
-    .route-forward-enter-from,
-    .route-forward-leave-to,
-    .route-back-enter-from,
-    .route-back-leave-to {
-      inset-inline-start: 0;
     }
   }
 

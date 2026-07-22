@@ -49,14 +49,14 @@
 
 - `main.ts` — 掛載 app、resume、PWA、session
 - `i18n/` — `messages/<locale>/<domain>.ts` 依語系與領域拆分的 catalog（含 API error code 對應文案）、系統語言首次偵測、localStorage 語言偏好、日期 locale 與共用 `t()`；所有前端可見字串只放語系目錄，key 使用短而穩定的語意命名
-- `App.vue` — startup gate + AppShell；route stage 使用固定 Grid 疊放新舊頁，依 navigation depth 套用短距離左右位移與 opacity，且不切換 absolute 定位、不使用 transform 合成陰影層或 `out-in` 卸載空檔；同層 route 維持純 crossfade
+- `App.vue` — startup gate + AppShell；route stage 使用固定 Grid 疊放新舊頁，navigation depth 僅保留轉場語意，實際統一採用較完整的 opacity crossfade，且不切換 absolute 定位、不使用 transform 合成陰影層或 `out-in` 卸載空檔
 - `sw.ts` — PWA SW、快取策略、FCM 背景通知
 - `style.css` — 全域樣式載入入口；依序載入 base、primitives 與領域樣式
-- `styles/base.css` — design tokens、全域基礎與頁面骨架
-- `styles/primitives.css` — viewport、control／card／floating 表面與陰影、list、dropdown、control frame 的單一可復用視覺契約；Tailwind 陰影名稱同樣只使用 `shadow-control`、`shadow-card`、`shadow-floating`
+- `styles/base.css` — design tokens、全域基礎與頁面骨架；route 換頁使用不觸發 layout、也不建立整頁 transform containing block 的長曲線 opacity crossfade
+- `styles/primitives.css` — viewport、control／card／floating 表面與陰影、list、dropdown、control frame、GPU progress fill 的單一可復用視覺契約；Tailwind 陰影名稱同樣只使用 `shadow-control`、`shadow-card`、`shadow-floating`
 - `styles/components.css` / `controls.css` — 共用表面、互動狀態、按鈕與欄位；全域點擊回饋使用無位移的輕微放大與 spring-like 回彈，大型表面降低幅度，不叠加縮小、下沉或 inset shadow
-- `styles/navigation.css` — 桌面側欄與手機底部導覽
-- `styles/content.css` / `responsive.css` — 列表、設定、統計、Dialog 與跨裝置覆寫；Dialog 使用獨立全畫面 backdrop，延後漸進壓暗／模糊，避免覆蓋尚未完成的按壓回彈
+- `styles/navigation.css` — 桌面側欄與手機底部導覽；浮入與 scrim 使用 opacity／局部 transform，窄桌面側欄展開不再推動整個內容 viewport
+- `styles/content.css` / `responsive.css` — 列表、設定、統計、Dialog 與跨裝置覆寫；Dialog 根節點保留 Vue transition 生命週期，surface 與獨立全畫面 backdrop 延後分層進場，blur 維持固定值只動畫 opacity
 - `assets/fonts/` — JetBrains Mono 與 Material Symbols 子集
 - `router/index.ts` / `router/default-route.ts` / `router/route-components.ts` / `router/navigation-hierarchy.ts` — 組合 modules、依啟用功能選擇登入預設頁並阻擋已關閉入口、abort 上一頁、session guard、主要頁面與三領域新增頁 chunk 預載，以及 root／新增／子頁／巢狀詳情深度與通知來源返回
 - `router/authRoutes.ts` / `issueRoutes.ts` / `facilityRoutes.ts` / `announcementRoutes.ts` / `adminRoutes.ts` / `notificationRoutes.ts` / `settingsRoutes.ts`
@@ -117,7 +117,7 @@
 - 公告：`useAnnouncements`、`useAnnouncementManagement`、`useAnnouncementDetail`（詳情讀取、快取、Realtime、按讚與刪除流程）
 - 設備：`useFacilities`、`useFacilityDetail`、`useFacilityComposerForm`
 - 通知／推播：`useNotificationBadge`、`useNotifications`、`useNotificationNavigation`（開啟內容時保留通知 root 來源，詳情返回會 pop 回通知）、`useNotificationDisplay`（依目前語系組合通知標題、狀態與舊資料內容）、`usePushNotifications`、`usePushPermissionPrompt`
-- UI 流程：`useActionFeedback`、`useActiveNavigationRefresh`、`useAuthenticatedDetailState`、`useDetailRouteQuery`、`useContentListRuntime`（三領域共用最短載入、逾時／斷線、重試、無限捲動與導覽重新整理）、`useBodyScrollLock`、`useBottomSheetDrag`（距離／速度門檻與跟手回彈）、`useOverlayBack`（LIFO 系統返回）、`useLongPress`（移動容差與 click 抑制）、`useVisualViewport`（手機鍵盤可視高度）、`useDialogFocus`、`useDialogThemeColor`、`useDropdownPosition`、`useClickOutside`、`useInfiniteScroll`、`useMinimumLoading`、`useLoadingTimeout`、`useTimedMessage`、`useNetworkStatus`、`useCompactTableLayout`
+- UI 流程：`useActionFeedback`、`useActiveNavigationRefresh`、`useAuthenticatedDetailState`、`useDetailRouteQuery`、`useContentListRuntime`（三領域共用最短載入、逾時／斷線、重試、無限捲動與導覽重新整理）、`useBodyScrollLock`、`useBottomSheetDrag`（距離／速度門檻、每 animation frame 合併 pointer 位移與跟手回彈）、`useOverlayBack`（LIFO 系統返回）、`useLongPress`（移動容差與 click 抑制）、`useVisualViewport`（手機鍵盤可視高度）、`useDialogFocus`、`useDialogThemeColor`、`useDropdownPosition`、`useClickOutside`、`useInfiniteScroll`、`useMinimumLoading`、`useLoadingTimeout`、`useTimedMessage`、`useNetworkStatus`、`useCompactTableLayout`
 - App：`useAppResume`、`useAppStartupGate`、`useAppUpdate`、`useAppInstallPrompt`、`useShareUrl`、`useAuthorProfile`
 - Markdown／圖：`useMarkdown`、`useResolvedMarkdown`、`useImageUpload`、`useMarkdownImageUpload`、`useMarkdownImageEditor`
 - Dashboard：`usePlatformDashboard`、`useDashboardMetrics`

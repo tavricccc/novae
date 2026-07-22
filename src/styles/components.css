@@ -12,7 +12,7 @@
   .decoded-image__media {
     display: block;
     opacity: 0;
-    transition: opacity 140ms var(--motion-ease-enter);
+    transition: opacity var(--motion-duration) var(--motion-ease-enter);
   }
 
   .decoded-image--ready .decoded-image__media {

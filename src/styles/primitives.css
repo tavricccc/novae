@@ -381,6 +381,13 @@
     background-color: rgb(var(--color-secondary-container) / 0.52);
   }
 
+  .progress-fill {
+    transform-origin: 0 50%;
+    transition: transform 560ms var(--motion-ease-spring);
+    width: 100%;
+    will-change: transform;
+  }
+
   .list-surface-row--interactive:is(:active, .is-pressing) {
     --press-scale: 1.025;
     background-color: rgb(var(--color-secondary-container) / 0.86);

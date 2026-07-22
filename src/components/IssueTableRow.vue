@@ -46,7 +46,7 @@
         </div>
         <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-ink-200/80 dark:bg-ink-700" aria-hidden="true">
           <div
-            class="h-full rounded-full bg-ink-900 transition-all duration-500 dark:bg-ink-100"
+            class="progress-fill h-full rounded-full bg-ink-900 dark:bg-ink-100"
             :style="supportProgressStyle"
           ></div>
         </div>

@@ -20,7 +20,7 @@
         </div>
         <div class="relative h-2 w-full overflow-hidden rounded-full bg-ink-200/50 dark:bg-ink-800/80">
           <div
-            class="h-full rounded-full bg-ink-900 transition-all duration-500 dark:bg-ink-100"
+            class="progress-fill h-full rounded-full bg-ink-900 dark:bg-ink-100"
             :style="supportProgressStyle"
           ></div>
         </div>

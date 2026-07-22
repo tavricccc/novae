@@ -14,16 +14,41 @@ export function useBottomSheetDrag(options: {
   let startY = 0;
   let lastY = 0;
   let lastTime = 0;
+  let frameId = 0;
+  let pendingOffset = 0;
   let velocity = 0;
+  const dragHeight = ref(1);
 
   const style = computed(() => ({
     '--sheet-drag-offset': `${offset.value}px`,
-    '--sheet-drag-progress': String(Math.min(1, offset.value / Math.max(1, options.surface.value?.offsetHeight ?? 1))),
+    '--sheet-drag-progress': String(Math.min(1, offset.value / dragHeight.value)),
   }));
 
+  function cancelPendingFrame() {
+    if (!frameId) return;
+    window.cancelAnimationFrame(frameId);
+    frameId = 0;
+  }
+
+  function flushPendingOffset() {
+    cancelPendingFrame();
+    offset.value = pendingOffset;
+  }
+
+  function scheduleOffset(nextOffset: number) {
+    pendingOffset = nextOffset;
+    if (frameId) return;
+    frameId = window.requestAnimationFrame(() => {
+      frameId = 0;
+      offset.value = pendingOffset;
+    });
+  }
+
   function reset() {
+    cancelPendingFrame();
     activePointerId = null;
     dragging.value = false;
+    pendingOffset = 0;
     offset.value = 0;
     velocity = 0;
   }
@@ -34,6 +59,8 @@ export function useBottomSheetDrag(options: {
     startY = event.clientY;
     lastY = event.clientY;
     lastTime = event.timeStamp;
+    dragHeight.value = Math.max(1, options.surface.value?.offsetHeight ?? 1);
+    pendingOffset = 0;
     velocity = 0;
     dragging.value = true;
     (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
@@ -46,13 +73,13 @@ export function useBottomSheetDrag(options: {
     velocity = (event.clientY - lastY) / elapsed;
     lastY = event.clientY;
     lastTime = event.timeStamp;
-    offset.value = nextOffset;
+    scheduleOffset(nextOffset);
   }
 
   function finish(event: PointerEvent) {
     if (activePointerId !== event.pointerId) return;
-    const height = Math.max(1, options.surface.value?.offsetHeight ?? 1);
-    const shouldClose = offset.value >= height * CLOSE_DISTANCE_RATIO || velocity >= CLOSE_VELOCITY;
+    flushPendingOffset();
+    const shouldClose = offset.value >= dragHeight.value * CLOSE_DISTANCE_RATIO || velocity >= CLOSE_VELOCITY;
     reset();
     if (shouldClose && !options.disabled.value) options.onClose();
   }

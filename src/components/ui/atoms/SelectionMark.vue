@@ -1,6 +1,6 @@
 <template>
   <span
-    class="flex h-5 w-5 shrink-0 items-center justify-center transition-all"
+    class="selection-mark flex h-5 w-5 shrink-0 items-center justify-center"
     :class="selected
       ? 'scale-100 text-ink-900 opacity-100 dark:text-ink-100'
       : 'scale-75 text-ink-900 opacity-0 dark:text-ink-100'"
@@ -17,3 +17,12 @@ defineProps<{
   selected: boolean;
 }>();
 </script>
+
+<style scoped>
+.selection-mark {
+  transition:
+    opacity var(--motion-duration) var(--motion-ease-enter),
+    scale var(--motion-duration-panel) var(--motion-ease-spring);
+  will-change: transform, opacity;
+}
+</style>

@@ -7,8 +7,8 @@
   .mobile-nav-leave-active {
     transition:
       opacity var(--motion-duration-panel) var(--motion-ease-enter),
-      transform var(--motion-duration-panel) var(--motion-ease-enter),
-      filter var(--motion-duration) var(--motion-ease-enter);
+      transform var(--motion-duration-panel) var(--motion-ease-spring);
+    will-change: transform, opacity;
   }
 
   .mobile-nav-leave-active {
@@ -19,8 +19,7 @@
   .mobile-nav-enter-from,
   .mobile-nav-leave-to {
     opacity: 0;
-    filter: blur(3px);
-    transform: translateY(18px) scale(0.96);
+    transform: translate3d(0, 18px, 0) scale(0.96);
   }
 
   .app-bottom-nav__item {
@@ -70,9 +69,9 @@
     opacity: 0;
     pointer-events: none;
     transition:
-      width 240ms var(--motion-ease-enter),
-      margin-right 240ms var(--motion-ease-enter),
-      opacity 160ms var(--motion-ease-exit);
+      width var(--motion-duration-panel) var(--motion-ease-spring),
+      margin-right var(--motion-duration-panel) var(--motion-ease-spring),
+      opacity var(--motion-duration) var(--motion-ease-enter);
     will-change: width, margin-right, opacity;
   }
 
@@ -105,7 +104,7 @@
 
   .app-sidebar {
     width: var(--app-sidebar-panel-width);
-    transition: width var(--motion-duration-panel) var(--motion-ease-enter);
+    transition: width var(--motion-duration-panel) var(--motion-ease-spring);
   }
 
   .app-sidebar__scrim {
@@ -114,8 +113,23 @@
 
   @media (min-width: 768px) and (max-width: 1399px) {
     .app-root[data-sidebar-expanded='true'] {
-      --app-sidebar-width: var(--app-sidebar-expanded-width);
+      --app-sidebar-width: var(--app-sidebar-collapsed-width);
       --app-sidebar-panel-width: var(--app-sidebar-expanded-width);
+    }
+
+    .app-sidebar__scrim {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: block;
+      border: 0;
+      background: rgb(var(--color-shadow) / 0.18);
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+      transition:
+        opacity var(--motion-duration) var(--motion-ease-enter),
+        visibility 0s linear var(--motion-duration);
     }
 
     .app-root[data-sidebar-expanded='true'] .app-sidebar {
@@ -123,14 +137,10 @@
     }
 
     .app-root[data-sidebar-expanded='true'] .app-sidebar__scrim {
-      position: fixed;
-      inset: 0;
-      z-index: 30;
-      display: block;
-      border: 0;
-      background: rgb(var(--color-shadow) / 0.18);
-      scale: 1;
-      translate: 0;
+      opacity: 1;
+      pointer-events: auto;
+      visibility: visible;
+      transition-delay: 0s;
     }
   }
 
@@ -147,7 +157,7 @@
   .app-sidebar__brand-label {
     @apply min-w-0 truncate text-sm font-semibold tracking-[0.015em];
     opacity: 0;
-    transition: opacity var(--motion-duration-fast) ease;
+    transition: opacity var(--motion-duration) var(--motion-ease-enter);
   }
 
   .app-sidebar__toggle {
@@ -179,7 +189,9 @@
     opacity: 0;
     pointer-events: none;
     transform: translate(-0.25rem, -50%);
-    transition: opacity var(--motion-duration-fast) ease, transform var(--motion-duration-fast) ease;
+    transition:
+      opacity var(--motion-duration) var(--motion-ease-enter),
+      transform var(--motion-duration-panel) var(--motion-ease-spring);
     white-space: nowrap;
   }
 
@@ -211,15 +223,6 @@
 
   .app-sidebar__utilities {
     padding-inline: 1rem;
-  }
-
-  .app-bottom-nav__inner > div:first-child {
-    transition:
-      transform 280ms var(--motion-ease-enter),
-      width 280ms var(--motion-ease-enter),
-      height 280ms var(--motion-ease-enter),
-      opacity var(--motion-duration) var(--motion-ease);
-    will-change: transform, width;
   }
 
   .desktop-utility-popup {
