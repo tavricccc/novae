@@ -1377,7 +1377,8 @@ test('primary navigation keeps desktop chrome and persistent mobile navigation',
   assert.match(defaultRoute, /issue-create[\s\S]*facility-create/u);
   assert.match(appShell, /isComposerRoute[\s\S]*showAuthenticatedChrome\.value && !isComposerRoute\.value/u);
   assert.doesNotMatch(responsiveStyles, /\.page-content-(?:enter|leave)/u);
-  assert.match(app, /class="route-stage[^"\n]*h-full[\s\S]*<Transition :name="routeTransitionName" mode="out-in"/u);
+  assert.match(app, /class="route-stage[^"\n]*h-full[\s\S]*<Transition :name="routeTransitionName">/u);
+  assert.doesNotMatch(app, /<Transition :name="routeTransitionName" mode="out-in"/u);
   assert.match(app, /getRouteNavigationDepth[\s\S]*route-forward[\s\S]*route-back/u);
   assert.match(app, /class="route-content-frame[^"\n]*flex h-full[^"\n]*flex-col/u);
   assert.match(appShell, /:data-bottom-nav="showMobileBottomNavigation/u);
@@ -1398,12 +1399,13 @@ test('primary navigation keeps desktop chrome and persistent mobile navigation',
   assert.doesNotMatch(baseStyles, /\.route-stage \{[\s\S]{0,120}(?:contain: paint|overflow: hidden)/u);
   assert.match(baseStyles, /\.route-content-frame \{[\s\S]*-webkit-backface-visibility: hidden;[\s\S]*backface-visibility: hidden/u);
   assert.doesNotMatch(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.route-content-frame \{[\s\S]*padding-bottom/u);
-  assert.match(primitives, /\.route-page-frame--flow,[\s\S]*\.route-page-frame--bottom-safe \{[\s\S]*padding-bottom: calc\(var\(--app-bottom-nav-height\) \+ 1rem\)/u);
+  assert.match(primitives, /\.route-page-frame--flow,[\s\S]*\.route-page-frame--bottom-safe \{\s*padding-bottom: max\(0px, calc\(var\(--app-bottom-nav-height\) \+ var\(--app-bottom-nav-gap\) - 0\.375rem\)\);/u);
   assert.match(primitives, /\.route-scroll-through \{[\s\S]*scroll-padding-bottom: calc\(var\(--app-bottom-nav-height\) \+ 1rem\)/u);
   assert.match(issueBoard, /route-scroll-through[\s\S]*overflow-y-auto/u);
   assert.match(facilitiesView, /route-scroll-through[\s\S]*overflow-y-auto/u);
   assert.doesNotMatch(baseStyles, /\.app-root\[data-bottom-nav='true'\] \.app-main-content \{[\s\S]{0,160}calc\(var\(--app-bottom-nav-height\) \+ 1rem\)/u);
-  assert.match(baseStyles, /\.route-swap-enter-active,[\s\S]*opacity 180ms[\s\S]*transform 180ms/u);
+  assert.match(baseStyles, /\.route-swap-enter-active,[\s\S]*opacity 260ms[\s\S]*transform 280ms/u);
+  assert.match(baseStyles, /\.route-swap-leave-active,[\s\S]*position: absolute;[\s\S]*opacity 180ms[\s\S]*transform 240ms/u);
   assert.match(baseStyles, /\.route-swap-enter-from \{[\s\S]*translate3d\(0, 6px, 0\)/u);
   assert.match(baseStyles, /@supports \(-webkit-touch-callout: none\)[\s\S]*\.route-content-frame \{[\s\S]*backface-visibility: visible[\s\S]*transition-property: opacity[\s\S]*will-change: opacity/u);
   assert.match(baseStyles, /@supports \(-webkit-touch-callout: none\)[\s\S]*\.route-swap-enter-from,[\s\S]*\.route-back-leave-to \{[\s\S]*transform: none/u);
@@ -1422,7 +1424,13 @@ test('primary navigation keeps desktop chrome and persistent mobile navigation',
   assert.match(detailShell, /v-else[\s\S]{0,240}pb-\[5px\]/u);
   assert.match(detailSkeleton, /v-else[\s\S]{0,240}pb-\[5px\]/u);
   assert.match(mobileHeader, /<AppButton[\s\S]{0,120}variant="icon"[\s\S]{0,120}class="app-header__back/u);
+  assert.match(mobileHeader, /app-header__back-slot[\s\S]*app-header__back-slot--visible[\s\S]*<Transition name="header-title">/u);
+  assert.doesNotMatch(mobileHeader, /<AppButton\s+v-if="showBackButton"/u);
   assert.match(baseStyles, /\.app-header__back \{[\s\S]*height: 1\.875rem;[\s\S]*width: 1\.875rem/u);
+  assert.match(navigationStyles, /\.app-header__back-slot \{[\s\S]*width: 0;[\s\S]*opacity: 0;[\s\S]*width 240ms/u);
+  assert.match(navigationStyles, /\.app-header__back-slot--visible \{[\s\S]*width: 1\.875rem;[\s\S]*margin-right: 0\.5rem;[\s\S]*opacity: 1;/u);
+  assert.match(detailShell, /detail-tab-stage[\s\S]*<Transition :name="detailTabTransitionName">/u);
+  assert.match(responsiveStyles, /\.detail-tab-forward-enter-active,[\s\S]*opacity 200ms[\s\S]*transform 240ms/u);
   assert.match(baseStyles, /@media \(max-width: 767px\) \{[\s\S]*--app-header-height: 3rem/u);
   assert.doesNotMatch(detailShell, /v-else[\s\S]{0,120}class="panel/u);
   assert.doesNotMatch(detailSkeleton, /h-7 w-1\/2|h-6 w-1\/2/u);
@@ -1683,6 +1691,7 @@ test('navigation and contextual creation share the same responsive information a
   const notificationsView = await read('src/views/NotificationsView.vue');
   const navigationStyles = await read('src/styles/navigation.css');
   const responsiveStyles = await read('src/styles/responsive.css');
+  const primitives = await read('src/styles/primitives.css');
   const issueComposerView = await read('src/views/IssueComposerView.vue');
   const facilityComposerView = await read('src/views/FacilityComposerView.vue');
   const announcementComposerView = await read('src/views/AnnouncementComposerView.vue');
@@ -1723,6 +1732,10 @@ test('navigation and contextual creation share the same responsive information a
     .forEach((view) => assert.match(view, /<RoutePageFrame[^>]*bleed[^>]*layout="fill"[^>]*entry-composer-page/u));
   assert.match(responsiveStyles, /\.entry-composer-page \{[\s\S]*max-width: none/u);
   assert.match(responsiveStyles, /\.entry-composer-page__surface \{[\s\S]*border-radius: 0;[\s\S]*box-shadow: none/u);
+  assert.match(responsiveStyles, /@media \(min-width: 640px\) \{[\s\S]*\.entry-composer__footer \{[\s\S]*padding-bottom: 0\.375rem;/u);
+  assert.match(responsiveStyles, /@media \(max-width: 767px\) \{[\s\S]*\.entry-composer-page__surface \{[\s\S]*padding-bottom: max\(0\.75rem, calc\(env\(safe-area-inset-bottom\) - 1rem\)\);[\s\S]*padding-left: max\(1rem, env\(safe-area-inset-left\)\);[\s\S]*padding-right: max\(1rem, env\(safe-area-inset-right\)\);/u);
+  assert.match(appShell, /'--app-bottom-nav-gap':[\s\S]*bottomGap\.value/u);
+  assert.match(primitives, /\.route-page-frame--bottom-safe \{[\s\S]*padding-bottom: max\(0px, calc\(var\(--app-bottom-nav-height\) \+ var\(--app-bottom-nav-gap\) - 0\.375rem\)\);/u);
   assert.match(responsiveStyles, /\.dialog-surface\.surface-pad-lg \{[\s\S]*padding-top: calc\(var\(--panel-padding\) \+ 0\.375rem\)/u);
   assert.ok(settingsPanel.indexOf('issue.myProposal') < settingsPanel.indexOf('dashboard.statistics'));
   assert.ok(settingsPanel.indexOf('dashboard.statistics') < settingsPanel.indexOf('adminCenter.openManagement'));

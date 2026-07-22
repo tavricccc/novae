@@ -74,6 +74,7 @@
     --control-padding-x: 1rem;
     --control-padding-y: 0.75rem;
     --app-bottom-nav-safe-padding: max(0.5rem, env(safe-area-inset-bottom));
+    --app-bottom-nav-gap: 0px;
     --app-bottom-nav-height: calc(4.5rem + var(--app-bottom-nav-safe-padding));
     --visual-viewport-height: 100dvh;
     --visual-viewport-offset-top: 0px;
@@ -297,6 +298,10 @@
   .app-header {
     background-color: rgb(var(--color-page-background) / 0.95);
     padding-top: env(safe-area-inset-top);
+    transition:
+      background-color var(--motion-duration) var(--motion-ease),
+      border-color var(--motion-duration) var(--motion-ease),
+      box-shadow var(--motion-duration) var(--motion-ease);
   }
 
   .app-header::before {
@@ -344,20 +349,27 @@
   }
 
   .route-swap-enter-active,
-  .route-swap-leave-active,
   .route-forward-enter-active,
-  .route-forward-leave-active,
-  .route-back-enter-active,
-  .route-back-leave-active {
+  .route-back-enter-active {
+    position: relative;
+    z-index: 2;
     transition:
-      opacity 180ms var(--motion-ease-enter),
-      transform 180ms var(--motion-ease-enter);
+      opacity 260ms var(--motion-ease-enter),
+      transform 280ms var(--motion-ease-enter);
     will-change: opacity, transform;
   }
 
-  .route-swap-leave-active {
-    transition-duration: 110ms;
-    transition-timing-function: var(--motion-ease-exit);
+  .route-swap-leave-active,
+  .route-forward-leave-active,
+  .route-back-leave-active {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    transition:
+      opacity 180ms var(--motion-ease-exit),
+      transform 240ms var(--motion-ease-exit);
+    will-change: opacity, transform;
   }
 
   .route-swap-enter-from {
@@ -375,7 +387,7 @@
   }
 
   .route-forward-leave-to {
-    opacity: 0;
+    opacity: 0.72;
     transform: translate3d(-0.35rem, 0, 0);
   }
 
@@ -385,7 +397,7 @@
   }
 
   .route-back-leave-to {
-    opacity: 0;
+    opacity: 0.72;
     transform: translate3d(0.75rem, 0, 0);
   }
 

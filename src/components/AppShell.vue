@@ -165,6 +165,9 @@ const mobileCategoryLabel = computed(() => mobileCategoryFilter.value
 const bottomGap = computed(() => hasSafeIndicator.value ? 25 : 15);
 const showMobileBottomNavigation = computed(() => showAuthenticatedChrome.value && !isComposerRoute.value);
 const rootStyle = computed(() => ({
+  '--app-bottom-nav-gap': showMobileBottomNavigation.value
+    ? `${bottomGap.value}px`
+    : '0px',
   '--app-bottom-nav-height': showMobileBottomNavigation.value
     ? `${bottomGap.value + MOBILE_NAV_HEIGHT + 6}px`
     : '0px',

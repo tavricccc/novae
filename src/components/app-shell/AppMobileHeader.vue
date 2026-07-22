@@ -1,28 +1,38 @@
 <template>
   <header class="app-header fixed inset-x-0 top-0 z-40 w-full backdrop-blur-md transition-colors duration-300 md:hidden">
     <ViewportFrame class="app-header__inner flex items-center justify-between">
-      <div class="flex min-w-0 items-center gap-2">
-        <AppButton
-          v-if="showBackButton"
-          variant="icon"
-          class="app-header__back shrink-0 md:hidden"
-          :aria-label="backLabel"
-          :title="backLabel"
-          @click="$emit('back')"
+      <div class="app-header__leading flex min-w-0 items-center">
+        <div
+          class="app-header__back-slot shrink-0"
+          :class="{ 'app-header__back-slot--visible': showBackButton }"
+          :aria-hidden="!showBackButton || undefined"
         >
-          <AppIcon name="chevron-left" :size="4.5" />
-        </AppButton>
+          <AppButton
+            variant="icon"
+            class="app-header__back md:hidden"
+            :disabled="!showBackButton"
+            :tabindex="showBackButton ? undefined : -1"
+            :aria-label="backLabel"
+            :title="showBackButton ? backLabel : undefined"
+            @click="$emit('back')"
+          >
+            <AppIcon name="chevron-left" :size="4.5" />
+          </AppButton>
+        </div>
         <h1 class="app-header__title flex min-w-0 items-center text-ink-950 dark:text-ink-50" :aria-label="title">
-          <BoardCategorySelector
-            v-if="categoryFilter && categoryLabel"
-            :model-value="categoryFilter"
-            :label="categoryLabel"
-            :options="categoryOptions"
-            :selector-label="t('issue.chooseProposalCategory')"
-            variant="mobile-header"
-            @update:model-value="filter => $emit('select-category', filter)"
-          />
-          <span v-else class="truncate text-2xl font-semibold leading-tight tracking-[0.015em]">{{ title }}</span>
+          <Transition name="header-title">
+            <BoardCategorySelector
+              v-if="categoryFilter && categoryLabel"
+              :key="`category:${categoryFilter}`"
+              :model-value="categoryFilter"
+              :label="categoryLabel"
+              :options="categoryOptions"
+              :selector-label="t('issue.chooseProposalCategory')"
+              variant="mobile-header"
+              @update:model-value="filter => $emit('select-category', filter)"
+            />
+            <span v-else :key="`title:${title}`" class="truncate text-2xl font-semibold leading-tight tracking-[0.015em]">{{ title }}</span>
+          </Transition>
         </h1>
       </div>
     </ViewportFrame>

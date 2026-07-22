@@ -71,26 +71,30 @@
         />
       </header>
 
-      <div
-        v-if="!showComments || activeTab === 'details'"
-        key="details"
-        class="flex min-h-0 flex-1 flex-col border-t border-ink-100/70 dark:border-ink-800/70"
-      >
-        <div class="scroll-shadow-bleed--compact min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3 overscroll-contain">
-          <slot name="details" :compact="true" :scroll-content="false" />
-        </div>
-        <div class="shrink-0 px-0 pb-2">
-          <slot name="actions" :compact="true" />
-        </div>
-      </div>
+      <div class="detail-tab-stage relative flex min-h-0 flex-1 flex-col overflow-hidden">
+        <Transition :name="detailTabTransitionName">
+          <div
+            v-if="!showComments || activeTab === 'details'"
+            key="details"
+            class="flex min-h-0 flex-1 flex-col border-t border-ink-100/70 dark:border-ink-800/70"
+          >
+            <div class="scroll-shadow-bleed--compact min-h-0 flex-1 overflow-y-auto overflow-x-hidden py-3 overscroll-contain">
+              <slot name="details" :compact="true" :scroll-content="false" />
+            </div>
+            <div class="shrink-0 px-0 pb-2">
+              <slot name="actions" :compact="true" />
+            </div>
+          </div>
 
-      <div
-        v-else
-        key="comments"
-        class="min-h-0 flex-1 border-t border-ink-100/70 px-0 py-3 dark:border-ink-800/70"
-        :aria-label="t(commentsLabel)"
-      >
-        <slot name="comments" :compact-header="true" />
+          <div
+            v-else
+            key="comments"
+            class="min-h-0 flex-1 border-t border-ink-100/70 px-0 py-3 dark:border-ink-800/70"
+            :aria-label="t(commentsLabel)"
+          >
+            <slot name="comments" :compact-header="true" />
+          </div>
+        </Transition>
       </div>
     </article>
   </section>
@@ -150,6 +154,9 @@ const tabOptions = computed(() => [
     title: t('comments.viewLabelCountComments', { label: t(props.commentsLabel), count: props.commentCount }),
   },
 ]);
+const detailTabTransitionName = computed(() => activeTab.value === 'comments'
+  ? 'detail-tab-forward'
+  : 'detail-tab-back');
 
 watch(
   () => props.initialTab,

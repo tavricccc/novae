@@ -67,7 +67,7 @@
   @media (max-width: 767px) {
     .route-page-frame--flow,
     .route-page-frame--bottom-safe {
-      padding-bottom: calc(var(--app-bottom-nav-height) + 1rem);
+      padding-bottom: max(0px, calc(var(--app-bottom-nav-height) + var(--app-bottom-nav-gap) - 0.375rem));
     }
 
     .route-scroll-through {
