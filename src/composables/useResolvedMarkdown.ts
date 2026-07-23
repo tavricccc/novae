@@ -33,7 +33,8 @@ function resolveUploadImageUrlsPooled(ids: string[]) {
             errors: Object.fromEntries(Object.entries(result.errors ?? {}).filter(([id]) => requested.has(id))),
             expiresAtByUploadId: Object.fromEntries(Object.entries(result.expiresAtByUploadId).filter(([id]) => requested.has(id))),
             expiresAtMs: result.expiresAtMs,
-            urls: Object.fromEntries(Object.entries(result.urls).filter(([id]) => requested.has(id))),
+            fullUrls: Object.fromEntries(Object.entries(result.fullUrls).filter(([id]) => requested.has(id))),
+            thumbnailUrls: Object.fromEntries(Object.entries(result.thumbnailUrls).filter(([id]) => requested.has(id))),
           });
         }
       } catch (error) {
@@ -44,7 +45,8 @@ function resolveUploadImageUrlsPooled(ids: string[]) {
 }
 
 export function useResolvedMarkdown(content: MaybeRefOrGetter<string>) {
-  const resolvedUrls = ref<Record<string, string>>({});
+  const resolvedFullUrls = ref<Record<string, string>>({});
+  const resolvedThumbnailUrls = ref<Record<string, string>>({});
   const expiresAtByUploadId = ref<Record<string, number>>({});
   const resolveErrors = ref<Record<string, string>>({});
   const isResolving = ref(false);
@@ -52,7 +54,7 @@ export function useResolvedMarkdown(content: MaybeRefOrGetter<string>) {
 
   const rawContent = computed(() => toValue(content) || '');
   const resolvedContent = computed(() =>
-    replaceMarkdownImageSources(rawContent.value, resolvedUrls.value, { unresolvedUpload: 'remove' }),
+    replaceMarkdownImageSources(rawContent.value, resolvedFullUrls.value, { unresolvedUpload: 'remove' }),
   );
   const images = computed<MarkdownImageRecord[]>(() =>
     extractMarkdownImages(rawContent.value)
@@ -62,8 +64,8 @@ export function useResolvedMarkdown(content: MaybeRefOrGetter<string>) {
           return image;
         }
 
-        const resolvedSrc = resolvedUrls.value[uploadId];
-        const fullSrc = resolvedUrls.value[uploadId];
+        const resolvedSrc = resolvedThumbnailUrls.value[uploadId];
+        const fullSrc = resolvedFullUrls.value[uploadId];
         return {
           ...image,
           fullSrc,
@@ -82,7 +84,8 @@ export function useResolvedMarkdown(content: MaybeRefOrGetter<string>) {
     async (ids) => {
       const token = ++requestToken;
       if (ids.length === 0) {
-        resolvedUrls.value = {};
+        resolvedFullUrls.value = {};
+        resolvedThumbnailUrls.value = {};
         resolveErrors.value = {};
         isResolving.value = false;
         return;
@@ -92,12 +95,14 @@ export function useResolvedMarkdown(content: MaybeRefOrGetter<string>) {
       try {
         const result = await resolveUploadImageUrlsPooled(ids);
         if (token !== requestToken) return;
-        resolvedUrls.value = result.urls;
+        resolvedFullUrls.value = result.fullUrls;
+        resolvedThumbnailUrls.value = result.thumbnailUrls;
         expiresAtByUploadId.value = result.expiresAtByUploadId;
         resolveErrors.value = result.errors ?? {};
       } catch {
         if (token !== requestToken) return;
-        resolvedUrls.value = {};
+        resolvedFullUrls.value = {};
+        resolvedThumbnailUrls.value = {};
         expiresAtByUploadId.value = {};
         resolveErrors.value = Object.fromEntries(ids.map((id) => [id, 'resolve-failed']));
       } finally {
@@ -118,9 +123,13 @@ export function useResolvedMarkdown(content: MaybeRefOrGetter<string>) {
     try {
       const result = await resolveUploadImageUrls([uploadId], { forceRefresh: true });
       if (token !== requestToken) return;
-      resolvedUrls.value = {
-        ...resolvedUrls.value,
-        ...result.urls,
+      resolvedFullUrls.value = {
+        ...resolvedFullUrls.value,
+        ...result.fullUrls,
+      };
+      resolvedThumbnailUrls.value = {
+        ...resolvedThumbnailUrls.value,
+        ...result.thumbnailUrls,
       };
       expiresAtByUploadId.value = {
         ...expiresAtByUploadId.value,
@@ -146,7 +155,8 @@ export function useResolvedMarkdown(content: MaybeRefOrGetter<string>) {
     refreshUploadImageUrl,
     resolvedContent,
     resolveErrors,
-    resolvedUrls,
+    resolvedFullUrls,
+    resolvedThumbnailUrls,
     unresolvedImages,
   };
 }

@@ -398,6 +398,13 @@ test('outbox, webhooks, FCM, and Notion deletion marks are guarded', async () =>
   assert.match(notion, /parent: \{ type: "data_source_id", data_source_id: await getDataSourceId\(\) \}/u);
   assert.match(notion, /NOTION_DATA_SOURCE_ID/u);
   assert.match(notion, /NOTION_DATA_SOURCE_ID does not belong to NOTION_DATABASE_ID/u);
+  assert.match(notion, /async function buildIssueManagedContent/u);
+  assert.match(notion, /from\("comments"\)[\s\S]*order\("created_at", \{ ascending: true \}\)/u);
+  assert.match(notion, /"審核未通過原因": richTextProperty/u);
+  assert.match(notion, /"提案結果": richTextProperty/u);
+  assert.match(notion, /appendContentSection\(parts, "地點", facility\.location\)/u);
+  assert.match(notion, /appendContentSection\(parts, "處理結果", facility\.result_content\)/u);
+  assert.doesNotMatch(outboxWorker, /syncIssueCommentToNotion/u);
   assert.doesNotMatch(notion, /callNotionAPI\(`\/databases\/[^`]+`, "PATCH"/u);
   assert.doesNotMatch(notion, /parent: \{ database_id:/u);
   assert.doesNotMatch(notion, /2022-06-28/u);
@@ -422,6 +429,8 @@ test('cost-sensitive ingress and provider operations are bounded before work', a
   const wrangler = await read('cloudflare/wrangler.toml');
   const deployBackend = await read('.github/workflows/deploy-backend.yml');
   const cloudinary = await read('supabase/functions/_shared/cloudinary.ts');
+  const mediaDelivery = await read('supabase/functions/_shared/media-delivery.ts');
+  const workerMedia = await read('cloudflare/src/media.ts');
   const cloudinaryWebhook = await read('supabase/functions/cloudinaryWebhook/index.ts');
   const hardening = await read('supabase/migrations/202607150001_rate_limit_cost_hardening.sql');
   const resourceHardening = await read('supabase/migrations/202607160006_resource_efficiency_hardening.sql');
@@ -434,7 +443,15 @@ test('cost-sensitive ingress and provider operations are bounded before work', a
   const uploads = await read('supabase/functions/backendAction/uploads.ts');
 
   assert.match(cloudinary, /max_file_size/u);
-  assert.match(cloudinary, /transformation: `c_limit,w_\$\{maxDimension\},h_\$\{maxDimension\}`/u);
+  assert.match(cloudinary, /transformation: ""/u);
+  assert.doesNotMatch(cloudinary, /c_limit/u);
+  assert.match(mediaDelivery, /novae-media-v1/u);
+  assert.match(workerMedia, /novae-media-v1/u);
+  assert.match(workerMedia, /caches as CacheStorage/u);
+  assert.match(workerMedia, /height: 240, quality: 75, width: 320/u);
+  assert.match(workerMedia, /format: 'webp'/u);
+  assert.match(workerMedia, /payload\.private[\s\S]*private, no-store/u);
+  assert.match(workerMedia, /MEDIA_IP_RATE_LIMITER\.limit/u);
   assert.match(uploads, /upload_preset: CLOUDINARY_IMAGE_UPLOAD_PRESET/u);
   assert.doesNotMatch(uploads, /claimFixedWindowRateLimitUnits/u);
   assert.match(backendRateLimit, /unitsPath.*payload\.images/u);
@@ -462,6 +479,7 @@ test('cost-sensitive ingress and provider operations are bounded before work', a
   assert.doesNotMatch(`${workerRateLimit}\n${workerTypes}`, /UPSTASH_REDIS/u);
   assert.match(wrangler, /\[\[env\.production\.ratelimits\]\]/u);
   assert.match(wrangler, /\[\[env\.development\.ratelimits\]\]/u);
+  assert.match(wrangler, /name = "MEDIA_IP_RATE_LIMITER"/u);
   assert.match(wrangler, /\[env\.production\.observability\][\s\S]*?head_sampling_rate = 0\.1/u);
   assert.match(firebaseAuth, /FIREBASE_USER_MEMORY_CACHE_MS = 5 \* 60 \* 1000/u);
   assert.match(firebaseAuth, /cachedAtMs \+ FIREBASE_USER_CACHE_MS - Date\.now\(\)/u);
@@ -472,6 +490,8 @@ test('cost-sensitive ingress and provider operations are bounded before work', a
   );
   assert.doesNotMatch(gatewayDeploy, /\$\{\{ secrets\.UPSTASH_REDIS/u);
   assert.match(gatewayDeploy, /secret delete "\$obsolete_key"/u);
+  assert.match(gatewayDeploy, /CLOUDINARY_API_SECRET/u);
+  assert.match(gatewayDeploy, /CLOUDINARY_CLOUD_NAME/u);
   assert.match(syncUser, /claimFixedWindowRateLimit/u);
   assert.ok(
     backendAction.indexOf('getBackendActionDefinition(action)')
@@ -506,6 +526,7 @@ test('removed issue categories are cleaned and Notion backups are marked deleted
 test('transient database tables have explicit retention coverage', async () => {
   const retentionMigration = await read('supabase/migrations/202607090006_database_retention_minimization.sql');
   const uploads = await read('supabase/functions/backendAction/uploads.ts');
+  const mediaDelivery = await read('supabase/functions/_shared/media-delivery.ts');
 
   assert.match(retentionMigration, /alter table app_private\.notifications[\s\S]*now\(\) \+ interval '7 days'/u);
   assert.match(retentionMigration, /alter table app_private\.realtime_events[\s\S]*now\(\) \+ interval '1 day'/u);
@@ -538,8 +559,8 @@ test('transient database tables have explicit retention coverage', async () => {
   assert.match(retentionMigration, /status = 'failed' and updated_at < now\(\) - interval '3 days'/u);
   assert.match(retentionMigration, /status = 'completed' and updated_at < now\(\) - interval '1 day'/u);
 
-  assert.match(uploads, /const PRIVATE_URL_LIFETIME_MS = 7 \* 24 \* 60 \* 60 \* 1000/u);
-  assert.doesNotMatch(uploads, /delivery_url_expires_at: expiresAt\.toISOString\(\),\s+updated_at:/u);
+  assert.match(mediaDelivery, /PRIVATE_MEDIA_LIFETIME_SECONDS = 15 \* 60/u);
+  assert.doesNotMatch(uploads, /delivery_url/u);
 });
 
 test('backend list actions use stable cursor pagination at the service boundary', async () => {
@@ -752,7 +773,8 @@ test('facilities and author-fixed support use independent atomic storage', async
   assert.match(facilityTypes, /export type FacilityStatus = 'pending' \| 'processing' \| 'completed' \| 'unable-to-handle'/u);
   assert.match(notion, /if \(!terminal\) return/u);
   assert.match(notion, /"遇到人數"[\s\S]*facility\.affected_count/u);
-  assert.match(notion, /\["completed", "infeasible"\]\.includes\(newStatus\)/u);
+  assert.match(notion, /"附議數": richTextProperty\(/u);
+  assert.match(notion, /await buildIssueManagedContent\(supabase, targetId/u);
   assert.match(legacyAdminBackfill, /from app_private\.user_roles[\s\S]*where role = 'admin'/u);
   assert.match(legacyAdminBackfill, /'platform-admin'/u);
   assert.match(syncUser, /backend_reconcile_platform_admins[\s\S]*admin_emails: adminEmails\(\)/u);
@@ -1041,24 +1063,25 @@ test('timestamps stay UTC at rest and render in the device time zone', async () 
   assert.doesNotMatch(migrationSource, /\btimestamp(?:\(\d+\))?\s+(?!with\s+time\s+zone)/iu);
 });
 
-test('private issue data and upload URLs stay behind backend authorization', async () => {
+test('private issue data and all media delivery stay behind backend authorization', async () => {
   const migration = await read('supabase/migrations/202607050001_supabase_baseline.sql');
-  const deliveryScopeMigration = await read('supabase/migrations/202607120004_refresh_upload_delivery_scope.sql');
+  const mediaMigration = await read('supabase/migrations/202607230003_unified_media_gateway.sql');
   const uploads = await read('supabase/functions/backendAction/uploads.ts');
-  const cloudinary = await read('supabase/functions/_shared/cloudinary.ts');
+  const mediaDelivery = await read('supabase/functions/_shared/media-delivery.ts');
+  const workerMedia = await read('cloudflare/src/media.ts');
   const support = await read('supabase/functions/backendAction/issue-support.ts');
 
   assert.match(migration, /revoke all on app_api\.issues from anon, authenticated/u);
-  assert.match(deliveryScopeMigration, /delivery_url_scope in \('private-v2', 'public-v2'\)/u);
-  assert.doesNotMatch(deliveryScopeMigration, /'private', 'public'/u);
+  assert.match(mediaMigration, /drop column delivery_url,[\s\S]*drop column delivery_url_expires_at,[\s\S]*drop column delivery_url_scope/u);
+  assert.doesNotMatch(mediaMigration, /expired_upload_delivery_urls_cleared/u);
   assert.match(uploads, /async function resolveUploadAccessBatch/u);
   assert.match(uploads, /canReadIssue\(issue, auth\)/u);
   assert.match(uploads, /issue\.read_access === "owner-admin"/u);
-  assert.match(uploads, /PRIVATE_DELIVERY_SCOPE = "private-v2"/u);
-  assert.match(uploads, /PUBLIC_DELIVERY_SCOPE = "public-v2"/u);
-  assert.match(cloudinary, /deliveryPath = `\$\{publicId\}\.webp`/u);
-  assert.match(cloudinary, /s--\$\{signature\}--\/\$\{encodedPublicId\}\.webp/u);
-  assert.doesNotMatch(cloudinary, /resource_type: "image",[\s\S]*timestamp:[\s\S]*type: "authenticated"/u);
+  assert.match(uploads, /createMediaDeliveryUrls\(upload\.cloudinary_public_id, access\.privateDelivery\)/u);
+  assert.match(mediaDelivery, /PRIVATE_MEDIA_LIFETIME_SECONDS = 15 \* 60/u);
+  assert.match(workerMedia, /verifyMediaToken\(token, env\.EDGE_ORIGIN_SECRET\)/u);
+  assert.match(workerMedia, /cloudinarySourceUrl\(payload\.publicId, env\)/u);
+  assert.match(workerMedia, /x-novae-media-cache/u);
   assert.match(support, /storedIssue\.response_deadline_days/u);
   assert.match(support, /issue\.support_enabled !== true/u);
 });

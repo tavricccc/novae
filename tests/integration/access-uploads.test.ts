@@ -265,7 +265,7 @@ integrationTest("access, role, idempotency, avatar, and upload actions", async (
     next_avatar_hash: "integration-avatar-hash",
     next_avatar_public_id: nextAvatarPublicId,
     next_avatar_source_url: "https://lh3.googleusercontent.com/integration-avatar",
-    next_cached_photo_url: "https://res.cloudinary.com/integration/avatar-next",
+    next_cached_photo_url: "https://media.novae.invalid/avatar-next",
     next_avatar_version: 2,
     next_display_name: renamedDisplayName,
   });
@@ -320,7 +320,8 @@ integrationTest("access, role, idempotency, avatar, and upload actions", async (
     { uploadIds: [uploadId] },
     user.auth,
   ));
-  assert.match(String(asRecord(resolved.urls)[uploadId]), /^https:\/\/api\.cloudinary\.com\//u);
+  assert.match(String(asRecord(resolved.fullUrls)[uploadId]), /^http:\/\/127\.0\.0\.1:1\/v1\/media\/.+\/full$/u);
+  assert.match(String(asRecord(resolved.thumbnailUrls)[uploadId]), /^http:\/\/127\.0\.0\.1:1\/v1\/media\/.+\/thumbnail$/u);
   const hidden = asRecord(await callAction(
     "resolveUploadImageUrls",
     { uploadIds: [uploadId] },

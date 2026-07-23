@@ -1,4 +1,5 @@
 import { asString } from "../_shared/http.ts";
+import { createMediaDeliveryUrl } from "../_shared/media-delivery.ts";
 import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 import { requirePermission } from "./auth.ts";
 
@@ -39,7 +40,7 @@ async function scopedAccessUids(scope: AccessScopeSelector, supabase: BackendSup
 async function accessUsersForUids(uids: string[], supabase: BackendSupabase) {
   if (uids.length === 0) return [];
   const { data: profiles, error: profileError } = await supabase.schema("app_private").from("user_profiles")
-    .select("uid,email,display_name,cached_photo_url,photo_url").in("uid", uids)
+    .select("uid,email,display_name,avatar_public_id,photo_url").in("uid", uids)
     .order("display_name", { ascending: true });
   if (profileError) throw profileError;
   const [roleResult, issueResult, facilityResult] = await Promise.all([
@@ -62,14 +63,19 @@ async function accessUsersForUids(uids: string[], supabase: BackendSupabase) {
   for (const assignment of facilityResult.data ?? []) {
     facilityCategories.set(assignment.uid, [...(facilityCategories.get(assignment.uid) ?? []), assignment.category_id]);
   }
-  return (profiles ?? []).map((profile) => ({
-    uid: profile.uid,
-    email: profile.email ?? null,
-    name: profile.display_name ?? profile.email ?? profile.uid,
-    photoUrl: profile.cached_photo_url ?? profile.photo_url ?? null,
-    roles: roles.get(profile.uid) ?? [],
-    managedIssueCategoryIds: issueCategories.get(profile.uid) ?? [],
-    managedFacilityCategoryIds: facilityCategories.get(profile.uid) ?? [],
+  return await Promise.all((profiles ?? []).map(async (profile) => {
+    const media = profile.avatar_public_id
+      ? await createMediaDeliveryUrl(profile.avatar_public_id, "avatar", false)
+      : null;
+    return {
+      uid: profile.uid,
+      email: profile.email ?? null,
+      name: profile.display_name ?? profile.email ?? profile.uid,
+      photoUrl: media?.url ?? profile.photo_url ?? null,
+      roles: roles.get(profile.uid) ?? [],
+      managedIssueCategoryIds: issueCategories.get(profile.uid) ?? [],
+      managedFacilityCategoryIds: facilityCategories.get(profile.uid) ?? [],
+    };
   }));
 }
 

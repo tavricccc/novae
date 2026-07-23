@@ -124,9 +124,6 @@ interface UploadRow {
   attached_target_type: string | null;
   content_type: string | null;
   expires_at: string;
-  delivery_url: string | null;
-  delivery_url_expires_at: string | null;
-  delivery_url_scope: string | null;
   size_bytes: number | null;
   visibility: string | null;
   width: number | null;

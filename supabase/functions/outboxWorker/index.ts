@@ -9,7 +9,6 @@ import { claimFixedWindowRateLimits, utcMinuteWindow, utcSecondWindow } from "..
 import {
   markNotionPageDeleted,
   syncAnnouncementCreatedToNotion,
-  syncIssueCommentToNotion,
   syncIssueCreatedToNotion,
   syncIssueResultUpdatedToNotion,
   syncIssueSupportToNotion,
@@ -357,9 +356,6 @@ async function syncNotionForEvent(
       break;
     case "issue.result_updated":
       await syncIssueResultUpdatedToNotion(supabase, event.target_id, event.payload);
-      break;
-    case "issue.comment_created":
-      await syncIssueCommentToNotion(supabase, event.target_id, event.payload);
       break;
     case "support.goal_met":
       await syncIssueSupportToNotion(supabase, event.target_id);

@@ -105,7 +105,6 @@ export async function handleHealthcheck(request: Request, supabase: BackendSupab
   if (request.headers.get("x-reconcile-config") === "true") {
     await ensureCloudinaryImageUploadPreset(
       RATE_LIMITS.imageCompression.maxUploadBytes,
-      RATE_LIMITS.imageCompression.maxDimension,
     );
   }
 

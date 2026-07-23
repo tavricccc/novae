@@ -1,6 +1,7 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { apiGatewayUrl } from '@/lib/api-gateway';
 
 const imageAltSizePattern = /^(.*)\|(\d{1,5})x(\d{1,5})$/u;
 const listItemPattern = /^ {0,3}(?:[-*+]\s+|\d{1,9}[.)]\s+)/u;
@@ -50,10 +51,8 @@ function renderImage(hrefOrToken: unknown, titleValue?: string | null, textValue
   } catch {
     return escapeAttribute(altText);
   }
-  if (
-    imageUrl.protocol !== 'https:'
-    || !['api.cloudinary.com', 'res.cloudinary.com'].includes(imageUrl.hostname.toLowerCase())
-  ) {
+  const mediaGateway = new URL(apiGatewayUrl('/'));
+  if (imageUrl.origin !== mediaGateway.origin || !imageUrl.pathname.startsWith('/v1/media/')) {
     return escapeAttribute(altText);
   }
 

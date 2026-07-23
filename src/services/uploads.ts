@@ -6,7 +6,8 @@ import { t } from '@/i18n';
 
 interface ResolvedUploadCacheEntry {
   expiresAtMs: number;
-  url: string;
+  fullUrl: string;
+  thumbnailUrl: string;
 }
 
 const resolvedUploadCache = new Map<string, ResolvedUploadCacheEntry>();
@@ -204,7 +205,8 @@ export async function resolveUploadImageUrls(uploadIds: string[], options: Resol
       errors: {},
       expiresAtByUploadId: Object.fromEntries(cachedEntries.map(([id, entry]) => [id, entry.expiresAtMs])),
       expiresAtMs: Math.min(...cachedEntries.map(([, entry]) => entry.expiresAtMs)),
-      urls: Object.fromEntries(cachedEntries.map(([id, entry]) => [id, entry.url])),
+      fullUrls: Object.fromEntries(cachedEntries.map(([id, entry]) => [id, entry.fullUrl])),
+      thumbnailUrls: Object.fromEntries(cachedEntries.map(([id, entry]) => [id, entry.thumbnailUrl])),
     };
   }
 
@@ -215,26 +217,32 @@ export async function resolveUploadImageUrls(uploadIds: string[], options: Resol
         errors?: Record<string, string>;
         expiresAtByUploadId?: Record<string, number>;
         expiresAtMs: number;
-        urls: Record<string, string>;
+        fullUrls: Record<string, string>;
+        thumbnailUrls: Record<string, string>;
       }
     >('resolveUploadImageUrls', {
       timeoutMs: READ_REQUEST_TIMEOUT_MS,
     });
     const result = await fn({ uploadIds: unresolvedIds });
     const fetched = result;
-    Object.entries(fetched.urls).forEach(([uploadId, url]) => {
+    Object.entries(fetched.fullUrls).forEach(([uploadId, fullUrl]) => {
+      const thumbnailUrl = fetched.thumbnailUrls[uploadId];
+      if (!thumbnailUrl) return;
       resolvedUploadCache.set(uploadId, {
         expiresAtMs: fetched.expiresAtByUploadId?.[uploadId] ?? fetched.expiresAtMs,
-        url,
+        fullUrl,
+        thumbnailUrl,
       });
     });
 
     const allEntries = uniqueIds.flatMap((uploadId) => {
       const cachedEntry = resolvedUploadCache.get(uploadId);
-      const fetchedUrl = fetched.urls[uploadId];
-      const entry = cachedEntry ?? (fetchedUrl ? {
+      const fetchedFullUrl = fetched.fullUrls[uploadId];
+      const fetchedThumbnailUrl = fetched.thumbnailUrls[uploadId];
+      const entry = cachedEntry ?? (fetchedFullUrl && fetchedThumbnailUrl ? {
         expiresAtMs: fetched.expiresAtByUploadId?.[uploadId] ?? fetched.expiresAtMs,
-        url: fetchedUrl,
+        fullUrl: fetchedFullUrl,
+        thumbnailUrl: fetchedThumbnailUrl,
       } : undefined);
       return entry ? [[uploadId, entry] as const] : [];
     });
@@ -245,7 +253,8 @@ export async function resolveUploadImageUrls(uploadIds: string[], options: Resol
       expiresAtMs: allExpirationValues.length > 0
         ? Math.min(...allExpirationValues)
         : fetched.expiresAtMs,
-      urls: Object.fromEntries(allEntries.map(([id, entry]) => [id, entry.url])),
+      fullUrls: Object.fromEntries(allEntries.map(([id, entry]) => [id, entry.fullUrl])),
+      thumbnailUrls: Object.fromEntries(allEntries.map(([id, entry]) => [id, entry.thumbnailUrl])),
     };
   } catch (error) {
     throw toReadableBackendError(error);

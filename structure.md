@@ -23,7 +23,7 @@
 ## Supabase
 
 - `supabase/config.toml` — schema 暴露、Functions JWT 模式與本地 Firebase Third-Party Auth；Hosted 專案由專用同步腳本只更新 Firebase issuer，讓 private Realtime channel 可驗證 Firebase JWT／JWKS，不以全量 `config push` 連帶修改 Storage／Vector 等無關設定
-- `supabase/migrations/` — 基線 + 增量 SQL（schema／RLS／RPC／Realtime Broadcast／清理／成本限流硬化／設備與 RBAC／輸入長度、附件型別、圖片網址快取、統一 feed 分頁與集合式留言回覆讀取）；`202607190001_dynamic_category_management.sql` 建立動態分類，`202607200002_atomic_user_access.sql` 將角色與分類指派改為單一交易並完整稽核，`202607200003_harden_category_deletion.sql` 統一分類永久刪除、內容／通知／圖片清理與稽核，`202607200004_facility_category_parity_and_personal_notifications.sql` 補齊設備分類篩選／分類管理範圍並將既有設備建立通知改回個人通知，`202607200005_platform_feature_switches.sql` 建立提案／設備功能開關與原子更新 RPC，`202607220001_scoped_user_access.sql` 改為鎖定目標帳號的單一權限範圍更新並保留既有設備通知退訂，`202607220002_remove_category_archiving.sql` 將舊分類全部恢復可用並以資料庫約束移除封存狀態，`202607230001_minimize_outbox_payloads.sql` 移除 outbox 的重複正文並由 Worker 依留言 ID 精準補讀，`202607230002_security_advisor_function_paths.sql` 固定剩餘 private function 的 `search_path` 並重申 private table 的 deny-by-default 授權邊界，較早 migration 細節見 git
+- `supabase/migrations/` — 基線 + 增量 SQL（schema／RLS／RPC／Realtime Broadcast／清理／成本限流硬化／設備與 RBAC／輸入長度、附件型別、統一 feed 分頁與集合式留言回覆讀取）；`202607190001_dynamic_category_management.sql` 建立動態分類，`202607200002_atomic_user_access.sql` 將角色與分類指派改為單一交易並完整稽核，`202607200003_harden_category_deletion.sql` 統一分類永久刪除、內容／通知／圖片清理與稽核，`202607200004_facility_category_parity_and_personal_notifications.sql` 補齊設備分類篩選／分類管理範圍並將既有設備建立通知改回個人通知，`202607200005_platform_feature_switches.sql` 建立提案／設備功能開關與原子更新 RPC，`202607220001_scoped_user_access.sql` 改為鎖定目標帳號的單一權限範圍更新並保留既有設備通知退訂，`202607220002_remove_category_archiving.sql` 將舊分類全部恢復可用並以資料庫約束移除封存狀態，`202607230001_minimize_outbox_payloads.sql` 移除 outbox 的重複正文並由 Worker 依留言 ID 精準補讀，`202607230002_security_advisor_function_paths.sql` 固定剩餘 private function 的 `search_path` 並重申 private table 的 deny-by-default 授權邊界，`202607230003_unified_media_gateway.sql` 移除舊圖片 delivery URL 快取欄位與維護工作，較早 migration 細節見 git
 - `supabase/functions/backendAction/` — 受控 action 閘道
   - `index.ts` — origin 驗證、CORS、Firebase 驗證與分派；公開限流由 Cloudflare Worker 先處理
   - `execution.ts` — 正式入口與本地整合驗證共用的權限、request ID、冪等執行核心
@@ -32,14 +32,14 @@
   - shared helpers：`issue-shared.ts`、`announcement-shared.ts`
   - 省 Edge Function 次數靠合併讀取與前端快取，不把 domain 業務搬進 Cloudflare Worker
 - 獨立 Functions：`syncUser`、`cloudinaryWebhook`、`outboxWorker`、`processDeletionJobs`、`maintenanceCleanup`
-- `_shared/` — `env`、`http`、`api-errors`（公開錯誤契約 codegen）、`origin`（Worker／內部 origin secret 與動態 Function URL）、`firebase-auth`（Redis 15 分鐘絕對期限與 warm isolate 5 分鐘記憶體快取）、`cloudinary`、`database`、`database-client`（Edge 專用精簡 PostgREST client）、`google-oauth`、`fcm`、`notion`、`rate-limits`、`upstash-rate-limit`、`webhook`
+- `_shared/` — `env`、`http`、`api-errors`（公開錯誤契約 codegen）、`origin`（Worker／內部 origin secret 與動態 Function URL）、`firebase-auth`（Redis 15 分鐘絕對期限與 warm isolate 5 分鐘記憶體快取）、`cloudinary`（只負責上傳、驗證與刪除）、`media-delivery`（公開固定／私人 15 分鐘簽名 Worker 媒體網址）、`database`、`database-client`（Edge 專用精簡 PostgREST client）、`google-oauth`、`fcm`、`notion`（提案狀態變更時以完整正文／原因／結果／留言快照更新受控 blocks 與最新附議數；設備正文同步地點與處理結果；圖片匯入同樣經 Media Gateway）、`rate-limits`、`upstash-rate-limit`、`webhook`
 
 ---
 
 ## Cloudflare
 
 - `cloudflare/wrangler.toml` — production/development `workers.dev` 部署與 observability；production traces 以 10% head sampling 控制 log 用量，development 保留完整取樣
-- `cloudflare/src/` — 公開 API gateway；CORS、Firebase JWT、Cloudinary 簽章、Cloudflare 原生 Rate Limiting bindings 與 Supabase origin 轉發；提案／設備／公告列表在驗證後以 UID、Origin 與完整 request digest 隔離 30 秒 POP cache，命中時省略 Supabase Edge 呼叫，瀏覽器回應仍為 `no-store`
+- `cloudflare/src/` — 公開 API 與 Media Gateway；CORS、Firebase JWT、Cloudinary webhook／authenticated delivery 簽章、Cloudflare 原生 Rate Limiting bindings 與 Supabase origin 轉發；提案／設備／公告列表在驗證後以 UID、Origin 與完整 request digest 隔離 30 秒 POP cache；所有附件與 Cloudinary 頭像由 `/v1/media/<token>/<variant>` 統一傳送，私人 token 先驗證再讀共享 edge cache，縮圖固定 320×240、頭像固定 96×96，前端不接觸 Cloudinary delivery URL
 - `cloudflare/generated/` — API error 與 backend action policy codegen
 - `scripts/prepare-edge-functions.mjs` — CI 依私密 namespace 暫時產生六個隨機 Supabase Function 部署目錄
 
@@ -119,7 +119,7 @@
 - 通知／推播：`useNotificationBadge`、`useNotifications`、`useNotificationNavigation`（開啟內容時保留通知 root 來源，詳情返回會 pop 回通知）、`useNotificationDisplay`（依目前語系組合通知標題、狀態與舊資料內容）、`usePushNotifications`、`usePushPermissionPrompt`
 - UI 流程：`useActionFeedback`、`useActiveNavigationRefresh`（目前導覽項重按以 20 秒 cooldown 合併重抓）、`useAuthenticatedDetailState`、`useDetailRouteQuery`、`useContentListRuntime`（三領域共用最短載入、逾時／斷線、重試、無限捲動與導覽重新整理）、`useBodyScrollLock`、`useBottomSheetDrag`（距離／速度門檻、每 animation frame 合併 pointer 位移與跟手回彈）、`useOverlayBack`（LIFO 系統返回）、`useLongPress`（移動容差與 click 抑制）、`useVisualViewport`（手機鍵盤可視高度）、`useDialogFocus`、`useDialogThemeColor`、`useDropdownPosition`、`useClickOutside`、`useInfiniteScroll`、`useMinimumLoading`、`useLoadingTimeout`、`useTimedMessage`、`useNetworkStatus`、`useCompactTableLayout`
 - App：`useAppResume`、`useAppStartupGate`、`useAppUpdate`、`useAppInstallPrompt`、`useShareUrl`、`useAuthorProfile`
-- Markdown／圖：`useMarkdown`、`useResolvedMarkdown`、`useImageUpload`、`useMarkdownImageUpload`、`useMarkdownImageEditor`
+- Markdown／圖：`useMarkdown` 只允許 Media Gateway 圖片路徑；`useResolvedMarkdown` 批次取得 320×240 thumbnail 與 full 兩種網址，小圖列只載縮圖、燈箱與正文才載完整圖；另有 `useImageUpload`、`useMarkdownImageUpload`、`useMarkdownImageEditor`
 - Dashboard：`usePlatformDashboard`、`useDashboardMetrics`
 
 ---

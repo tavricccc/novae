@@ -11,13 +11,13 @@ const {
   expiresAtByUploadId,
   refreshUploadImageUrl,
   resolvedContent,
-  resolvedUrls,
+  resolvedFullUrls,
 } = useResolvedMarkdown(() => props.content)
 const safeHtml = useMarkdown(resolvedContent)
 
 function uploadIdForImage(image: HTMLImageElement) {
   const currentSrc = image.currentSrc || image.src
-  return Object.entries(resolvedUrls.value).find(([, url]) => url === currentSrc)?.[0] ?? ''
+  return Object.entries(resolvedFullUrls.value).find(([, url]) => url === currentSrc)?.[0] ?? ''
 }
 
 function handleImageError(event: Event) {

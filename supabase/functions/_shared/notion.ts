@@ -1,7 +1,7 @@
 import type { AppDatabaseClient } from "./database-client.ts";
 import type { Database } from "./database.ts";
 import { optionalEnv, requireEnv } from "./env.ts";
-import { createCloudinaryExpiringImageUrl } from "./cloudinary.ts";
+import { createMediaDeliveryUrl } from "./media-delivery.ts";
 
 // ---------------------------------------------------------------------------
 // Status label translation (matches ISSUE_STATUS_LABELS in src/constants/statuses.ts)
@@ -217,6 +217,16 @@ function dateProperty(value: unknown) {
     : { date: null };
 }
 
+function richTextProperty(value: unknown) {
+  const chunks = String(value ?? "").match(/[\s\S]{1,1900}/gu) ?? [];
+  return {
+    rich_text: chunks.map((content) => ({
+      type: "text",
+      text: { content },
+    })),
+  };
+}
+
 function issueTimeProperties(issue: Partial<Database["app_private"]["Tables"]["issues"]["Row"]>) {
   return {
     "提案時間": dateProperty(issue.created_at),
@@ -255,11 +265,8 @@ function appendBlock(pageId: string, content: string): Promise<unknown> {
 
 const UPLOAD_PATTERN = /!\[([^\]]*)\]\(srp-upload:\/\/([0-9a-fA-F-]{36})\)/gu;
 async function uploadImageToNotion(publicId: string, filename: string) {
-  const sourceUrl = await createCloudinaryExpiringImageUrl(
-    publicId,
-    new Date(Date.now() + 15 * 60 * 1000),
-  );
-  const source = await fetch(sourceUrl, { signal: AbortSignal.timeout(15_000) });
+  const sourceUrl = await createMediaDeliveryUrl(publicId, "full", true);
+  const source = await fetch(sourceUrl.url, { signal: AbortSignal.timeout(15_000) });
   if (!source.ok) throw new Error("notion-image-source-failed");
   const bytes = await source.arrayBuffer();
   const created = await fetch("https://api.notion.com/v1/file_uploads", {
@@ -360,6 +367,57 @@ async function replaceManagedContent(
   if (updateError) throw updateError;
 }
 
+function appendContentSection(parts: string[], label: string, value: unknown) {
+  const content = String(value ?? "").trim();
+  if (content) parts.push(`【${label}】\n${content}`);
+}
+
+async function buildIssueManagedContent(
+  supabase: AppSupabase,
+  targetId: string,
+  issue: Partial<Database["app_private"]["Tables"]["issues"]["Row"]>,
+) {
+  const parts = [String(issue.content ?? "").trim()].filter(Boolean);
+  appendContentSection(parts, "審核未通過原因", issue.review_rejection_reason);
+  appendContentSection(parts, "提案結果", issue.result_content);
+
+  const { data: comments, error: commentsError } = await supabase
+    .schema("app_private")
+    .from("comments")
+    .select("id,author_uid,content,created_at")
+    .eq("issue_id", targetId)
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true });
+  if (commentsError) throw commentsError;
+  if (!comments?.length) return parts.join("\n\n");
+
+  const authorUids = [...new Set(comments.map((comment) => String(comment.author_uid)).filter(Boolean))];
+  const { data: profiles, error: profilesError } = authorUids.length
+    ? await supabase.schema("app_private").from("user_profiles")
+      .select("uid,display_name").in("uid", authorUids)
+    : { data: [], error: null };
+  if (profilesError) throw profilesError;
+  const displayNames = new Map(
+    (profiles ?? []).map((profile) => [String(profile.uid), String(profile.display_name)]),
+  );
+  const commentLines = comments.map((comment) => {
+    const uid = String(comment.author_uid);
+    const authorName = (displayNames.get(uid) ?? uid) || "使用者";
+    return `${String(comment.created_at)} | ${authorName}：${String(comment.content)}`;
+  });
+  appendContentSection(parts, "留言", commentLines.join("\n\n"));
+  return parts.join("\n\n");
+}
+
+function buildFacilityManagedContent(
+  facility: Partial<Database["app_private"]["Tables"]["facility_reports"]["Row"]>,
+) {
+  const parts = [String(facility.content ?? "").trim()].filter(Boolean);
+  appendContentSection(parts, "地點", facility.location);
+  appendContentSection(parts, "處理結果", facility.result_content);
+  return parts.join("\n\n");
+}
+
 /**
  * Return the existing Notion page ID for a target, or create a new page in the
  * configured database and record it in app_private.notion_pages.
@@ -456,7 +514,7 @@ export async function syncIssueCreatedToNotion(
   const { data: issue } = await supabase
     .schema("app_private")
     .from("issues")
-    .select("title, content, category, status, author_uid, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at")
+    .select("title, content, category, status, author_uid, support_count, support_goal, review_rejection_reason, result_content, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at")
     .eq("id", targetId)
     .maybeSingle();
 
@@ -474,12 +532,25 @@ export async function syncIssueCreatedToNotion(
   );
   if (pageId) {
     await updateIssueTimeProperties(pageId, issue ?? {});
+    await Promise.all([
+      ensureRichTextProperty("審核未通過原因"),
+      ensureRichTextProperty("提案結果"),
+    ]);
+    await callNotionAPI(`/pages/${pageId}`, "PATCH", {
+      properties: {
+        "審核未通過原因": richTextProperty(issue?.review_rejection_reason),
+        "提案結果": richTextProperty(issue?.result_content),
+      },
+    });
     await replaceManagedContent(
       supabase,
       "issue",
       targetId,
       pageId,
-      String(issue?.content ?? payload.content ?? ""),
+      await buildIssueManagedContent(supabase, targetId, {
+        ...issue,
+        content: issue?.content ?? String(payload.content ?? ""),
+      }),
     );
   }
 }
@@ -503,12 +574,18 @@ export async function syncFacilityCreatedToNotion(
   if (!pageId) return;
   await Promise.all([ensureRichTextProperty("地點"), ...["建立時間", "開始處理時間", "結案時間"].map(ensureDateProperty)]);
   await callNotionAPI(`/pages/${pageId}`, "PATCH", { properties: {
-    "地點": { rich_text: [{ text: { content: String(facility.location) } }] },
+    "地點": richTextProperty(facility.location),
     "建立時間": dateProperty(facility.created_at),
     "開始處理時間": dateProperty(facility.started_at),
     "結案時間": dateProperty(facility.closed_at),
   } });
-  await replaceManagedContent(supabase, "facility", targetId, pageId, String(facility.content));
+  await replaceManagedContent(
+    supabase,
+    "facility",
+    targetId,
+    pageId,
+    buildFacilityManagedContent(facility),
+  );
 }
 
 export async function syncFacilityStatusToNotion(
@@ -518,7 +595,7 @@ export async function syncFacilityStatusToNotion(
 ): Promise<void> {
   if (!notionEnabled()) return;
   const { data: facility, error } = await supabase.schema("app_private").from("facility_reports")
-    .select("title,status,author_uid,affected_count,category_id,created_at,started_at,closed_at,result_content")
+    .select("title,content,location,status,author_uid,affected_count,category_id,created_at,started_at,closed_at,result_content")
     .eq("id", targetId).maybeSingle();
   if (error) throw error;
   if (!facility) return;
@@ -539,8 +616,15 @@ export async function syncFacilityStatusToNotion(
     "開始處理時間": dateProperty(facility.started_at),
     "結案時間": dateProperty(facility.closed_at),
     "遇到人數": { rich_text: [{ text: { content: String(facility.affected_count) } }] },
-    "處理結果": { rich_text: [{ text: { content: String(facility.result_content ?? payload.result_content ?? "") } }] },
+    "處理結果": richTextProperty(facility.result_content ?? payload.result_content),
   } });
+  await replaceManagedContent(
+    supabase,
+    "facility",
+    targetId,
+    pageId,
+    buildFacilityManagedContent(facility),
+  );
 }
 
 /**
@@ -562,7 +646,7 @@ export async function syncIssueStatusChangedToNotion(
   const { data: issue } = await supabase
     .schema("app_private")
     .from("issues")
-    .select("title, category, author_uid, support_count, support_goal, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at")
+    .select("title, content, category, author_uid, support_count, support_goal, review_rejection_reason, result_content, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at")
     .eq("id", targetId)
     .maybeSingle();
 
@@ -580,17 +664,36 @@ export async function syncIssueStatusChangedToNotion(
   );
   if (!pageId) return;
 
-  await ensureSelectOption("狀態", newStatusLabel);
-  await ensureIssueTimeProperties();
+  await Promise.all([
+    ensureSelectOption("狀態", newStatusLabel),
+    ensureIssueTimeProperties(),
+    ensureRichTextProperty("審核未通過原因"),
+    ensureRichTextProperty("提案結果"),
+    ensureRichTextProperty("附議數"),
+  ]);
   await callNotionAPI(`/pages/${pageId}`, "PATCH", {
     properties: {
       "狀態": { select: { name: newStatusLabel } },
-      ...(["completed", "infeasible"].includes(newStatus) ? {
-        "附議數": { rich_text: [{ text: { content: supportLabel(issue?.support_count ?? payload.support_count, issue?.support_goal ?? payload.support_goal) } }] },
-      } : {}),
+      "附議數": richTextProperty(
+        supportLabel(
+          issue?.support_count ?? payload.support_count,
+          issue?.support_goal ?? payload.support_goal,
+        ),
+      ),
+      "審核未通過原因": richTextProperty(issue?.review_rejection_reason ?? payload.reason),
+      "提案結果": richTextProperty(issue?.result_content),
       ...issueTimeProperties(issue ?? {}),
     },
   });
+  await replaceManagedContent(
+    supabase,
+    "issue",
+    targetId,
+    pageId,
+    await buildIssueManagedContent(supabase, targetId, issue ?? {
+      review_rejection_reason: String(payload.reason ?? ""),
+    }),
+  );
   const oldLabel = oldStatus ? `${translateStatus(oldStatus)} → ` : "";
   await appendBlock(pageId, `【狀態更新】${oldLabel}${newStatusLabel}`);
 }
@@ -646,7 +749,7 @@ export async function syncIssueResultUpdatedToNotion(
   const { data: issue } = await supabase
     .schema("app_private")
     .from("issues")
-    .select("title, category, status, author_uid, support_count, support_goal, result_content, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at")
+    .select("title, content, category, status, author_uid, support_count, support_goal, review_rejection_reason, result_content, created_at, review_approved_at, support_deadline_at, support_met_at, response_deadline_at, closed_at")
     .eq("id", targetId)
     .maybeSingle();
 
@@ -664,38 +767,25 @@ export async function syncIssueResultUpdatedToNotion(
   );
   if (!pageId) return;
 
-  await updateIssueTimeProperties(pageId, issue ?? {});
-  await appendBlock(pageId, `【結果更新】${String(issue?.result_content ?? payload.result_content ?? "").slice(0, 150)}`);
-}
-
-/**
- * Append the newest comment to the Notion page for an issue.
- * Queries the comments table to get the latest comment content.
- * Skips silently if the issue has no Notion page yet.
- */
-export async function syncIssueCommentToNotion(
-  supabase: AppSupabase,
-  targetId: string,
-  payload: Record<string, unknown>,
-): Promise<void> {
-  if (!notionEnabled()) return;
-
-  const { data: pageRow } = await supabase
-    .schema("app_private")
-    .from("notion_pages")
-    .select("notion_page_id")
-    .eq("target_type", "issue")
-    .eq("target_id", targetId)
-    .maybeSingle();
-  if (!pageRow?.notion_page_id) return;
-
-  const authorName = await resolveDisplayName(supabase, payload.author_uid);
-  const contentPreview = String(payload.content ?? "").slice(0, 150);
-
-  await appendBlock(
-    String(pageRow.notion_page_id),
-    `【新增留言】${authorName}：${contentPreview}`,
+  await Promise.all([
+    updateIssueTimeProperties(pageId, issue ?? {}),
+    ensureRichTextProperty("提案結果"),
+  ]);
+  await callNotionAPI(`/pages/${pageId}`, "PATCH", {
+    properties: {
+      "提案結果": richTextProperty(issue?.result_content ?? payload.result_content),
+    },
+  });
+  await replaceManagedContent(
+    supabase,
+    "issue",
+    targetId,
+    pageId,
+    await buildIssueManagedContent(supabase, targetId, issue ?? {
+      result_content: String(payload.result_content ?? ""),
+    }),
   );
+  await appendBlock(pageId, `【結果更新】${String(issue?.result_content ?? payload.result_content ?? "").slice(0, 150)}`);
 }
 
 /**

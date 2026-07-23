@@ -13,21 +13,8 @@ function toHex(buffer: ArrayBuffer) {
     .join("");
 }
 
-function toUrlSafeBase64(buffer: ArrayBuffer) {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  for (let index = 0; index < bytes.length; index += 1) {
-    binary += String.fromCharCode(bytes[index]);
-  }
-  return btoa(binary).replace(/\+/gu, "-").replace(/\//gu, "_").replace(/=+$/u, "");
-}
-
 async function sha1Hex(value: string) {
   return toHex(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(value)));
-}
-
-async function sha1UrlSafeBase64(value: string) {
-  return toUrlSafeBase64(await crypto.subtle.digest("SHA-1", new TextEncoder().encode(value)));
 }
 
 export async function sha256Hex(buffer: ArrayBuffer) {
@@ -83,27 +70,18 @@ export async function getCloudinaryAuthenticatedImageMetadata(publicId: string) 
   return await response.json() as Record<string, unknown>;
 }
 
-export async function createCloudinaryAuthenticatedImageUrl(publicId: string) {
-  const cloudName = requireEnv("CLOUDINARY_CLOUD_NAME");
-  const apiSecret = requireEnv("CLOUDINARY_API_SECRET");
-  const deliveryPath = `${publicId}.webp`;
-  const signature = (await sha1UrlSafeBase64(`${deliveryPath}${apiSecret}`)).slice(0, 8);
-  const encodedPublicId = publicId.split("/").map((part) => encodeURIComponent(part)).join("/");
-  return `https://res.cloudinary.com/${cloudName}/image/authenticated/s--${signature}--/${encodedPublicId}.webp`;
-}
-
 function cloudinaryAdminAuthorization() {
   return `Basic ${btoa(`${requireEnv("CLOUDINARY_API_KEY")}:${requireEnv("CLOUDINARY_API_SECRET")}`)}`;
 }
 
-export async function ensureCloudinaryImageUploadPreset(maxFileSize: number, maxDimension: number) {
+export async function ensureCloudinaryImageUploadPreset(maxFileSize: number) {
   if (uploadPresetVerifiedUntil > Date.now()) return;
   const cloudName = requireEnv("CLOUDINARY_CLOUD_NAME");
   const preset = new URLSearchParams({
     allowed_formats: "webp",
     max_file_size: String(maxFileSize),
     overwrite: "false",
-    transformation: `c_limit,w_${maxDimension},h_${maxDimension}`,
+    transformation: "",
     type: "authenticated",
     unsigned: "false",
   });
@@ -139,24 +117,6 @@ export async function ensureCloudinaryImageUploadPreset(maxFileSize: number, max
     throw new Error(`cloudinary-upload-preset-create:${create.status}:${await create.text()}`);
   }
   uploadPresetVerifiedUntil = Date.now() + 60 * 60 * 1000;
-}
-
-export async function createCloudinaryExpiringImageUrl(publicId: string, expiresAt: Date) {
-  const cloudName = requireEnv("CLOUDINARY_CLOUD_NAME");
-  const apiKey = requireEnv("CLOUDINARY_API_KEY");
-  const params = {
-    expires_at: Math.floor(expiresAt.getTime() / 1000).toString(),
-    format: "webp",
-    public_id: publicId,
-    timestamp: Math.floor(Date.now() / 1000).toString(),
-    type: "authenticated",
-  };
-  const query = new URLSearchParams({
-    ...params,
-    api_key: apiKey,
-    signature: await signCloudinaryParams(params),
-  });
-  return `https://api.cloudinary.com/v1_1/${cloudName}/image/download?${query.toString()}`;
 }
 
 export async function uploadCloudinaryAuthenticatedImage(publicId: string, source: string | Blob) {

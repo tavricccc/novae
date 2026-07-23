@@ -103,6 +103,14 @@ namespace_id = "1011"
 limit = 300
 period = 60
 
+[[env.production.ratelimits]]
+name = "MEDIA_IP_RATE_LIMITER"
+namespace_id = "1012"
+
+[env.production.ratelimits.simple]
+limit = 1200
+period = 60
+
 [[env.development.ratelimits]]
 name = "ACTION_IP_RATE_LIMITER"
 namespace_id = "2001"
@@ -189,6 +197,14 @@ namespace_id = "2011"
 
 [env.development.ratelimits.simple]
 limit = 300
+period = 60
+
+[[env.development.ratelimits]]
+name = "MEDIA_IP_RATE_LIMITER"
+namespace_id = "2012"
+
+[env.development.ratelimits.simple]
+limit = 1200
 period = 60
 
 [env.production.observability]

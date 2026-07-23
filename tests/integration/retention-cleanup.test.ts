@@ -205,7 +205,7 @@ integrationTest("configured retention cleanup removes every expired data class a
   if (maintenanceSeedError) throw maintenanceSeedError;
 
   const uploadIds = {
-    expiredDelivery: crypto.randomUUID(),
+    attached: crypto.randomUUID(),
     failed: crypto.randomUUID(),
     pending: crypto.randomUUID(),
     readyUnattached: crypto.randomUUID(),
@@ -216,8 +216,6 @@ integrationTest("configured retention cleanup removes every expired data class a
     attached_target_type: attached ? "issue" : null,
     cloudinary_public_id: `retention/${id}`,
     created_at: timestamp,
-    delivery_url: id === uploadIds.expiredDelivery ? "https://example.invalid/expired" : null,
-    delivery_url_expires_at: id === uploadIds.expiredDelivery ? expiredAt : null,
     id,
     owner_uid: owner.auth.uid,
     status,
@@ -229,7 +227,7 @@ integrationTest("configured retention cleanup removes every expired data class a
     upload(uploadIds.readyUnattached, "ready", expiredAt),
     upload(uploadIds.failed, "failed", expiredAt),
     upload(uploadIds.recentPending, "pending", recentAt),
-    upload(uploadIds.expiredDelivery, "ready", recentAt, true),
+    upload(uploadIds.attached, "ready", recentAt, true),
   ]);
   if (uploadError) throw uploadError;
 
@@ -249,7 +247,6 @@ integrationTest("configured retention cleanup removes every expired data class a
     expired_closed_facility_notion_deletions_queued: 1,
     expired_closed_issues_deleted: 1,
     expired_closed_issue_notion_deletions_queued: 1,
-    expired_upload_delivery_urls_cleared: 1,
     idempotency_keys_deleted: 1,
     maintenance_runs_deleted: 0,
     notifications_deleted: 1,
@@ -297,9 +294,7 @@ integrationTest("configured retention cleanup removes every expired data class a
   await expectRemoved("uploads", "id", uploadIds.readyUnattached);
   await expectRemoved("uploads", "id", uploadIds.failed);
   await expectPresent("uploads", "id", uploadIds.recentPending);
-  const deliveryUpload = await tableRow("uploads", "id", uploadIds.expiredDelivery);
-  assert.equal(deliveryUpload?.delivery_url, null);
-  assert.equal(deliveryUpload?.delivery_url_expires_at, null);
+  await expectPresent("uploads", "id", uploadIds.attached);
   for (const id of [uploadIds.pending, uploadIds.readyUnattached, uploadIds.failed]) {
     await expectPresent("deletion_jobs", "target_id", id);
   }

@@ -1,8 +1,8 @@
 import {
-  createCloudinaryAuthenticatedImageUrl,
   sha256Hex,
   uploadCloudinaryAuthenticatedImage,
 } from "../_shared/cloudinary.ts";
+import { createMediaDeliveryUrl } from "../_shared/media-delivery.ts";
 import { asString } from "../_shared/http.ts";
 import type { AuthContext, BackendSupabase, JsonRecord } from "./types.ts";
 import { handleUserAccessAction } from "./user-access.ts";
@@ -58,10 +58,12 @@ export async function handleUserAction(
     if (
       existing?.avatar_source_url === sourceUrl
       && existing.cached_photo_url
+      && existing.avatar_public_id
       && Number.isFinite(checkedAt)
       && Date.now() - checkedAt < AVATAR_REVALIDATE_INTERVAL_MS
     ) {
-      return { photoUrl: existing.cached_photo_url };
+      const media = await createMediaDeliveryUrl(existing.avatar_public_id, "avatar", false);
+      return { photoUrl: media.url };
     }
 
 
@@ -80,7 +82,7 @@ export async function handleUserAction(
     const imageBuffer = await imageResponse.arrayBuffer();
     if (imageBuffer.byteLength > 5 * 1024 * 1024) throw new Error("validation-invalid");
     const avatarHash = await sha256Hex(imageBuffer);
-    if (existing?.avatar_hash === avatarHash && existing.cached_photo_url) {
+    if (existing?.avatar_hash === avatarHash && existing.cached_photo_url && existing.avatar_public_id) {
       const { error } = await supabase.schema("app_private").from("user_profiles").upsert({
         uid: auth.uid,
         avatar_source_url: sourceUrl,
@@ -90,7 +92,8 @@ export async function handleUserAction(
         updated_at: new Date().toISOString(),
       }, { onConflict: "uid" });
       if (error) throw error;
-      return { photoUrl: existing.cached_photo_url };
+      const media = await createMediaDeliveryUrl(existing.avatar_public_id, "avatar", false);
+      return { photoUrl: media.url };
     }
 
     const nextVersion = Number(existing?.avatar_version ?? 0) + 1;
@@ -99,7 +102,7 @@ export async function handleUserAction(
       nextPublicId,
       new Blob([imageBuffer], { type: contentType }),
     );
-    const cachedPhotoUrl = await createCloudinaryAuthenticatedImageUrl(nextPublicId);
+    const cachedPhotoUrl = (await createMediaDeliveryUrl(nextPublicId, "avatar", false)).url;
     const { error } = await supabase.schema("app_api").rpc("backend_commit_user_avatar", {
       actor_uid: auth.uid,
       next_avatar_hash: avatarHash,
@@ -115,17 +118,23 @@ export async function handleUserAction(
 
   const uids = Array.isArray(payload.uids) ? payload.uids.map((uid) => asString(uid)).filter(Boolean).slice(0, 50) : [];
   const { data, error } = await supabase.schema("app_private").from("user_profiles")
-    .select("uid,display_name,cached_photo_url,photo_url,profile_version").in("uid", uids);
+    .select("uid,display_name,avatar_public_id,photo_url,profile_version").in("uid", uids);
   if (error) throw error;
-  return {
-    profiles: Object.fromEntries((data ?? []).map((profile) => [
+  const profiles = await Promise.all((data ?? []).map(async (profile) => {
+    const media = profile.avatar_public_id
+      ? await createMediaDeliveryUrl(profile.avatar_public_id, "avatar", false)
+      : null;
+    return [
       profile.uid,
       {
         uid: profile.uid,
         displayName: profile.display_name,
-        photoUrl: profile.cached_photo_url ?? profile.photo_url ?? null,
+        photoUrl: media?.url ?? profile.photo_url ?? null,
         version: profile.profile_version,
       },
-    ])),
+    ] as const;
+  }));
+  return {
+    profiles: Object.fromEntries(profiles),
   };
 }

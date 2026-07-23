@@ -8,7 +8,7 @@
         class="content-trigger w-32 shrink-0 snap-start overflow-hidden rounded-lg border border-ink-200 bg-ink-50 dark:border-ink-800 dark:bg-ink-950 sm:w-40"
         :disabled="Boolean(image.uploadId && !image.isUploadResolved)"
         :aria-label="t('media.zoom', { alt: image.alt || fallbackAlt })"
-        @click="selectedImage = image"
+        @click="openImage(image)"
       >
         <div
           v-if="image.uploadId && image.resolveError"
@@ -108,6 +108,23 @@ const { t } = useI18n();
 const lightboxTitleId = useId();
 
 const selectedImage = ref<MarkdownImageRecord | null>(null);
-const { images, resolvedContent } = useResolvedMarkdown(() => props.content);
+const {
+  expiresAtByUploadId,
+  images,
+  refreshUploadImageUrl,
+  resolvedContent,
+} = useResolvedMarkdown(() => props.content);
 const textContent = computed(() => stripMarkdownImages(resolvedContent.value));
+
+async function openImage(image: MarkdownImageRecord) {
+  if (
+    image.uploadId
+    && (expiresAtByUploadId.value[image.uploadId] ?? 0) <= Date.now() + 60_000
+  ) {
+    await refreshUploadImageUrl(image.uploadId);
+  }
+  selectedImage.value = image.uploadId
+    ? images.value.find((candidate) => candidate.uploadId === image.uploadId) ?? image
+    : image;
+}
 </script>

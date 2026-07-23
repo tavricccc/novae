@@ -216,6 +216,7 @@ supabase db lint --local --level error --fail-on error
 if [[ "$SERVE" == "true" ]]; then
   printf 'LOCAL_TEST_MODE=true\n' >>"$TEMP_ENV"
   printf 'FIREBASE_AUTH_EMULATOR_HOST=host.docker.internal:9099\n' >>"$TEMP_ENV"
+  sed -i 's#CLOUDFLARE_WORKER_URL=http://127.0.0.1:1#CLOUDFLARE_WORKER_URL=http://127.0.0.1:8787#' "$TEMP_ENV"
 fi
 chmod 600 "$TEMP_ENV"
 grep -v '^SUPABASE_' "$TEMP_ENV" >"$FUNCTION_ENV"
@@ -329,6 +330,9 @@ fi
 echo "[environment] Starting local Cloudflare gateway"
 "${TEST_NPX[@]}" wrangler@4.112.0 dev --config "$TEST_ROOT/cloudflare/wrangler.toml" --env development --local --port 8787 \
   --var "ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173" \
+  --var "CLOUDINARY_API_SECRET:integration-cloudinary-secret" \
+  --var "CLOUDINARY_CLOUD_NAME:integration" \
+  --var "CLOUDINARY_DELIVERY_BASE_URL:http://127.0.0.1:54330" \
   --var "CLOUDINARY_WEBHOOK_SECRET:integration-cloudinary-webhook" \
   --var "EDGE_FUNCTION_NAMESPACE:local" \
   --var "EDGE_ORIGIN_SECRET:$ORIGIN_SECRET" \

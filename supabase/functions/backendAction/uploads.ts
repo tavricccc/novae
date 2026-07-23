@@ -1,11 +1,10 @@
 import {
-  createCloudinaryAuthenticatedImageUrl,
-  createCloudinaryExpiringImageUrl,
   createCloudinaryUploadSignature,
   CLOUDINARY_IMAGE_UPLOAD_PRESET,
   getCloudinaryAuthenticatedImageMetadata,
   verifyCloudinaryUploadResponseSignature,
 } from "../_shared/cloudinary.ts";
+import { createMediaDeliveryUrls } from "../_shared/media-delivery.ts";
 import { requireEnv } from "../_shared/env.ts";
 import { asString } from "../_shared/http.ts";
 import { RATE_LIMITS } from "../_shared/rate-limits.ts";
@@ -15,12 +14,6 @@ import { canReadIssue } from "./issue-shared.ts";
 
 const MARKDOWN_UPLOAD_ID_PATTERN = /srp-upload:\/\/([0-9a-fA-F-]{36})/gu;
 const MARKDOWN_IMAGE_SOURCE_PATTERN = /!\[[^\]]*\]\((\S+?)(?:\s+["'][^"']*["'])?\)/gu;
-const PRIVATE_URL_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
-const PRIVATE_URL_REFRESH_BUFFER_MS = 5 * 60 * 1000;
-const PRIVATE_DELIVERY_SCOPE = "private-v2";
-const PUBLIC_URL_CACHE_MS = 365 * 24 * 60 * 60 * 1000;
-const PUBLIC_DELIVERY_SCOPE = "public-v2";
-
 function extractMarkdownUploadIds(content: string) {
   return [...new Set(
     [...content.matchAll(MARKDOWN_UPLOAD_ID_PATTERN)]
@@ -369,7 +362,7 @@ export async function handleUploadAction(
 
   const uploadIds = Array.isArray(payload.uploadIds) ? payload.uploadIds.map((id) => asString(id)).filter(Boolean).slice(0, 50) : [];
   const { data, error } = await supabase.schema("app_private").from("uploads")
-    .select("id,owner_uid,cloudinary_public_id,attached_target_type,attached_target_id,delivery_url,delivery_url_expires_at,delivery_url_scope")
+    .select("id,owner_uid,cloudinary_public_id,attached_target_type,attached_target_id")
     .in("id", uploadIds)
     .in("status", ["ready", "attached"]);
   if (error) throw error;
@@ -377,43 +370,10 @@ export async function handleUploadAction(
   const resolved = await Promise.all((data ?? []).map(async (upload) => {
     const access = accessByUploadId.get(upload.id) ?? { allowed: false, privateDelivery: true };
     if (!access.allowed || !upload.cloudinary_public_id) return null;
-    if (!access.privateDelivery) {
-      const cachedExpiresAtMs = Date.parse(upload.delivery_url_expires_at ?? "");
-      if (upload.delivery_url_scope === PUBLIC_DELIVERY_SCOPE && upload.delivery_url && cachedExpiresAtMs > Date.now() + PRIVATE_URL_REFRESH_BUFFER_MS) {
-        return { expiresAtMs: cachedExpiresAtMs, id: upload.id, url: upload.delivery_url };
-      }
-      const expiresAt = new Date(Date.now() + PUBLIC_URL_CACHE_MS);
-      const url = await createCloudinaryAuthenticatedImageUrl(upload.cloudinary_public_id);
-      const { error: cacheError } = await supabase.schema("app_private").from("uploads").update({
-        delivery_url: url,
-        delivery_url_expires_at: expiresAt.toISOString(),
-        delivery_url_scope: PUBLIC_DELIVERY_SCOPE,
-      }).eq("id", upload.id);
-      if (cacheError) throw cacheError;
-      return {
-        expiresAtMs: expiresAt.getTime(),
-        id: upload.id,
-        url,
-      };
-    }
-    const cachedExpiresAtMs = Date.parse(upload.delivery_url_expires_at ?? "");
-    if (
-      upload.delivery_url_scope === PRIVATE_DELIVERY_SCOPE
-      && upload.delivery_url
-      && Number.isFinite(cachedExpiresAtMs)
-      && cachedExpiresAtMs > Date.now() + PRIVATE_URL_REFRESH_BUFFER_MS
-    ) {
-      return { expiresAtMs: cachedExpiresAtMs, id: upload.id, url: upload.delivery_url };
-    }
-    const expiresAt = new Date(Date.now() + PRIVATE_URL_LIFETIME_MS);
-    const url = await createCloudinaryExpiringImageUrl(upload.cloudinary_public_id, expiresAt);
-    const { error: cacheError } = await supabase.schema("app_private").from("uploads").update({
-      delivery_url: url,
-      delivery_url_expires_at: expiresAt.toISOString(),
-      delivery_url_scope: PRIVATE_DELIVERY_SCOPE,
-    }).eq("id", upload.id);
-    if (cacheError) throw cacheError;
-    return { expiresAtMs: expiresAt.getTime(), id: upload.id, url };
+    return {
+      id: upload.id,
+      ...await createMediaDeliveryUrls(upload.cloudinary_public_id, access.privateDelivery),
+    };
   }));
   const available = resolved.filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
   const expiresAtMs = available.length
@@ -423,6 +383,7 @@ export async function handleUploadAction(
     errors: Object.fromEntries(uploadIds.filter((id) => !available.some((entry) => entry.id === id)).map((id) => [id, "not-found"])),
     expiresAtByUploadId: Object.fromEntries(available.map((entry) => [entry.id, entry.expiresAtMs])),
     expiresAtMs,
-    urls: Object.fromEntries(available.map((entry) => [entry.id, entry.url])),
+    fullUrls: Object.fromEntries(available.map((entry) => [entry.id, entry.fullUrl])),
+    thumbnailUrls: Object.fromEntries(available.map((entry) => [entry.id, entry.thumbnailUrl])),
   };
 }

@@ -15,6 +15,7 @@ import {
   RateLimitError,
 } from './rate-limit';
 import { verifyCloudinarySignature } from './signature';
+import { handleMedia } from './media';
 import type { Env } from './types';
 import { isApiErrorCode } from '../generated/api-errors';
 
@@ -152,6 +153,11 @@ async function handleCloudinary(request: Request, env: Env, requestId: string) {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const requestId = crypto.randomUUID();
+    const pathname = new URL(request.url).pathname;
+    const mediaMatch = pathname.match(/^\/v1\/media\/([^/]+)\/([^/]+)$/u);
+    if (mediaMatch && (request.method === 'GET' || request.method === 'HEAD')) {
+      return await handleMedia(request, env, mediaMatch[1], mediaMatch[2]);
+    }
     if (request.method === 'OPTIONS') {
       if (!isAllowedBrowserRequest(request, env)) return new Response(null, { status: 403 });
       return new Response(null, { status: 204, headers: corsHeaders(request, env) });
@@ -159,7 +165,6 @@ export default {
     if (request.method !== 'POST') return apiErrorResponse(request, env, requestId, 'method-not-allowed', undefined, { allow: 'POST, OPTIONS' });
 
     try {
-      const pathname = new URL(request.url).pathname;
       if (pathname === '/v1/actions') return await handleAction(request, env, requestId);
       if (pathname === '/v1/auth/sync') return await handleSync(request, env, requestId);
       if (pathname === '/v1/webhooks/cloudinary') return await handleCloudinary(request, env, requestId);

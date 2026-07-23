@@ -15,6 +15,15 @@ Deno.serve({ hostname: "0.0.0.0", port }, async (request) => {
   if (url.pathname === "/__requests" && request.method === "GET") {
     return Response.json({ requests });
   }
+  if (request.method === "GET" && url.pathname.startsWith("/image/authenticated/")) {
+    const bytes = Uint8Array.from(
+      atob("UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA"),
+      (character) => character.charCodeAt(0),
+    );
+    return new Response(bytes, {
+      headers: { "cache-control": "public, max-age=3600", "content-type": "image/webp" },
+    });
+  }
   if (request.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
   }
