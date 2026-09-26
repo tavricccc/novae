@@ -43,6 +43,8 @@ bun run verify:integration
 
 Migration 變更還會建立 populated pre-0016 database，從切換前 schema 升級到現在。這能抓到只在有舊資料時發生的 unique、foreign key、counter、event 或 role 問題。
 
+修改本文或作者搜尋查詢時，另跑 `bun run verify:search-performance`。它會建立並清理獨立測試資料庫，量測 migration 前後的 `EXPLAIN ANALYZE`、檢查索引計畫及搜尋權限回歸；資料量、重跑條件及量測限制見[搜尋效能紀錄](search-performance.md)。
+
 ## Browser 與完整交付
 
 | 指令 | 內容 |
