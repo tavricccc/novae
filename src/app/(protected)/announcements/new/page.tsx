@@ -4,6 +4,7 @@ import { t as translate, useI18n as useLocaleSubscription } from "@/i18n";
 import { useAnnouncementComposer } from "@/hooks/use-entry-composer";
 import { usePermissionRedirect } from "@/hooks/use-permission-redirect";
 import { ComposerField } from "@/components/composer-fields";
+import { ComposerDraftNotice } from "@/components/composer-draft-notice";
 import { ComposerLayout } from "@/components/composer-layout";
 import { ErrorState } from "@/components/ui/page-state";
 
@@ -44,6 +45,7 @@ export default function AnnouncementComposerPage() {
         titleLabel={translate('ui.announcement.titleLabel')}
         titlePlaceholder={translate('ui.announcement.titlePlaceholder')}
       />
+      <ComposerDraftNotice draft={form.draft} />
     </ComposerLayout>
   );
 }

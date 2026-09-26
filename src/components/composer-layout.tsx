@@ -50,7 +50,9 @@ export function ComposerLayout({
     <form className="min-w-0" onSubmit={onSubmit}>
       <Card className="min-w-0 py-5 sm:py-6">
         <CardContent className="grid min-w-0 max-w-full gap-5 px-4 sm:px-6">
-          {children}
+          <fieldset className="contents" disabled={busy} inert={busy}>
+            {children}
+          </fieldset>
           <div className="flex justify-end">
             <Button disabled={submitDisabled} type="submit">
               {busy ? null : <ArrowUp />}

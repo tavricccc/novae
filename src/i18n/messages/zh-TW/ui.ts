@@ -1,4 +1,10 @@
 const messages = {
+  'ui.composer.clearDraft': '清除文字草稿',
+  'ui.composer.clearDraftDescription': '要清除標題、內容與位置嗎？已選取的圖片會保留。',
+  'ui.composer.draftUnavailable': '瀏覽器無法儲存草稿，送出前請保持此頁開啟。',
+  'ui.composer.draftHint': '文字草稿會在此分頁保留最多 24 小時；離開後圖片需重新選取，登出時草稿會清除。',
+  'ui.composer.draftSaved': '文字草稿已儲存在此分頁；離開後圖片需重新選取。',
+  'ui.composer.draftRestored': '已恢復文字草稿，送出前請重新選取圖片。',
   'ui.operations.provider.cloudinary': 'Cloudinary 用量',
   'ui.operations.provider.cloudflare': 'Workers 統計（24 小時）',
   'ui.operations.providerStatus.available': '已成功取得資料',

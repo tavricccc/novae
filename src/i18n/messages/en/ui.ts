@@ -1,4 +1,10 @@
 const messages = {
+  'ui.composer.clearDraft': 'Clear text draft',
+  'ui.composer.clearDraftDescription': 'Clear the title, content and location? Selected images will remain.',
+  'ui.composer.draftUnavailable': 'This browser could not save your draft. Keep this page open until you submit.',
+  'ui.composer.draftHint': 'Text drafts stay in this tab for up to 24 hours. Images must be selected again after leaving. Signing out clears drafts.',
+  'ui.composer.draftSaved': 'Text draft saved in this tab. Images must be selected again after leaving.',
+  'ui.composer.draftRestored': 'Text draft restored. Select your images again before submitting.',
   'ui.operations.provider.cloudinary': 'Cloudinary usage',
   'ui.operations.provider.cloudflare': 'Workers metrics (24 hours)',
   'ui.operations.providerStatus.available': 'Retrieved successfully',

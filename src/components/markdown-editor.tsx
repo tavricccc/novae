@@ -200,6 +200,18 @@ export function MarkdownEditor({
     if (editor) limitValue(editor.getValue(), editor);
   }, [limitValue]);
 
+  const flushValue = React.useCallback(() => {
+    const editor = editorRef.current;
+    if (editor) onChangeRef.current(editor.getValue().slice(0, maxLengthRef.current));
+  }, []);
+
+  React.useEffect(() => {
+    // Vditor debounces input callbacks. Save the latest DOM value before a
+    // reload, rather than losing the user's last keystrokes to that delay.
+    window.addEventListener("pagehide", flushValue);
+    return () => window.removeEventListener("pagehide", flushValue);
+  }, [flushValue]);
+
   const handleImageTransfer = React.useCallback(
     (event: React.ClipboardEvent<HTMLDivElement> | React.DragEvent<HTMLDivElement>) => {
       const files = "clipboardData" in event
@@ -219,6 +231,7 @@ export function MarkdownEditor({
     <div
       aria-busy={!ready}
       className={cn("novae-markdown-editor", !ready && "is-loading", className)}
+      onBlurCapture={flushValue}
       onCompositionEnd={handleCompositionEnd}
       onCompositionStart={handleCompositionStart}
       onDropCapture={handleImageTransfer}

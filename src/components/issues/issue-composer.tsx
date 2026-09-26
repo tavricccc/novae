@@ -1,6 +1,7 @@
 "use client";
 
 import { ComposerField } from "@/components/composer-fields";
+import { ComposerDraftNotice } from "@/components/composer-draft-notice";
 import { ComposerLayout } from "@/components/composer-layout";
 import { useIssueComposer } from "@/hooks/use-entry-composer";
 import { t as translate, useI18n as useLocaleSubscription } from "@/i18n";
@@ -41,6 +42,7 @@ export function IssueComposer() {
         titleLabel={translate("ui.issue.titleLabel")}
         titlePlaceholder={translate("ui.issue.titlePlaceholder")}
       />
+      <ComposerDraftNotice draft={form.draft} />
     </ComposerLayout>
   );
 }

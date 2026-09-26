@@ -3,6 +3,7 @@ import { t as translate, useI18n as useLocaleSubscription } from "@/i18n";
 
 import { useFacilityComposer } from "@/hooks/use-entry-composer";
 import { ComposerField } from "@/components/composer-fields";
+import { ComposerDraftNotice } from "@/components/composer-draft-notice";
 import { ComposerLayout } from "@/components/composer-layout";
 import { FacilityComposerFields } from "@/components/facilities/facility-composer-fields";
 
@@ -49,6 +50,7 @@ export default function FacilityComposerPage() {
         titleLabel={translate('ui.facility.reportTitle')}
         titlePlaceholder={translate('ui.facility.reportTitlePlaceholder')}
       />
+      <ComposerDraftNotice draft={form.draft} />
     </ComposerLayout>
   );
 }

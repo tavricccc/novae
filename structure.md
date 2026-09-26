@@ -34,6 +34,9 @@ This document is the maintained map of the repository. Read it before broad sear
 
 ## Presentation components
 
+- `src/hooks/use-composer-base.ts` owns the shared upload/create transaction and synchronous submission lock; `use-entry-composer.ts` supplies domain-specific creation and navigation. `use-composer-draft.ts` and `src/lib/composer-draft.ts` own account/category-scoped, expiring tab-session text drafts; `src/components/composer-draft-notice.tsx` presents save/restore failures and confirmed text clearing. Markdown editor blur/pagehide flushes its debounced value before navigation.
+- `src/services/notification-cursor.ts` preserves database timestamp precision for notification pagination; forward migrations `0048` and `0049` correct inbox cursors, expiry filtering and monotonic read watermarks. `use-notifications-page.ts` shares the paged request guard so an old response cannot overwrite a refreshed inbox.
+
 - `src/components/motion/resize-motion.tsx` / `state-transition.tsx` / `stagger.tsx` — opt-in, height-only state-container resizing plus shared content entry/exit and dynamic-list presence animation; viewport reflow is excluded, physical card frames survive state replacement, observers clean up after disconnected nodes, and reduced motion is honored.
 - `src/components/ui/feed-list.tsx` — persistent physical card slots for loading, content, error, and empty states; domain content stays keyed by entity inside the retained frame.
 - `src/components/ui/detail-layout.tsx` — persistent detail content and reaction/timeline cards; record loading replaces only their contents.

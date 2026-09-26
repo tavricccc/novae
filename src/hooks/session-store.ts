@@ -8,6 +8,7 @@ import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { readCachedAvatar, writeCachedAvatar } from "@/lib/avatar-cache";
 import { clearContentEntityScope } from "@/lib/content-entity-store";
 import { clearViewMemoryScope } from "@/lib/view-memory-cache";
+import { clearComposerDrafts } from "@/lib/composer-draft";
 import { clearSupportedIssueMemory } from "@/lib/supported-issue-memory";
 import { ensureBackendProfile } from "@/services/backend-auth";
 import {
@@ -128,6 +129,7 @@ function shouldRecordPlatformVisit() {
 }
 
 function clearActiveSessionData() {
+  clearComposerDrafts(state.user?.uid);
   void setPushSession(null).catch(() => undefined);
   clearContentEntityScope(state.user?.uid);
   clearViewMemoryScope(state.user?.uid);
