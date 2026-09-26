@@ -87,7 +87,7 @@ export function useAnnouncementComposer() {
       !form.title.trim() ||
       !form.content.trim() ||
       !form.contentWithinLimit ||
-      form.saving
+      form.saving || form.images.uploading
     ) return;
     await form.withUploads(async (content) => {
       const announcement = await createAnnouncement({
@@ -128,7 +128,7 @@ export function useIssueComposer() {
       !form.title.trim() ||
       !form.content.trim() ||
       !form.contentWithinLimit ||
-      form.saving
+      form.saving || form.images.uploading
     ) return;
     await form.withUploads(async (content) => {
       const issue = await createIssue({ category, content, title: form.title.trim() });
@@ -168,7 +168,7 @@ export function useFacilityComposer() {
       !location.trim() ||
       !form.content.trim() ||
       !form.contentWithinLimit ||
-      form.saving
+      form.saving || form.images.uploading
     )
       return;
     await form.withUploads(async (content) => {

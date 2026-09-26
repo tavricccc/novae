@@ -41,13 +41,12 @@ export function useImageAttachments(
   const [images, setImages] = React.useState<PreparedImage[]>([]);
   const [uploading, setUploading] = React.useState(false);
   const imagesRef = React.useRef(images);
-
-  React.useEffect(() => {
-    imagesRef.current = images;
-  }, [images]);
+  const preparationRef = React.useRef<symbol | null>(null);
+  const [preparing, setPreparing] = React.useState(false);
 
   React.useEffect(
     () => () => {
+      preparationRef.current = null;
       imagesRef.current.forEach((image) =>
         URL.revokeObjectURL(image.previewUrl),
       );
@@ -57,28 +56,31 @@ export function useImageAttachments(
 
   const pick = React.useCallback(
     async (files: FileList | null) => {
-      if (!files?.length) return;
+      if (!files?.length || preparationRef.current) return;
       const remaining = Math.max(0, maxImages - imagesRef.current.length);
       if (remaining === 0) {
         toast.error(t("upload.imageLimit", { count: maxImages }));
         return;
       }
-      setUploading(true);
+      const preparation = Symbol();
+      preparationRef.current = preparation;
+      setPreparing(true);
       const prepared: PreparedImage[] = [];
       try {
         for (const file of Array.from(files).slice(0, remaining)) {
           const result = await processImageForUpload(file, settings);
+          if (preparationRef.current !== preparation) return;
           prepared.push({
             ...result,
             previewUrl: URL.createObjectURL(result.file),
           });
         }
-        setImages((current) => [...current, ...prepared]);
+        imagesRef.current = [...imagesRef.current, ...prepared];
+        setImages(imagesRef.current);
         if (files.length > remaining)
           toast.error(t("upload.imageLimit", { count: maxImages }));
       } catch (error) {
-        prepared.forEach((image) => URL.revokeObjectURL(image.previewUrl));
-        toast.error(
+        if (preparationRef.current === preparation) toast.error(
           t(
             error instanceof Error
               ? error.message
@@ -86,35 +88,42 @@ export function useImageAttachments(
           ),
         );
       } finally {
-        setUploading(false);
+        // Uncommitted previews belong to this batch, including canceled batches.
+        prepared.filter((image) => !imagesRef.current.includes(image))
+          .forEach((image) => URL.revokeObjectURL(image.previewUrl));
+        if (preparationRef.current === preparation) {
+          preparationRef.current = null;
+          setPreparing(false);
+        }
       }
     },
     [maxImages, settings, t],
   );
 
   const remove = React.useCallback((index: number) => {
-    setImages((current) => {
-      const target = current[index];
-      if (target) URL.revokeObjectURL(target.previewUrl);
-      return current.filter((_, currentIndex) => currentIndex !== index);
-    });
+    const target = imagesRef.current[index];
+    if (target) URL.revokeObjectURL(target.previewUrl);
+    imagesRef.current = imagesRef.current.filter((_, currentIndex) => currentIndex !== index);
+    setImages(imagesRef.current);
   }, []);
 
   const clear = React.useCallback(() => {
-    setImages((current) => {
-      current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
-      return [];
-    });
+    preparationRef.current = null;
+    setPreparing(false);
+    imagesRef.current.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+    imagesRef.current = [];
+    setImages([]);
   }, []);
 
   const uploadAndAppend = React.useCallback(async (content: string) => {
-    if (imagesRef.current.length === 0)
+    const selectedImages = imagesRef.current;
+    if (selectedImages.length === 0)
       return { content: content.trim(), uploaded: [] as UploadedImage[] };
     setUploading(true);
     let uploaded: UploadedImage[] = [];
     try {
       const policies = await createImageUploadPolicies(
-        imagesRef.current.map(({ file, height, width }) => ({
+        selectedImages.map(({ file, height, width }) => ({
           file,
           height,
           width,
@@ -128,7 +137,7 @@ export function useImageAttachments(
         url: `srp-upload://${uploadId}`,
         width,
       }));
-      if (uploaded.length !== imagesRef.current.length)
+      if (uploaded.length !== selectedImages.length)
         throw new Error("markdown.imageUploadFailed");
       const imageMarkdown = uploaded
         .map((image) => `![image|${image.width}x${image.height}](${image.url})`)
@@ -149,5 +158,5 @@ export function useImageAttachments(
     }
   }, [targetType]);
 
-  return { clear, images, pick, remove, uploadAndAppend, uploading };
+  return { clear, images, pick, remove, uploadAndAppend, uploading: preparing || uploading };
 }
