@@ -7,24 +7,28 @@ export function SkeletonReveal({
   className,
   enabled = true,
   skeleton,
+  stableLayout = false,
 }: {
   as?: "div" | "span";
   children: React.ReactNode;
   className?: string;
   enabled?: boolean;
   skeleton: React.ReactNode;
+  stableLayout?: boolean;
 }) {
   const Element = as;
   const Layer = as;
-  if (!enabled) return <Element className={className}>{children}</Element>;
+  if (!enabled && !stableLayout) return <Element className={className}>{children}</Element>;
   return (
     <Element
       className={cn("t-skel is-revealed", className)}
       data-block={as === "div" ? "true" : undefined}
     >
-      <Layer aria-hidden className="t-skel-skeleton is-pulsing">
-        {skeleton}
-      </Layer>
+      {enabled ? (
+        <Layer aria-hidden className="t-skel-skeleton is-pulsing">
+          {skeleton}
+        </Layer>
+      ) : null}
       <Layer className="t-skel-content">{children}</Layer>
     </Element>
   );

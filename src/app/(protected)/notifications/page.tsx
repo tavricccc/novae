@@ -112,6 +112,7 @@ export default function NotificationsPage() {
                               <SkeletonReveal
                                 as="span"
                                 enabled={state.revealFields}
+                                stableLayout
                                 skeleton={<Skeleton className="mt-1 block h-3 w-4/5" />}
                               >
                                 {notification.body_preview}
@@ -122,6 +123,7 @@ export default function NotificationsPage() {
                               <SkeletonReveal
                                 as="span"
                                 enabled={state.revealFields}
+                                stableLayout
                                 skeleton={<Skeleton className="block h-4 w-2/5" />}
                               >
                                 {t(TITLE_KEYS[notification.type] ?? "ui.notification.issueUpdated")}
