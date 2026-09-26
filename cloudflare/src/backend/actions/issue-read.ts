@@ -117,6 +117,7 @@ async function listUserIssues(
   const { data, error } = await database.call("app_api", "backend_list_user_issues_snapshot", {
     actor_is_admin: auth.isAdmin,
     actor_uid: auth.uid,
+    title_query: optionalText(payload.titleQuery, "search", INPUT_LIMITS.search).toLowerCase(),
     status_bucket: asString(payload.statusBucket, "active"),
     sort_name: readSort(payload),
     page_size: readPageSize(payload),

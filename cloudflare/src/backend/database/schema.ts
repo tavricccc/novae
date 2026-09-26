@@ -614,6 +614,7 @@ export interface AppApiFunctions {
     page_size: number;
     sort_name: string;
     status_bucket: string;
+    title_query?: string;
   }, Json>;
   backend_update_user_access_scope: AppFunction<{
     actor_uid: string;

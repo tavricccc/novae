@@ -22,6 +22,36 @@ async function createIssue(
   return asRecord(result.issue);
 }
 
+integrationTest("own proposal search filters content without accepting another user's scope", async () => {
+  const owner = await seedActor("own-search-owner");
+  const stranger = await seedActor("own-search-stranger");
+  const own = await createIssue(owner, "public-issues", "search-needle");
+  await createIssue(owner, "public-issues", "ordinary");
+  await createIssue(stranger, "public-issues", "search-needle");
+  const search = asRecord(await callAction("listUserIssues", {
+    uid: stranger.auth.uid,
+    titleQuery: "content search-needle",
+    statusBucket: "active",
+    sort: "latest",
+    pageSize: 20,
+  }, owner.auth));
+  assert.deepEqual((search.issues as Array<{ id: string }>).map(issue => issue.id), [own.id]);
+  const wildcard = asRecord(await callAction("listUserIssues", { titleQuery: "%" }, owner.auth));
+  assert.deepEqual(wildcard.issues, []);
+  const all = asRecord(await callAction("listUserIssues", { titleQuery: "" }, owner.auth));
+  assert.equal((all.issues as unknown[]).length, 2);
+
+  await database.sql`update app_private.issues set created_at = '2026-01-01T00:00:00.123456Z'::timestamptz
+    where author_uid = ${owner.auth.uid}`;
+  const firstPage = asRecord(await callAction("listUserIssues", { titleQuery: "content", pageSize: 1 }, owner.auth));
+  assert.equal(firstPage.hasMore, true);
+  const nextPage = asRecord(await callAction("listUserIssues", {
+    titleQuery: "content", pageSize: 1, cursor: firstPage.cursor,
+  }, owner.auth));
+  assert.equal((nextPage.issues as unknown[]).length, 1);
+  assert.notEqual(asRecord((nextPage.issues as unknown[])[0]).id, asRecord((firstPage.issues as unknown[])[0]).id);
+});
+
 integrationTest("issue reads, scoped moderation, support, comments, and deletion", async () => {
   const admin = await seedActor("issue-admin", { roles: ["platform-admin"] });
   const owner = await seedActor("issue-owner");
