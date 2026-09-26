@@ -1139,7 +1139,6 @@ html[data-theme-transition="true"]::view-transition-new(root) {
   .t-panel-reveal,
   .t-startup-brand,
   .t-startup-status > *,
-  .t-startup-progress > span,
   .t-stagger-item,
   .t-success-check,
   .t-success-check path,

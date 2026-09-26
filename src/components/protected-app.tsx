@@ -39,7 +39,6 @@ export function AppStartupScreen({
             key={phase}
           >{label}</p>
         </div>
-        <div className="t-startup-progress mt-1" aria-hidden><span /></div>
       </div>
     </div>
   );

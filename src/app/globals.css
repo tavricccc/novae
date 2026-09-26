@@ -333,23 +333,6 @@ body[data-scroll-locked] {
   animation: t-startup-status var(--motion-control) var(--ease-arrive) both;
 }
 
-.t-startup-progress {
-  width: min(10rem, 46vw);
-  height: 2px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: var(--border);
-}
-
-.t-startup-progress > span {
-  display: block;
-  width: 42%;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--foreground);
-  animation: t-startup-progress 1.2s var(--ease-nav) infinite;
-}
-
 @keyframes t-startup-brand {
   from { opacity: 0; transform: translateY(8px) scale(0.96); }
   to { opacity: 1; transform: none; }
@@ -358,11 +341,6 @@ body[data-scroll-locked] {
 @keyframes t-startup-status {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: none; }
-}
-
-@keyframes t-startup-progress {
-  from { transform: translateX(-120%); }
-  to { transform: translateX(340%); }
 }
 
 button,
