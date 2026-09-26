@@ -151,7 +151,8 @@ async function resetLocalDatabase() {
       "select pg_terminate_backend(pid) from pg_stat_activity where datname = 'novae' and pid <> pg_backend_pid()",
     );
     await client.query("drop database if exists novae");
-    await client.query("drop role if exists novae_runtime");
+    // Roles are cluster-wide: other isolated verification databases may still
+    // use this one. Runtime configuration safely reuses it after migration.
     await client.query("create database novae");
   } finally {
     await client.end();

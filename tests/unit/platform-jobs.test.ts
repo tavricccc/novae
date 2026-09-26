@@ -6,7 +6,10 @@ import { listPlatformJobs } from "@/services/categories";
 import { notifyPlatformJobsChanged } from "@/lib/platform-job-events";
 
 vi.mock("@/services/categories", () => ({ listPlatformJobs: vi.fn() }));
-vi.mock("@/i18n", () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+vi.mock("@/i18n", () => {
+  const t = (key: string) => key;
+  return { useI18n: () => ({ t }) };
+});
 let root: Root;
 let state: ReturnType<typeof usePlatformJobs>;
 beforeEach(async () => {
