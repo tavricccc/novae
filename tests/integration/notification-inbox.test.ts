@@ -60,3 +60,31 @@ integrationTest("expired notifications do not occupy inbox pages or unread hints
   }, user.auth));
   assert.deepEqual(asRecord(asRecord(expiredOnly.pages).user).notifications, []);
 });
+
+integrationTest("a delayed mark-opened request cannot make read notifications unread again", async () => {
+  const user = await seedActor("notification-open-order");
+  const earlier = "2026-01-01T00:00:00.000Z";
+  const later = "2026-01-01T00:00:02.000Z";
+  await database.sql`
+    insert into app_private.notifications
+      (source, recipient_uid, type, target_type, target_id, title, created_at, expires_at)
+    values ('user', ${user.auth.uid}, 'issue_comment_created', 'issue', 'test',
+      'already read', '2026-01-01T00:00:01Z'::timestamptz, '2099-01-01'::timestamptz)`;
+
+  const newer = await database.call("app_api", "backend_mark_notifications_opened", {
+    actor_uid: user.auth.uid, opened_at: later,
+  });
+  assert.ifError(newer.error);
+  const delayed = await database.call("app_api", "backend_mark_notifications_opened", {
+    actor_uid: user.auth.uid, opened_at: earlier,
+  });
+  assert.ifError(delayed.error);
+
+  const hint = asRecord(await callAction("getNotificationUnreadHint", {}, user.auth));
+  assert.equal(hint.hasUnread, false);
+  const state = asRecord(asRecord(await callAction("getNotificationReadState", {}, user.auth)).state);
+  for (const key of ["adminOpenedAt", "broadcastOpenedAt", "userOpenedAt"]) {
+    assert.equal(Date.parse(String(state[key])), Date.parse(later));
+  }
+  assert.equal(asRecord(delayed.data).openedAtMs, Date.parse(later));
+});
