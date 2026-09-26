@@ -236,8 +236,11 @@ export async function safeFetch(
   options: RequestOptions = {},
 ) {
   const label = options.label ?? 'common.request';
-  const parentSignal = options.signal ?? init.signal ?? undefined;
-  const method = (init.method ?? 'GET').toUpperCase();
+  const request = input instanceof Request ? input : undefined;
+  const parentSignal = options.signal
+    ?? (init.signal !== undefined ? init.signal : request?.signal)
+    ?? undefined;
+  const method = (init.method ?? request?.method ?? 'GET').toUpperCase();
   const retrySafe = SAFE_RETRY_METHODS.has(method)
     || (options.retry !== false && options.retry?.allowUnsafe === true);
   const maxAttempts = options.retry === false

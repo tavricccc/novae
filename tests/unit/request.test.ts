@@ -115,6 +115,72 @@ describe("safeFetch retries", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("uses the Request method when deciding whether a network failure is safe to retry", async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError("network down"));
+    vi.stubGlobal("fetch", fetchMock);
+    const input = new Request("https://example.test/api/write", { method: "POST" });
+
+    const rejection = expect(safeFetch(input)).rejects.toMatchObject({ code: "network" });
+    await vi.runAllTimersAsync();
+
+    await rejection;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not send a Request whose own signal was already aborted", async () => {
+    const parent = new AbortController();
+    const input = new Request("https://example.test/api/read", { signal: parent.signal });
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    parent.abort();
+
+    await expect(safeFetch(input)).rejects.toMatchObject({ code: "aborted" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("lets init override the Request method and signal", async () => {
+    const parent = new AbortController();
+    const override = new AbortController();
+    const input = new Request("https://example.test/api/read", { signal: parent.signal });
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError("network down"));
+    vi.stubGlobal("fetch", fetchMock);
+    parent.abort();
+
+    await expect(safeFetch(input, { method: "POST", signal: override.signal }))
+      .rejects.toMatchObject({ code: "network" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows an explicit null init signal to detach from the Request signal", async () => {
+    const parent = new AbortController();
+    const input = new Request("https://example.test/api/read", { signal: parent.signal });
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+    parent.abort();
+
+    await expect(safeFetch(input, { signal: null })).resolves.toMatchObject({ status: 204 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels an active fetch when the Request signal is aborted", async () => {
+    const parent = new AbortController();
+    const input = new Request("https://example.test/api/read", { signal: parent.signal });
+    let fetchSignal: AbortSignal | null | undefined;
+    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      fetchSignal = init?.signal;
+      return new Promise<Response>(() => undefined);
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const request = safeFetch(input);
+    parent.abort();
+
+    await expect(request).rejects.toMatchObject({ code: "aborted" });
+    expect(fetchSignal?.aborted).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("retries an explicitly retry-safe POST after a transient network failure", async () => {
     vi.useFakeTimers();
     vi.spyOn(Math, "random").mockReturnValue(0);
