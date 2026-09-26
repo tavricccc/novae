@@ -41,6 +41,7 @@ tests/e2e/.auth/
 
 # Local AI / agent tooling and prompts
 /.agents/
+/.codex/
 /.claude/
 /.gemini/
 /.kiro/
@@ -62,6 +63,8 @@ tests/e2e/.auth/
 /skills-lock.json
 /.vscode/mcp.json
 /.github/copilot-instructions.md
+/.github/code-review-graph.instruction.md
+/PRODUCT.md
 /.github/instructions/
 /.github/prompts/
 /.github/agents/
