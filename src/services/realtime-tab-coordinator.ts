@@ -11,6 +11,7 @@ export function createRealtimeTabCoordinator(
   let stopped = false;
   let leader = false;
   let ready = false;
+  let eligible = false;
   let controller: AbortController | null = null;
   let release: (() => void) | null = null;
   const participant = crypto.randomUUID();
@@ -26,9 +27,9 @@ export function createRealtimeTabCoordinator(
       const message = data as { type?: string; value?: unknown; target?: string; sender?: string };
       if (message.type === 'hello' && leader && ready) post({ type: 'ready', target: message.sender });
       if (message.type === 'event' && !leader) callbacks.onEvent(message.value);
-      if (message.type === 'ready' && !leader && (!message.target || message.target === participant)) callbacks.onResync();
+      if (message.type === 'ready' && eligible && !leader
+        && (!message.target || message.target === participant)) callbacks.onResync();
     };
-    post({ type: 'hello', sender: participant });
   }
   const setLeader = (next: boolean) => {
     if (leader === next) return;
@@ -37,8 +38,10 @@ export function createRealtimeTabCoordinator(
     callbacks.onLeadership(next);
   };
   return {
-    setEligible(eligible: boolean) {
+    setEligible(nextEligible: boolean) {
       if (stopped) return;
+      const resumed = nextEligible && !eligible;
+      eligible = nextEligible;
       if (!channel) { setLeader(eligible); return; }
       if (!eligible) {
         controller?.abort();
@@ -48,6 +51,9 @@ export function createRealtimeTabCoordinator(
         release = null;
         return;
       }
+      // A background follower still invalidates caches from events, but only
+      // asks for a fresh read once it can display the result again.
+      if (resumed) post({ type: 'hello', sender: participant });
       if (controller) return;
       const pending = new AbortController();
       controller = pending;

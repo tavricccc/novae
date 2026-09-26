@@ -61,6 +61,7 @@ export function LiquidTabs({
 
             return (
               <TabsPrimitive.Trigger
+                aria-label={option.label}
                 className="t-tab t-tab-label relative z-10 isolate inline-flex h-[1.875rem] shrink-0 cursor-pointer appearance-none items-center justify-center gap-1 rounded-full border-0 bg-transparent px-3 font-semibold leading-4 text-[var(--tabs-text-muted)] outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 data-control-label=""
                 data-displayed-active={displayedActive}

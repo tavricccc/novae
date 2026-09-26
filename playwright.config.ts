@@ -57,7 +57,7 @@ export default defineConfig({
     ...(surfaceBrowser ? [{
       name: `surfaces-${surfaceBrowser}`,
       dependencies: ["bootstrap"],
-      testMatch: /record-surfaces\.spec\.ts/,
+      testMatch: /(?:record-surfaces|composer-drafts|feed-and-discussion-state|realtime-sharing)\.spec\.ts/,
       use: { browserName: surfaceBrowser as "chromium" | "firefox" | "webkit" },
     }] : [{
       dependencies: ["bootstrap"],

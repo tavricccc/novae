@@ -88,8 +88,9 @@ export async function signInWithEmulator(page: Page, email: string) {
       await window.__NOVAE_E2E__?.signIn(accountEmail);
     }, email),
   ]);
-  await page.goto('/issues');
-  await expect(page).not.toHaveURL(/\/login/u, { timeout: 20_000 });
+  // The login page redirects after bootstrap. Starting a second navigation as
+  // soon as profile sync responds races that redirect, notably in WebKit.
+  await page.waitForURL((url) => url.pathname !== '/login', { timeout: 30_000 });
   await page.waitForFunction(
     () => Boolean(document.querySelector('.app-mobile-nav') || document.querySelector('main h1')),
     undefined,
@@ -99,6 +100,7 @@ export async function signInWithEmulator(page: Page, email: string) {
   if (await localeGate.isVisible().catch(() => false)) {
     await page.getByRole('button', { name: /Continue|繼續/u }).click();
   }
+  await page.waitForURL((url) => !['/', '/login', '/issues'].includes(url.pathname), { timeout: 30_000 });
 }
 
 export async function saveSignedInState(

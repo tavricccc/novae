@@ -62,10 +62,23 @@ it('elects one owner, forwards events, and transfers ownership on hidden/idle', 
 it('synchronizes a joining follower without refreshing existing followers', async () => {
   const owner = tab(); owner.session.setEligible(true); await settle();
   owner.session.connected();
-  const follower = tab(); await settle();
+  const follower = tab(); follower.session.setEligible(true); await settle();
   expect(follower.onResync).toHaveBeenCalledOnce();
-  const newcomer = tab(); await settle();
+  const newcomer = tab(); newcomer.session.setEligible(true); await settle();
   expect(newcomer.onResync).toHaveBeenCalledOnce();
+  expect(follower.onResync).toHaveBeenCalledOnce();
+});
+it('keeps background invalidations but defers resync until a follower is eligible', async () => {
+  const owner = tab(); owner.session.setEligible(true); await settle();
+  const follower = tab(); follower.session.setEligible(true); await settle();
+  follower.session.setEligible(false);
+  owner.session.connected(); owner.session.publish({ id: 'background-event' });
+  await settle();
+  expect(follower.onEvent).toHaveBeenCalledWith({ id: 'background-event' });
+  expect(follower.onResync).not.toHaveBeenCalled();
+  follower.session.setEligible(true); await settle();
+  expect(follower.onResync).toHaveBeenCalledOnce();
+  follower.session.setEligible(true); await settle();
   expect(follower.onResync).toHaveBeenCalledOnce();
 });
 it('isolates account and role scopes and discards queued ownership after stop', async () => {

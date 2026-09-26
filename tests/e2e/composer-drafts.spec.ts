@@ -13,6 +13,10 @@ for (const width of [390, 1280]) {
     await title.fill("Draft report");
     await location.fill("Library entrance");
     await content.fill("The light is broken.");
+    await expect.poll(() => page.evaluate(() => {
+      const key = Object.keys(sessionStorage).find((key) => key.startsWith("novae:composer-draft:") && key.endsWith(":facility"));
+      return key ? JSON.parse(sessionStorage.getItem(key)!).value : null;
+    })).toMatchObject({ title: "Draft report", location: "Library entrance", content: "The light is broken." });
     await page.reload();
     await expect(title).toHaveValue("Draft report");
     await expect(location).toHaveValue("Library entrance");

@@ -34,6 +34,10 @@ This document is the maintained map of the repository. Read it before broad sear
 
 ## Presentation components
 
+- `src/hooks/use-foreground-poll.ts` shares visibility/online-aware, sequential exponential polling between setup and administration. `src/lib/refresh-scheduler.ts` bounds and coalesces invalidation bursts; its hook defers background reads.
+- `src/hooks/use-feed-url-state.ts` and `src/lib/feed-url-state.ts` validate URL-backed feed filters and use native history without a server navigation per keystroke. `use-discussion-composer.ts` scopes comment/reply drafts and preserves edits across submission completion. `use-update-deferral.ts` guards PWA reloads while editing or offline.
+- `src/services/realtime-tab-coordinator.ts` elects a per-account/role Web Lock owner and relays credential-free events with BroadcastChannel; `realtime-transport.ts` owns the socket, generation fencing, fallback and foreground resynchronization.
+
 - `src/hooks/use-composer-base.ts` owns the shared upload/create transaction and synchronous submission lock; `use-entry-composer.ts` supplies domain-specific creation and navigation. `use-composer-draft.ts` and `src/lib/composer-draft.ts` own account/category-scoped, expiring tab-session text drafts; `src/components/composer-draft-notice.tsx` presents save/restore failures and confirmed text clearing. Markdown editor blur/pagehide flushes its debounced value before navigation.
 - `src/services/notification-cursor.ts` preserves database timestamp precision for notification pagination; forward migrations `0048` and `0049` correct inbox cursors, expiry filtering and monotonic read watermarks. `use-notifications-page.ts` shares the paged request guard so an old response cannot overwrite a refreshed inbox.
 
