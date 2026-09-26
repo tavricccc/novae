@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { ListSection, RowInner, rowClass } from "@/components/ui/list";
 import {
   EmptyStateContent,
+  ErrorState,
   ErrorStateContent,
   PageHeader,
 } from "@/components/ui/page-state";
@@ -79,6 +80,9 @@ export default function NotificationsPage() {
   return (
     <div className="space-y-5">
       <PageHeader title={t("ui.nav.notifications")} />
+      {state.error && state.notifications.length > 0 ? (
+        <ErrorState error={state.error} onRetry={() => void state.load()} />
+      ) : null}
       <div aria-busy={state.loading} data-notification-surface>
         <ListSection className="min-w-0">
         <StateTransition identity={view}>
@@ -159,7 +163,7 @@ export default function NotificationsPage() {
       {state.hasMore ? (
         <div className="flex justify-center">
           <Button
-            disabled={state.loadingMore}
+            disabled={state.loading || state.loadingMore}
             onClick={() => void state.loadMore()}
             variant="outline"
           >

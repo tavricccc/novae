@@ -15,6 +15,8 @@ import {
 import type { NotificationRecord, NotificationSource } from "@/types";
 import { getViewMemory, setViewMemory } from "@/lib/view-memory-cache";
 import { useColdDataReveal } from "@/hooks/use-cold-data-reveal";
+import { usePagedRequestGuard } from "@/hooks/use-paged-request-guard";
+import { canContinuePage } from "@/lib/pagination";
 import {
   advanceFeedPageCount,
   canLoadAnotherFeedPage,
@@ -59,6 +61,8 @@ export function useNotificationsPage() {
   const revealFields = useColdDataReveal(coldRead, loading);
   const [loadingMore, setLoadingMore] = React.useState(false);
   const [error, setError] = React.useState("");
+  const requestGuard = usePagedRequestGuard();
+  const queryKey = `${session.user?.uid ?? ""}|${activeSources.join(",")}`;
 
   const applyPages = React.useCallback((next: Record<NotificationSource, NotificationSourcePage>) => {
     setPages((current) => ({
@@ -81,27 +85,36 @@ export function useNotificationsPage() {
 
   const load = React.useCallback(async () => {
     if (!session.user) return;
-    if (coldRead) setLoading(true);
+    requestGuard.restart(queryKey);
+    const requestToken = requestGuard.begin(queryKey);
+    if (!requestToken) return;
+    setLoadingMore(false);
+    setLoading(true);
     setError("");
     try {
       await fetchNotificationSnapshot(
         activeSources,
         session.user.uid,
-        { onPages: applyPages },
+        { onPages: (next) => {
+          if (requestGuard.isCurrent(requestToken)) applyPages(next);
+        } },
       );
+      if (!requestGuard.isCurrent(requestToken)) return;
       await markNotificationsOpened().catch(() => undefined);
     } catch (caught) {
+      if (!requestGuard.isCurrent(requestToken)) return;
       setError(
         caught instanceof Error ? caught.message : t("notification.loadFailed"),
       );
     } finally {
-      setLoading(false);
+      if (requestGuard.finish(requestToken)) setLoading(false);
     }
-  }, [activeSources, applyPages, coldRead, session.user, t]);
+  }, [activeSources, applyPages, queryKey, requestGuard, session.user, t]);
 
   React.useEffect(() => {
     void load();
-  }, [load]);
+    return () => requestGuard.restart(queryKey);
+  }, [load, queryKey, requestGuard]);
 
   const handleRealtimeResync = React.useCallback(() => {
     void load();
@@ -162,12 +175,15 @@ export function useNotificationsPage() {
         : [],
     );
     if (requests.length === 0) return;
+    const requestToken = requestGuard.begin(queryKey);
+    if (!requestToken) return;
     setLoadingMore(true);
     try {
       const result = await fetchNotificationSourcePages(
         requests,
         session.user.uid,
       );
+      if (!requestGuard.isCurrent(requestToken)) return;
       const nextPageCounts = { ...pageCounts };
       for (const source of activeSources) {
         const page = result[source];
@@ -187,20 +203,22 @@ export function useNotificationsPage() {
         setCursors((current) => ({ ...current, [source]: page.cursor }));
         setMore((current) => ({
           ...current,
-          [source]: canLoadAnotherFeedPage(nextPageCount, page.hasMore),
+          [source]: canLoadAnotherFeedPage(nextPageCount,
+            canContinuePage(cursors[source], page.cursor, page.hasMore)),
         }));
       }
       setPageCounts(nextPageCounts);
     } catch (caught) {
+      if (!requestGuard.isCurrent(requestToken)) return;
       toast.error(
         caught instanceof Error
           ? caught.message
           : t("ui.notification.loadMoreFailed"),
       );
     } finally {
-      setLoadingMore(false);
+      if (requestGuard.finish(requestToken)) setLoadingMore(false);
     }
-  }, [activeSources, cursors, loadingMore, more, pageCounts, session.user, t]);
+  }, [activeSources, cursors, loadingMore, more, pageCounts, queryKey, requestGuard, session.user, t]);
 
   return { error, hasMore, load, loadMore, loading, loadingMore, notifications, revealFields };
 }
