@@ -107,7 +107,8 @@ test.describe.serial("shareable feeds and isolated discussion drafts", () => {
         await expect(sharedPage.getByRole("tab", { name: "Closed", exact: true })).toHaveAttribute("aria-selected", "true");
         await sharedPage.getByRole("button", { name: searchLabel, exact: true }).click();
         await expect(sharedPage.getByRole("textbox", { name: searchLabel, exact: true })).toHaveValue(`圖書館 ${size}`);
-        await sharedPage.screenshot({ path: `${captureDirectory}/${size}-feed.png`, fullPage: true });
+        await expect(sharedPage.locator('[data-slot="popover-content"]')).toHaveCSS("opacity", "1");
+        await sharedPage.screenshot({ path: `${captureDirectory}/${size}-feed.png`, fullPage: true, animations: "disabled" });
       } finally {
         await context.close();
       }
