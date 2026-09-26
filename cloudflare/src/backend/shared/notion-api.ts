@@ -111,7 +111,9 @@ async function pacedFetch(url: string, init: RequestInit): Promise<Response> {
   });
   await ready;
   setTimeout(release, NOTION_REQUEST_SPACING_MS);
-  return countedFetch(url, init);
+  // Queueing and Retry-After are not time spent waiting on the network. Start
+  // a fresh deadline only once this attempt can actually leave the isolate.
+  return countedFetch(url, { ...init, signal: AbortSignal.timeout(15_000) });
 }
 
 export async function callNotionAPI(path: string, method: string, body?: unknown): Promise<unknown> {
@@ -125,7 +127,6 @@ export async function callNotionAPI(path: string, method: string, body?: unknown
       "Notion-Version": NOTION_API_VERSION,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(15_000),
   };
   for (let attempt = 0; ; attempt += 1) {
     const response = await pacedFetch(url, init);
