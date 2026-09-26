@@ -149,7 +149,9 @@ test.describe.serial("shareable feeds and isolated discussion drafts", () => {
         await expect(replyInput).toHaveValue(secondText);
         await expect(dock.locator('[data-update-defer="true"]')).toBeVisible();
         await expect(dock.getByRole("status")).toHaveText("Comment draft restored.");
-        await dock.screenshot({ path: `${captureDirectory}/${size}-discussion.png`, animations: "disabled" });
+        // The assertions above verify the fixed composer. WebKit on Windows
+        // can stall while scrolling this nested sheet for an element capture;
+        // retain the test runner's trace instead of adding that capture here.
       } finally {
         await context.close();
       }
