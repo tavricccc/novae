@@ -22,17 +22,24 @@ export function usePlatformJobs() {
   const [entries, setEntries] = React.useState<PlatformJob[]>([]);
   const [error, setError] = React.useState("");
   const [watching, setWatching] = React.useState(false);
+  const pendingRead = React.useRef<Promise<PlatformJob[] | null> | null>(null);
 
   const load = React.useCallback(async () => {
-    try {
-      const result = (await listPlatformJobs()).entries;
-      setEntries(result);
-      setError("");
-      return result;
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t("ui.admin.backgroundJobsLoadFailed"));
-      return [];
-    }
+    if (pendingRead.current) return pendingRead.current;
+    const pending = (async () => {
+      try {
+        const result = (await listPlatformJobs()).entries;
+        setEntries(result);
+        setError("");
+        return result;
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : t("ui.admin.backgroundJobsLoadFailed"));
+        // A failed read says nothing about whether the work has finished.
+        return null;
+      }
+    })().finally(() => { pendingRead.current = null; });
+    pendingRead.current = pending;
+    return pending;
   }, [t]);
 
   // Nothing is read until a save on this screen queues something. An admin
@@ -42,7 +49,7 @@ export function usePlatformJobs() {
     () =>
       subscribePlatformJobsChanged(() => {
         setWatching(true);
-        void load();
+        if (document.visibilityState === "visible" && navigator.onLine) void load();
       }),
     [load],
   );
@@ -55,13 +62,13 @@ export function usePlatformJobs() {
 
     const tick = async () => {
       if (stopped) return;
-      if (document.visibilityState !== "visible") {
+      if (document.visibilityState !== "visible" || !navigator.onLine) {
         timer = window.setTimeout(() => void tick(), nextPollDelay(attempt));
         return;
       }
       const result = await load();
       if (stopped) return;
-      if (!result.some((entry) => ACTIVE_STATUSES.has(entry.status))) {
+      if (result && !result.some((entry) => ACTIVE_STATUSES.has(entry.status))) {
         setWatching(false);
         return;
       }
