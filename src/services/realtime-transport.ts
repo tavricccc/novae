@@ -5,6 +5,8 @@ import { withRequestTimeout } from '@/lib/request';
 import { backendSecurityHeaders } from '@/lib/backend-security';
 import { realtimeIdleRemaining } from '@/lib/realtime-timing';
 import { noteHeartbeatResponse, startHeartbeat, stopHeartbeat } from '@/services/realtime-heartbeat';
+import { createRealtimeTabCoordinator } from '@/services/realtime-tab-coordinator';
+import { getCachedSessionRole } from '@/services/session-role';
 
 interface RealtimeTicketEnvelope {
   data?: {
@@ -45,6 +47,10 @@ let activityTracking = false;
 let idleSuspended = false;
 let idleTimer = 0;
 let lastActivityAt = 0;
+let connectionGeneration = 0;
+let coordinator: ReturnType<typeof createRealtimeTabCoordinator> | null = null;
+let coordinatorScope = '';
+let isLeader = false;
 
 const activityEvents = ['keydown', 'pointerdown', 'scroll', 'touchstart'] as const;
 
@@ -53,7 +59,32 @@ function hasRealtimeInterest() {
 }
 
 function shouldConnect() {
-  return hasRealtimeInterest() && !idleSuspended;
+  return hasRealtimeInterest() && !idleSuspended
+    && document.visibilityState !== 'hidden' && navigator.onLine !== false;
+}
+
+function currentScope() {
+  const uid = auth?.currentUser?.uid;
+  return uid ? JSON.stringify([uid, getCachedSessionRole()]) : '';
+}
+
+function notifyResync() {
+  const callbacks = new Set(Array.from(listeners.values(), (listener) => listener.onResync));
+  callbacks.forEach((callback) => callback?.());
+}
+
+function deliverMessage(value: unknown) {
+  if (!coordinatorScope || coordinatorScope !== currentScope()) {
+    ensureRealtimeConnection();
+    return;
+  }
+  const message = normalizeMessage(value);
+  if (!message || !rememberDelivery(message.id)) return;
+  listeners.forEach((listener) => {
+    if (listener.topic === message.topic && listener.event === message.event) {
+      listener.onMessage(message.payload);
+    }
+  });
 }
 
 function rememberDelivery(id: string) {
@@ -82,6 +113,7 @@ function scheduleReconnect() {
 }
 
 function closeSocket() {
+  connectionGeneration += 1;
   window.clearTimeout(reconnectTimer);
   reconnectTimer = 0;
   connecting = false;
@@ -98,7 +130,7 @@ function scheduleIdleCheck() {
   const remaining = realtimeIdleRemaining(lastActivityAt);
   if (remaining === 0) {
     idleSuspended = true;
-    closeSocket();
+    ensureRealtimeConnection();
     return;
   }
   idleTimer = window.setTimeout(scheduleIdleCheck, remaining);
@@ -115,12 +147,21 @@ function recordRealtimeActivity() {
 }
 
 function handleVisibilityChange() {
-  if (document.visibilityState !== 'visible') return;
+  if (document.visibilityState !== 'visible') {
+    ensureRealtimeConnection();
+    return;
+  }
   if (realtimeIdleRemaining(lastActivityAt) === 0) {
     idleSuspended = true;
     closeSocket();
   }
   recordRealtimeActivity();
+  ensureRealtimeConnection();
+}
+
+function handlePageHide() {
+  coordinator?.setEligible(false);
+  closeSocket();
 }
 
 function startActivityTracking() {
@@ -132,6 +173,10 @@ function startActivityTracking() {
     window.addEventListener(event, recordRealtimeActivity, { passive: true }),
   );
   window.addEventListener('focus', recordRealtimeActivity);
+  window.addEventListener('online', ensureRealtimeConnection);
+  window.addEventListener('offline', ensureRealtimeConnection);
+  window.addEventListener('pagehide', handlePageHide);
+  window.addEventListener('pageshow', handleVisibilityChange);
   document.addEventListener('visibilitychange', handleVisibilityChange);
   scheduleIdleCheck();
 }
@@ -147,6 +192,10 @@ function stopActivityTracking() {
     window.removeEventListener(event, recordRealtimeActivity),
   );
   window.removeEventListener('focus', recordRealtimeActivity);
+  window.removeEventListener('online', ensureRealtimeConnection);
+  window.removeEventListener('offline', ensureRealtimeConnection);
+  window.removeEventListener('pagehide', handlePageHide);
+  window.removeEventListener('pageshow', handleVisibilityChange);
   document.removeEventListener('visibilitychange', handleVisibilityChange);
 }
 
@@ -194,27 +243,28 @@ async function requestRealtimeTicket(uid: string) {
 
 async function connectRealtime() {
   const uid = auth?.currentUser?.uid;
-  if (!uid || !shouldConnect() || socket || connecting) return;
+  if (!uid || !isLeader || !shouldConnect() || socket || connecting) return;
+  const generation = connectionGeneration;
   connecting = true;
   try {
     const { ticket, url } = await requestRealtimeTicket(uid);
-    if (auth?.currentUser?.uid !== uid || !shouldConnect()) return;
+    if (generation !== connectionGeneration || currentScope() !== coordinatorScope
+      || auth?.currentUser?.uid !== uid || !isLeader || !shouldConnect()) return;
     const nextSocket = new WebSocket(url, [REALTIME_PROTOCOL, ticket]);
     socket = nextSocket;
     nextSocket.onopen = () => {
       if (socket !== nextSocket) return;
       reconnectAttempt = 0;
-      if (connectedBefore) {
-        const resyncCallbacks = new Set(
-          Array.from(listeners.values(), (listener) => listener.onResync)
-            .filter((callback): callback is () => void => Boolean(callback)),
-        );
-        resyncCallbacks.forEach((callback) => callback());
-      }
+      if (connectedBefore) notifyResync();
       connectedBefore = true;
+      coordinator?.connected();
       startHeartbeat(nextSocket, () => socket === nextSocket);
     };
     nextSocket.onmessage = (event) => {
+      if (socket !== nextSocket || currentScope() !== coordinatorScope) {
+        ensureRealtimeConnection();
+        return;
+      }
       if (typeof event.data !== 'string') return;
       if (event.data === 'pong') {
         noteHeartbeatResponse();
@@ -226,14 +276,13 @@ async function connectRealtime() {
       } catch {
         return;
       }
-      if (!message || !rememberDelivery(message.id)) return;
-      listeners.forEach((listener) => {
-        if (listener.topic === message.topic && listener.event === message.event) {
-          listener.onMessage(message.payload);
-        }
-      });
+      if (!message) return;
+      coordinator?.publish(message);
+      deliverMessage(message);
     };
-    nextSocket.onerror = () => notifyError(new Error('notification-realtime-unavailable'));
+    nextSocket.onerror = () => {
+      if (socket === nextSocket) notifyError(new Error('notification-realtime-unavailable'));
+    };
     nextSocket.onclose = () => {
       if (socket !== nextSocket) return;
       socket = null;
@@ -244,15 +293,43 @@ async function connectRealtime() {
       }
     };
   } catch (error) {
+    if (generation !== connectionGeneration) return;
     notifyError(error instanceof Error ? error : new Error('notification-realtime-unavailable'));
     scheduleReconnect();
   } finally {
-    connecting = false;
+    if (generation === connectionGeneration) connecting = false;
   }
 }
 
 export function ensureRealtimeConnection() {
-  void connectRealtime();
+  const scope = currentScope();
+  if (coordinatorScope !== scope || !hasRealtimeInterest()) {
+    coordinator?.stop();
+    coordinator = null;
+    closeSocket();
+    coordinatorScope = scope;
+    connectedBefore = false;
+    deliveredIds.clear();
+    deliveredIdOrder.length = 0;
+  }
+  if (!scope || !hasRealtimeInterest()) return;
+  if (!coordinator) {
+    coordinator = createRealtimeTabCoordinator(scope, {
+      onLeadership(leader) {
+        isLeader = leader;
+        if (leader) void connectRealtime();
+        else closeSocket();
+      },
+      onEvent: deliverMessage,
+      onResync() {
+        if (scope !== currentScope()) { ensureRealtimeConnection(); return; }
+        connectedBefore = true;
+        notifyResync();
+      },
+    });
+  }
+  coordinator.setEligible(shouldConnect());
+  if (isLeader) void connectRealtime();
 }
 
 export function startRealtimeSession() {
@@ -263,7 +340,7 @@ export function startRealtimeSession() {
 
 export function stopRealtimeSession() {
   sessionActive = false;
-  if (listeners.size === 0) closeSocket();
+  ensureRealtimeConnection();
   stopActivityTracking();
 }
 
@@ -279,7 +356,7 @@ export function subscribeRealtimeTopic(
   ensureRealtimeConnection();
   return () => {
     listeners.delete(id);
-    if (!shouldConnect()) closeSocket();
+    ensureRealtimeConnection();
     stopActivityTracking();
   };
 }
