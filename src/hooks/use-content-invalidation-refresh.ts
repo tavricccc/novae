@@ -2,30 +2,36 @@
 
 import * as React from "react";
 import { subscribeContentCacheInvalidations } from "@/services/content-read-cache";
+import { createRefreshScheduler } from "@/lib/refresh-scheduler";
 
 export function useContentInvalidationRefresh(
   prefixes: readonly string[],
   refresh: () => void | Promise<void>,
 ) {
   const refreshRef = React.useRef(refresh);
-  const queuedRef = React.useRef(false);
 
   React.useEffect(() => {
     refreshRef.current = refresh;
   }, [refresh]);
 
   React.useEffect(() => {
+    const scheduler = createRefreshScheduler(
+      () => refreshRef.current(),
+      () => document.visibilityState === "visible" && navigator.onLine,
+    );
     const unsubscribe = subscribeContentCacheInvalidations((invalidatedPrefix) => {
       if (!prefixes.some((prefix) => invalidatedPrefix.startsWith(prefix))) return;
-      if (queuedRef.current) return;
-      queuedRef.current = true;
-      queueMicrotask(() => {
-        queuedRef.current = false;
-        void refreshRef.current();
-      });
+      scheduler.request();
     });
+    document.addEventListener("visibilitychange", scheduler.resume);
+    window.addEventListener("online", scheduler.resume);
+    window.addEventListener("offline", scheduler.resume);
     return () => {
       unsubscribe();
+      scheduler.dispose();
+      document.removeEventListener("visibilitychange", scheduler.resume);
+      window.removeEventListener("online", scheduler.resume);
+      window.removeEventListener("offline", scheduler.resume);
     };
   }, [prefixes]);
 }

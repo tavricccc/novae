@@ -12,6 +12,7 @@ import type {
   IssueCategoryDraft,
 } from "@/types/categories";
 import { useActionFeedback } from "@/hooks/use-action-feedback";
+import { useForegroundPoll } from "@/hooks/use-foreground-poll";
 
 const categoryPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const newIssue = (isDefault = false): IssueCategoryDraft => ({
@@ -50,11 +51,11 @@ export function useInitialSetup() {
   const [confirming, setConfirming] = React.useState(false);
   const submittingRef = React.useRef(false);
 
-  React.useEffect(() => {
-    if (isAdmin || setupCompleted) return;
-    const timer = window.setInterval(() => void refreshSessionAccess(), 3_000);
-    return () => window.clearInterval(timer);
-  }, [isAdmin, refreshSessionAccess, setupCompleted]);
+  useForegroundPoll(
+    refreshSessionAccess,
+    !isAdmin && !setupCompleted,
+    { initialDelayMs: 3_000 },
+  );
 
   React.useEffect(() => {
     if (setupCompleted && !submittingRef.current) router.replace("/issues");
