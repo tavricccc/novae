@@ -21,6 +21,7 @@ export async function fetchUserIssues(
   options?: {
     forceRefresh?: boolean;
     pageSize?: number;
+    query?: string;
     sort?: IssueSortOption;
     statusBucket?: IssueStatusBucket;
     supportedIssueIds?: Set<string>;
@@ -30,12 +31,14 @@ export async function fetchUserIssues(
   const pageSize = options?.pageSize ?? 30;
   const sort = options?.sort ?? 'latest';
   const statusBucket = options?.statusBucket ?? 'active';
+  const titleQuery = options?.query?.trim() ?? '';
   const cacheKey = createContentCacheKey([
     'user-issue-list-page',
-    'summary-v3',
+    'summary-v4',
     uid,
     statusBucket,
     sort,
+    titleQuery,
     pageSize,
     cursor?.id ?? 'first',
     cursor?.sort_number ?? '',
@@ -56,13 +59,13 @@ export async function fetchUserIssues(
 
   try {
     const fn = invokeBackendAction<
-      { cursor: ReturnType<typeof issueCursorPayload>; pageSize: number; sort: IssueSortOption; statusBucket: IssueStatusBucket; uid: string },
+      { cursor: ReturnType<typeof issueCursorPayload>; pageSize: number; sort: IssueSortOption; statusBucket: IssueStatusBucket; titleQuery: string; uid: string },
       { cursor: IssueCursor | null; hasMore: boolean; issues: Record<string, unknown>[]; statusCounts: Record<string, number>; version: number }
     >('listUserIssues', {
       signal: options?.signal,
       timeoutMs: readRequestTimeoutMs,
     });
-    const result = await fn({ cursor: issueCursorPayload(cursor), pageSize, sort, statusBucket, uid });
+    const result = await fn({ cursor: issueCursorPayload(cursor), pageSize, sort, statusBucket, titleQuery, uid });
     const issues = result.issues.map((issue) => normalizeIssueSummary(String(issue.id ?? ''), issue));
     const page = {
       cursor: normalizeIssueCursor(result.cursor),

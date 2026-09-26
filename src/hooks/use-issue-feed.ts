@@ -31,6 +31,8 @@ import {
 import { canContinuePage, mergePageById } from "@/lib/pagination";
 import { toIssueStatusCounts, type IssueStatusCounts } from "@/constants/statuses";
 import { usePagedRequestGuard } from "@/hooks/use-paged-request-guard";
+import { useFeedUrlState } from "@/hooks/use-feed-url-state";
+import { readIssueFeedFilters } from "@/lib/feed-url-state";
 import { useContentEntityDomainVersion } from "@/hooks/use-content-entity";
 import { useContentInvalidationRefresh } from "@/hooks/use-content-invalidation-refresh";
 import { getViewMemory, setViewMemory } from "@/lib/view-memory-cache";
@@ -71,17 +73,17 @@ export function useIssueFeed() {
   const categories = useCategories();
   const { t } = useI18n();
   const filter = decodeURIComponent(params.filter);
-  const viewMemory = getViewMemory<IssueFeedViewMemory>(
+  const { params: searchParams, committedQuery, query, setCommittedQuery, setQuery, updateParams } = useFeedUrlState();
+  const { bucket, sort } = readIssueFeedFilters(searchParams);
+  const remembered = getViewMemory<IssueFeedViewMemory>(
     session.user?.uid,
     `issue-feed|${filter}`,
   );
+  const viewMemory = remembered?.bucket === bucket && remembered.sort === sort
+    && remembered.committedQuery === committedQuery ? remembered : null;
   const [coldRead] = React.useState(() => !viewMemory);
   const validFilter =
     filter === "my-proposals" || Boolean(findIssueCategory(filter));
-  const [bucket, setBucket] = React.useState<IssueStatusBucket>(viewMemory?.bucket ?? "active");
-  const [sort, setSort] = React.useState<IssueSortOption>(viewMemory?.sort ?? "latest");
-  const [query, setQuery] = React.useState(viewMemory?.query ?? "");
-  const [committedQuery, setCommittedQuery] = React.useState(viewMemory?.committedQuery ?? "");
   const [feed, setFeed] = React.useState<IssueFeed>({
     cursor: viewMemory?.feed.cursor ?? null,
     hasMore: viewMemory?.feed.hasMore ?? false,
@@ -186,6 +188,7 @@ export function useIssueFeed() {
         let statusCounts: IssueStatusCounts | null = null;
         if (filter === "my-proposals") {
           const page = await fetchUserIssues(session.user.uid, cursor, {
+            query: committedQuery,
             sort,
             statusBucket: bucket,
             supportedIssueIds: supportedIssueIdsRef.current,
@@ -311,10 +314,10 @@ export function useIssueFeed() {
     loadingMore,
     query,
     revealFields,
-    setBucket,
+    setBucket: (value: IssueStatusBucket) => updateParams({ bucket: value === "active" ? null : value }),
     setCommittedQuery,
     setQuery,
-    setSort,
+    setSort: (value: IssueSortOption) => updateParams({ sort: value === "latest" ? null : value }),
     sort,
     support,
     supportBurstById,

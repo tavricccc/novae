@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useI18n } from "@/i18n";
 import { useSession } from "@/hooks/use-session";
@@ -25,6 +24,8 @@ import {
 } from "@/lib/content-entity-store";
 import { canContinuePage, mergePageById } from "@/lib/pagination";
 import { usePagedRequestGuard } from "@/hooks/use-paged-request-guard";
+import { useFeedUrlState } from "@/hooks/use-feed-url-state";
+import { readFacilityFeedFilters } from "@/lib/feed-url-state";
 import { useContentEntityDomainVersion } from "@/hooks/use-content-entity";
 import { useContentInvalidationRefresh } from "@/hooks/use-content-invalidation-refresh";
 import { getViewMemory, setViewMemory } from "@/lib/view-memory-cache";
@@ -54,27 +55,22 @@ interface FacilityFeedViewMemory {
 }
 
 export function useFacilityFeed() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { params: searchParams, committedQuery, query, setCommittedQuery, setQuery, updateParams } = useFeedUrlState();
+  const { bucket, sort, status } = readFacilityFeedFilters(searchParams);
   const categories = useCategories();
   const session = useSession();
   const { t } = useI18n();
   const requestedCategory = searchParams.get("category");
-  const viewMemory = getViewMemory<FacilityFeedViewMemory>(
+  const category = requestedCategory && findFacilityCategory(requestedCategory)
+    ? requestedCategory : getDefaultFacilityCategoryId();
+  const remembered = getViewMemory<FacilityFeedViewMemory>(
     session.user?.uid,
     "facility-feed",
   );
+  const viewMemory = remembered?.bucket === bucket && remembered.category === category
+    && remembered.sort === sort && remembered.status === status
+    && remembered.committedQuery === committedQuery ? remembered : null;
   const [coldRead] = React.useState(() => !viewMemory);
-  const [category, setCategory] = React.useState(
-    requestedCategory && findFacilityCategory(requestedCategory)
-      ? requestedCategory
-      : viewMemory?.category || getDefaultFacilityCategoryId(),
-  );
-  const [bucket, setBucket] = React.useState<"active" | "closed">(viewMemory?.bucket ?? "active");
-  const [sort, setSort] = React.useState<FacilitySortOption>(viewMemory?.sort ?? "latest");
-  const [status, setStatus] = React.useState<FacilityStatus | "">(viewMemory?.status ?? "");
-  const [query, setQuery] = React.useState(viewMemory?.query ?? "");
-  const [committedQuery, setCommittedQuery] = React.useState(viewMemory?.committedQuery ?? "");
   const [feed, setFeed] = React.useState<FacilityFeed>({
     cursor: viewMemory?.feed.cursor ?? null,
     facilities: viewMemory?.feed.facilities ?? [],
@@ -158,10 +154,6 @@ export function useFacilityFeed() {
       setAffectingId(null);
     }
   }
-
-  React.useEffect(() => {
-    if (!category && categories.loaded) setCategory(getDefaultFacilityCategoryId());
-  }, [categories.loaded, category]);
 
   const load = React.useCallback(
     async (cursor: FacilityCursor | null = null, restart = false) => {
@@ -274,8 +266,7 @@ export function useFacilityFeed() {
     categories: categories.activeFacilityCategories,
     category,
     changeCategory: (value: string) => {
-      setCategory(value);
-      router.replace(`/facilities?category=${encodeURIComponent(value)}`);
+      if (findFacilityCategory(value)) updateParams({ category: value });
     },
     committedQuery,
     error,
@@ -285,11 +276,11 @@ export function useFacilityFeed() {
     loadingMore,
     query,
     revealFields,
-    setBucket,
+    setBucket: (value: "active" | "closed") => updateParams({ bucket: value === "active" ? null : value, status: null }),
     setCommittedQuery,
     setQuery,
-    setSort,
-    setStatus,
+    setSort: (value: FacilitySortOption) => updateParams({ sort: value === "latest" ? null : value }),
+    setStatus: (value: FacilityStatus | "") => updateParams({ status: value || null }),
     sort,
     toggleAffected,
   };
