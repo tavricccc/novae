@@ -148,7 +148,7 @@ test.describe.serial("shareable feeds and isolated discussion drafts", () => {
         await expect(replyInput).toHaveValue(secondText);
         await expect(dock.locator('[data-update-defer="true"]')).toBeVisible();
         await expect(dock.getByRole("status")).toHaveText("Comment draft restored.");
-        await page.screenshot({ path: `${captureDirectory}/${size}-discussion.png`, fullPage: true });
+        await dock.screenshot({ path: `${captureDirectory}/${size}-discussion.png`, animations: "disabled" });
       } finally {
         await context.close();
       }

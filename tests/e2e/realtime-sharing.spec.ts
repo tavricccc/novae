@@ -17,8 +17,7 @@ test('visible tabs share realtime and recover after owner closure and offline mo
       if (new URL(socket.url()).pathname !== '/v1/realtime') return;
       created += 1;
       sockets.set(socket, page);
-      socket.on('close', () => { sockets.delete(socket); console.log('realtime closed', created); });
-      socket.on('socketerror', (error) => console.log('realtime socket error', error));
+      socket.on('close', () => sockets.delete(socket));
     });
   };
   const connected = () => [...sockets].filter(([socket, page]) => !socket.isClosed() && !page.isClosed());
@@ -47,12 +46,7 @@ test('visible tabs share realtime and recover after owner closure and offline mo
     const owner = connected()[0][1];
     const follower = owner === first ? second : first;
     await owner.close();
-    await expect.poll(() => connected().length).toBe(1).catch(async (error) => {
-      console.log('realtime takeover state', await follower.evaluate(async () => ({
-        visibility: document.visibilityState, online: navigator.onLine, locks: await navigator.locks.query(),
-      })), { created });
-      throw error;
-    });
+    await expect.poll(() => connected().length).toBe(1);
     expect(connected()[0][1]).toBe(follower);
     expect(created).toBe(initialCount + 1);
 
@@ -63,7 +57,6 @@ test('visible tabs share realtime and recover after owner closure and offline mo
     expect(connected()[0][1]).toBe(follower);
     expect(created).toBe(initialCount + 2);
     await follower.waitForTimeout(2_000);
-    console.log('after online', await follower.evaluate(async () => ({ visibility: document.visibilityState, online: navigator.onLine, locks: await navigator.locks.query() })), { created, connected: connected().length });
     expect(connected()).toHaveLength(1);
     expect(created).toBe(initialCount + 2);
   } finally { await context.close(); }
