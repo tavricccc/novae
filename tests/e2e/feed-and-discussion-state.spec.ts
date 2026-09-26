@@ -108,7 +108,11 @@ test.describe.serial("shareable feeds and isolated discussion drafts", () => {
         await sharedPage.getByRole("button", { name: searchLabel, exact: true }).click();
         await expect(sharedPage.getByRole("textbox", { name: searchLabel, exact: true })).toHaveValue(`圖書館 ${size}`);
         await expect(sharedPage.locator('[data-slot="popover-content"]')).toHaveCSS("opacity", "1");
-        await sharedPage.screenshot({ path: `${captureDirectory}/${size}-feed.png`, fullPage: true, animations: "disabled" });
+        // Windows WebKit can stall while capturing a full page with an open popover.
+        // Keep its functional assertions above; traces still provide visual evidence.
+        if (browser.browserType().name() !== "webkit") {
+          await sharedPage.screenshot({ path: `${captureDirectory}/${size}-feed.png`, fullPage: true, animations: "disabled" });
+        }
       } finally {
         await context.close();
       }
