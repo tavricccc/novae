@@ -95,12 +95,16 @@ export async function getIssueCategory(database: BackendDatabase, categoryId: st
 }
 
 export async function issueCategoryPolicyLists(database: BackendDatabase) {
-  const categories = await getIssueCategories(database, true);
+  // Policy checks are on the hot read/write path. Avoid materializing full
+  // category records when only the stable access columns are needed. Inactive
+  // rows stay included because historical issues still carry those category IDs.
+  const { rows } = await database.sql<Selected<"issue_categories", "id" | "author_visible" | "read_access">>`
+    select id, author_visible, read_access from app_private.issue_categories`;
   return {
-    authorPrivateCategoryIds: categories.filter((category) => !category.authorVisible).map((category) => category.id),
-    privateToOwnerCategoryIds: categories.filter((category) => category.readAccess === "owner-admin").map((category) => category.id),
-    publicCommentCategoryIds: categories.filter((category) => category.readAccess !== "owner-admin").map((category) => category.id),
-    reviewRequiredCategoryIds: categories.filter((category) => category.readAccess === "reviewed-school").map((category) => category.id),
+    authorPrivateCategoryIds: rows.filter((category) => category.author_visible !== true).map((category) => category.id),
+    privateToOwnerCategoryIds: rows.filter((category) => category.read_access === "owner-admin").map((category) => category.id),
+    publicCommentCategoryIds: rows.filter((category) => category.read_access !== "owner-admin").map((category) => category.id),
+    reviewRequiredCategoryIds: rows.filter((category) => category.read_access === "reviewed-school").map((category) => category.id),
   };
 }
 

@@ -25,7 +25,10 @@ async function listComments(payload: JsonRecord, auth: AuthContext, database: Ba
   if (!issueId) throw new Error("not-found");
   const issue = await selectIssue(database, issueId);
   const cursor = readCursor(payload);
-  const version = await loadContentVersion(database, "issues");
+  const [version, policyParams] = await Promise.all([
+    loadContentVersion(database, "issues"),
+    issueCommentPolicyParams(database, auth, canManageIssueCategory(auth, asString(issue.category))),
+  ]);
   const sortName = asString(payload.sort) === "oldest" ? "oldest" : "newest";
   const { data, error } = await database.call("app_api", "backend_list_issue_comments", {
     issue_id: issueId,
@@ -33,7 +36,7 @@ async function listComments(payload: JsonRecord, auth: AuthContext, database: Ba
     cursor_created_at: readCursorDate(cursor, "createdAt") || null,
     page_size: Math.min(Math.max(Math.round(asNumber(payload.pageSize, 30)), 1), 30),
     sort_name: sortName,
-    ...await issueCommentPolicyParams(database, auth, canManageIssueCategory(auth, asString(issue.category))),
+    ...policyParams,
   });
   if (error) throw error;
   return attachContentVersion(data, version);
@@ -54,12 +57,15 @@ async function createComment(payload: JsonRecord, auth: AuthContext, database: B
     INPUT_LIMITS.commentStorage,
   );
   const parentCommentId = asUuid(payload.parentCommentId) || null;
-  await validateMarkdownUploadsBeforeCreate(database, auth.uid, content, "comment");
+  const [, policyParams] = await Promise.all([
+    validateMarkdownUploadsBeforeCreate(database, auth.uid, content, "comment"),
+    issueCommentPolicyParams(database, auth, canManageIssueCategory(auth, asString(issue.category))),
+  ]);
   const { data, error } = await database.call("app_api", "backend_create_issue_comment", {
     issue_id: issueId,
     parent_comment_id: parentCommentId,
     comment_content: content,
-    ...await issueCommentPolicyParams(database, auth, canManageIssueCategory(auth, asString(issue.category))),
+    ...policyParams,
   });
   if (error) throw error;
   return { comment: asRecord(data), issueCategory: asString(issue.category) };

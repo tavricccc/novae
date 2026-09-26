@@ -27,8 +27,9 @@ export async function loadContentVersion(
   database: BackendDatabase,
   domain: ContentVersionDomain,
 ) {
-  const versions = await loadContentVersions(database);
-  return versions[domain];
+  const row = await database.sqlMaybe<Selected<"content_versions", "version">>`
+    select version from app_private.content_versions where domain = ${domain}`;
+  return row ? Math.max(1, Number(row.version)) : EMPTY_VERSIONS[domain];
 }
 
 export function attachContentVersion(value: unknown, version: number) {
