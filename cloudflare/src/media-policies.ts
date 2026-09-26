@@ -1,6 +1,6 @@
 import type { Env } from './types';
 import { createDatabaseClient } from './backend/database/client';
-import { operationPolicies, withOperationPolicies } from './backend/shared/operation-policies';
+import { cachedOperationPolicies, readOperationPolicies } from './backend/shared/operation-policies';
 
 /**
  * The policies a signed media request runs under.
@@ -10,7 +10,9 @@ import { operationPolicies, withOperationPolicies } from './backend/shared/opera
  * when nothing in this isolate has read them in the last minute.
  */
 export async function mediaPolicies(env: Env) {
-  const database = await createDatabaseClient(env);
-  try { return await withOperationPolicies(database, async () => operationPolicies()); }
-  finally { await database.close(); }
+  return cachedOperationPolicies(async () => {
+    const database = await createDatabaseClient(env);
+    try { return await readOperationPolicies(database); }
+    finally { await database.close(); }
+  });
 }

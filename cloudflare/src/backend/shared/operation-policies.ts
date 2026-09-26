@@ -37,9 +37,10 @@ export async function readOperationPolicies(database: DatabaseSession): Promise<
   return { revision: stored.revision, values: validateOperationPolicies(stored.values) };
 }
 
-function cachedOperationPolicies(database: DatabaseSession): Promise<PolicySnapshot> {
+/** Lazily acquire a database only when the isolate needs a fresh snapshot. */
+export function cachedOperationPolicies(load: () => Promise<PolicySnapshot>): Promise<PolicySnapshot> {
   if (!reading || reading.expiresAt <= Date.now()) {
-    const entry = { expiresAt: Date.now() + POLICY_READ_MAX_AGE_MS, pending: readOperationPolicies(database) };
+    const entry = { expiresAt: Date.now() + POLICY_READ_MAX_AGE_MS, pending: load() };
     reading = entry;
     entry.pending.catch(() => { if (reading === entry) reading = undefined; });
   }
@@ -57,7 +58,7 @@ export function forgetOperationPolicies() {
  * through every call between here and there.
  */
 export async function withOperationPolicies<T>(database: DatabaseSession, callback: () => Promise<T>): Promise<T> {
-  const snapshot = await cachedOperationPolicies(database);
+  const snapshot = await cachedOperationPolicies(() => readOperationPolicies(database));
   return activePolicies.run(snapshot, callback);
 }
 
