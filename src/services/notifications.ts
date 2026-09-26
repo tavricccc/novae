@@ -15,6 +15,8 @@ import {
   toReadableBackendError,
 } from './issues-core';
 import { NOTIFICATION_FEED_PAGE_SIZE } from '@/lib/page-size';
+import { normalizeNotificationCursor, type NotificationCursor } from './notification-cursor';
+export type { NotificationCursor } from './notification-cursor';
 import {
   CONTENT_SHORT_CACHE_TTL_MS,
   captureContentCacheWriteGuard,
@@ -55,7 +57,6 @@ function subscribeNotificationBroadcast(
   }, { onError, onResync });
 }
 
-export type NotificationCursor = { createdAt: string; id: string } | null;
 export interface NotificationSourcePage {
   cursor: NotificationCursor;
   hasMore: boolean;
@@ -84,14 +85,6 @@ function normalizeNotificationType(value: unknown): NotificationType {
     return value;
   }
   return 'issue_comment_created';
-}
-
-function normalizeNotificationCursor(data: unknown): NotificationCursor {
-  if (!data || typeof data !== 'object') return null;
-  const record = data as Record<string, unknown>;
-  const id = typeof record.id === 'string' ? record.id : '';
-  const createdAt = normalizeDate(record.createdAt);
-  return id && createdAt ? { id, createdAt: createdAt.toISOString() } : null;
 }
 
 function normalizeTargetType(value: unknown): NotificationTargetType {

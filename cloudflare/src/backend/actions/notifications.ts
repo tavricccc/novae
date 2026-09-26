@@ -62,6 +62,15 @@ function readNotificationSource(payload: JsonRecord) {
   return source === "admin" || source === "user" ? source : "broadcast";
 }
 
+function readNotificationCursorDate(cursor: JsonRecord) {
+  const normalized = readCursorDate(cursor, "createdAt");
+  const original = asString(cursor.createdAt);
+  // PostgreSQL cursors carry microseconds; Date.toISOString() would discard them.
+  return normalized && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/u.test(original)
+    ? original
+    : normalized;
+}
+
 function readDeviceId(payload: JsonRecord) {
   return asString(payload.deviceId);
 }
@@ -102,7 +111,7 @@ export async function handleNotificationAction(
         notification_source: source,
         page_size: Math.min(Math.max(Math.round(asNumber(request.pageSize, 10)), 1), 30),
         cursor_id: asUuid(cursor.id) || null,
-        cursor_created_at: readCursorDate(cursor, "createdAt") || null,
+        cursor_created_at: readNotificationCursorDate(cursor) || null,
       });
       if (error) throw error;
       return [source, data] as const;
