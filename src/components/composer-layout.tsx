@@ -47,7 +47,7 @@ export function ComposerLayout({
     <SecondaryToolbar backLabel={translate("ui.common.back")} onBack={onBack} />
   );
   const form = (
-    <form className="min-w-0" onSubmit={onSubmit}>
+    <form className="min-w-0" data-update-defer="true" onSubmit={onSubmit}>
       <Card className="min-w-0 py-5 sm:py-6">
         <CardContent className="grid min-w-0 max-w-full gap-5 px-4 sm:px-6">
           <fieldset className="contents" disabled={busy} inert={busy}>

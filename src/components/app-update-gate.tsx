@@ -11,6 +11,7 @@ import { ActionFeedbackIcon } from "@/components/ui/action-feedback-icon";
 import { raceWithAbort } from "@/lib/abort-signal";
 import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { useTurnstile } from "@/components/turnstile-provider";
+import { hasUpdateDeferral, useUpdateDeferral } from "@/hooks/use-update-deferral";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +44,7 @@ export function AppUpdateGate() {
   const [reloading, setReloading] = React.useState(false);
   const [updateComplete, setUpdateComplete] = React.useState(false);
   const [promptVisible, setPromptVisible] = React.useState(false);
-  const [sheetOpen, setSheetOpen] = React.useState(false);
+  const updateDeferred = useUpdateDeferral();
   const lastCheckedAt = React.useRef(0);
   const checking = React.useRef(false);
   const reloadInFlight = React.useRef(false);
@@ -108,22 +109,7 @@ export function AppUpdateGate() {
   }, [check]);
 
   React.useEffect(() => {
-    const syncSheetState = () => setSheetOpen(Boolean(
-      document.querySelector('[data-sheet-surface][data-state="open"]'),
-    ));
-    syncSheetState();
-    const observer = new MutationObserver(syncSheetState);
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ["data-state"],
-      childList: true,
-      subtree: true,
-    });
-    return () => observer.disconnect();
-  }, []);
-
-  React.useEffect(() => {
-    if (!availableVersion || verifying || sheetOpen) return;
+    if (!availableVersion || verifying || updateDeferred) return;
     if (!canAutoReload(availableVersion)) {
       setPromptVisible(true);
       return;
@@ -131,7 +117,7 @@ export function AppUpdateGate() {
     void reload({ automatic: true });
     // The first unseen version automatically reloads once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableVersion, sheetOpen, verifying]);
+  }, [availableVersion, updateDeferred, verifying]);
 
   function readReloadCount(version: string) {
     try {
@@ -213,8 +199,13 @@ export function AppUpdateGate() {
     reloadInFlight.current = true;
     setReloading(true);
     setUpdateComplete(false);
-    if (options.automatic && availableVersion) markAutoReload(availableVersion);
     await prepareServiceWorker();
+    if (options.automatic && hasUpdateDeferral()) {
+      reloadInFlight.current = false;
+      setReloading(false);
+      return;
+    }
+    if (options.automatic && availableVersion) markAutoReload(availableVersion);
     setUpdateComplete(true);
     await new Promise((resolve) =>
       window.setTimeout(resolve, UPDATE_SUCCESS_HOLD_MS),
@@ -244,7 +235,7 @@ export function AppUpdateGate() {
 
   return (
     <>
-      <Dialog open={promptVisible && !reloading && !verifying}>
+      <Dialog open={promptVisible && !reloading && !verifying && !updateDeferred}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>{translate('ui.update.title')}</DialogTitle>
