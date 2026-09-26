@@ -9,7 +9,7 @@ import { BrandLockup } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import { ActionFeedbackIcon } from "@/components/ui/action-feedback-icon";
 import { raceWithAbort } from "@/lib/abort-signal";
-import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
+import { readLocalStorage, removeLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { useTurnstile } from "@/components/turnstile-provider";
 import { hasUpdateDeferral, useUpdateDeferral } from "@/hooks/use-update-deferral";
 import {
@@ -67,9 +67,13 @@ export function AppUpdateGate() {
     }
     checking.current = true;
     lastCheckedAt.current = now;
+    // The shared timestamp doubles as a lightweight cross-tab lease. Keep it
+    // only after a successful check; otherwise an offline/error response would
+    // suppress the next online/pageshow retry for the full interval.
     writeLocalStorage(LAST_VERSION_CHECK_KEY, String(now));
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), VERSION_CHECK_TIMEOUT_MS);
+    let completed = false;
     try {
       const response = await fetch("/version.json", {
         cache: "no-store",
@@ -77,12 +81,19 @@ export function AppUpdateGate() {
       });
       if (!response.ok) return;
       const data = (await response.json()) as { version?: string };
+      completed = true;
       if (data.version && data.version !== currentVersion)
         setAvailableVersion(data.version);
     } catch {
       // Version checks are opportunistic and must never block the app.
     } finally {
       window.clearTimeout(timeout);
+      if (!completed) {
+        if (readLocalStorage(LAST_VERSION_CHECK_KEY) === String(now)) {
+          removeLocalStorage(LAST_VERSION_CHECK_KEY);
+        }
+        if (lastCheckedAt.current === now) lastCheckedAt.current = 0;
+      }
       checking.current = false;
     }
   }, []);
