@@ -50,6 +50,15 @@ import {
 const VISIT_RECORD_INTERVAL_MS = 24 * 60 * 60 * 1_000;
 const VISIT_RECORDED_AT_KEY = "novae:platform-visit-recorded-at";
 
+export type StartupPhase =
+  | "session"
+  | "security"
+  | "account"
+  | "profile"
+  | "access"
+  | "content"
+  | "ready";
+
 export interface SessionState {
   appReady: boolean;
   authChecking: boolean;
@@ -64,7 +73,7 @@ export interface SessionState {
   restoringSession: boolean;
   roles: RoleCode[];
   setupCompleted: boolean;
-  startupPhase: "session" | "security" | "account" | "content" | "ready";
+  startupPhase: StartupPhase;
   user: User | null;
   userRole: "admin" | "user";
 }
@@ -181,10 +190,11 @@ async function refreshVerifiedSession(
     const tokenValidation = await tokenValidationPromise;
     if (!current()) return;
     if (!tokenValidation.ok) return await rejectUser(tokenValidation.reason);
-    patch({ startupPhase: "content" });
+    patch({ startupPhase: syncProfile ? "profile" : "access" });
     if (syncProfile) {
       await ensureBackendProfile(user);
       if (!current()) return;
+      patch({ startupPhase: "access" });
     }
     const applyAccess = (access: SessionAccess) => {
       patch({
@@ -193,6 +203,7 @@ async function refreshVerifiedSession(
         permissions: access.permissions,
         roles: access.roles,
         setupCompleted: access.setupCompleted,
+        startupPhase: "content",
         userRole: access.role,
       });
     };
