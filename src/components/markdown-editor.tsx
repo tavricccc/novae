@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { useI18n } from "@/i18n";
 import { getVditorI18n } from "@/lib/vditor-i18n";
 import { cn } from "@/lib/utils";
+import { normalizeMarkdownEditorValue } from "@/lib/markdown-editor-value";
 import "vditor/dist/index.css";
 import "@/styles/vditor-editor.css";
 
@@ -71,8 +72,9 @@ export function MarkdownEditor({
   }, [content, maxLength, onChange, onPickImages]);
 
   const limitValue = React.useCallback((value: string, editor?: VditorInstance | null) => {
-    const limited = value.slice(0, maxLengthRef.current);
-    if (limited !== value && !isComposingRef.current) {
+    const normalized = normalizeMarkdownEditorValue(value);
+    const limited = normalized.slice(0, maxLengthRef.current);
+    if (limited !== normalized && !isComposingRef.current) {
       editor?.setValue(limited);
     }
     onChangeRef.current(limited);
@@ -187,7 +189,9 @@ export function MarkdownEditor({
   React.useEffect(() => {
     const editor = editorRef.current;
     const nextValue = content.slice(0, maxLength);
-    if (editor && editor.getValue() !== nextValue) editor.setValue(nextValue);
+    if (editor && normalizeMarkdownEditorValue(editor.getValue()) !== nextValue) {
+      editor.setValue(nextValue);
+    }
   }, [content, maxLength, ready]);
 
   const handleCompositionStart = React.useCallback(() => {
@@ -202,7 +206,11 @@ export function MarkdownEditor({
 
   const flushValue = React.useCallback(() => {
     const editor = editorRef.current;
-    if (editor) onChangeRef.current(editor.getValue().slice(0, maxLengthRef.current));
+    if (editor) {
+      onChangeRef.current(
+        normalizeMarkdownEditorValue(editor.getValue()).slice(0, maxLengthRef.current),
+      );
+    }
   }, []);
 
   React.useEffect(() => {
