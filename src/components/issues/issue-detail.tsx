@@ -49,6 +49,8 @@ export function IssueDetail() {
       discussion={issue && detail.commentsAvailable ? (
             <div className={detail.commentsHighlighted ? "t-panel-reveal" : ""}>
               <Discussion
+                key={`issue:${issue.id}`}
+                targetKey={`issue:${issue.id}`}
                 comments={detail.comments}
                 sort={detail.commentSort}
                 enabled={detail.commentsEnabled}

@@ -82,6 +82,8 @@ export function AnnouncementDetail() {
             ) : null}
       </> : undefined}
       discussion={announcement ? <Discussion
+            key={`announcement:${announcement.id}`}
+            targetKey={`announcement:${announcement.id}`}
             comments={detail.comments}
             sort={detail.commentSort}
             enabled={detail.commentsEnabled}

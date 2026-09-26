@@ -1,4 +1,7 @@
 const messages = {
+  'comments.draftRestored': 'Comment draft restored.',
+  'comments.draftSaved': 'Draft saved in this tab.',
+  'comments.draftUnavailable': 'Could not save this draft. Keep this page open until you submit.',
   'comments.error': 'Error: {message}',
   'comments.imageLimit': 'Up to {count} images per comment',
   'comments.replies': '{count} replies',

@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 export function CommentComposer({
   busy,
   content,
+  draftStatus,
   feedbackState = "idle",
   onChange,
   onSubmit,
@@ -23,6 +24,7 @@ export function CommentComposer({
 }: {
   busy: boolean;
   content: string;
+  draftStatus?: "restored" | "saved" | "unavailable";
   feedbackState?: "idle" | "loading" | "success";
   onChange: (value: string) => void;
   onSubmit: () => Promise<void>;
@@ -34,7 +36,7 @@ export function CommentComposer({
   const submitLabel = reply ? translate("ui.discussion.reply") : translate("ui.discussion.submit");
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2" data-update-defer={content.length > 0 || busy ? "true" : undefined}>
       <div className="flex min-h-10 items-center gap-3 px-1">
         <Avatar className="size-10 border bg-background">
           <AvatarImage alt={displayName} src={photoUrl} />
@@ -49,7 +51,8 @@ export function CommentComposer({
           maxLength={INPUT_LIMITS.comment}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
-            if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && content.trim() && !busy) {
+            if (!event.nativeEvent.isComposing && event.nativeEvent.keyCode !== 229
+              && (event.metaKey || event.ctrlKey) && event.key === "Enter" && content.trim() && !busy) {
               event.preventDefault();
               void onSubmit();
             }
@@ -80,10 +83,16 @@ export function CommentComposer({
         </Tooltip>
       </div>
       {content.length > 0 ? (
-        <div className="flex justify-end px-3">
+        <div className="flex items-start justify-between gap-3 px-3">
+          {draftStatus ? (
+            <span className="min-w-0 text-[11px] text-muted-foreground" role="status">
+              {translate(draftStatus === "restored" ? "comments.draftRestored"
+                : draftStatus === "saved" ? "comments.draftSaved" : "comments.draftUnavailable")}
+            </span>
+          ) : null}
           <span
             className={cn(
-              "text-[11px] tabular-nums",
+              "ml-auto shrink-0 text-[11px] tabular-nums",
               content.length > INPUT_LIMITS.comment
                 ? "font-medium text-destructive"
                 : "text-muted-foreground",

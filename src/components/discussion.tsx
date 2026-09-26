@@ -3,7 +3,6 @@ import { t as translate, useI18n as useLocaleSubscription } from "@/i18n";
 
 import * as React from "react";
 import { ChevronDown, MessageCircle, X } from "lucide-react";
-import { toast } from "sonner";
 import { AnimatePresence, motion } from "motion/react";
 import { timing } from "@/lib/motion-timing";
 import type { CommentSortOption, DiscussionCommentRecord } from "@/types";
@@ -15,7 +14,7 @@ import { StaggerItem, StaggerList } from "@/components/motion/stagger";
 import { ContentTransition, StateTransition } from "@/components/motion/state-transition";
 import { CommentComposer } from "@/components/comments/comment-composer";
 import { CommentThread } from "@/components/comments/comment-thread";
-import { useActionFeedback } from "@/hooks/use-action-feedback";
+import { useDiscussionComposer } from "@/hooks/use-discussion-composer";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SkeletonRows } from "@/components/ui/skeleton-rows";
@@ -44,6 +43,7 @@ export function Discussion({
   onLoadMore,
   onSortChange,
   sort,
+  targetKey,
 }: {
   comments: DiscussionCommentRecord[];
   enabled?: boolean;
@@ -55,13 +55,12 @@ export function Discussion({
   onLoadMore?: () => Promise<void>;
   onSortChange: (sort: CommentSortOption) => void;
   sort: CommentSortOption;
+  targetKey: string;
 }) {
   useLocaleSubscription();
   const session = useSession();
-  const [commentDraft, setCommentDraft] = React.useState("");
-  const [replyDraft, setReplyDraft] = React.useState("");
   const [replyTarget, setReplyTarget] = React.useState<ReplyTarget | null>(null);
-  const feedback = useActionFeedback();
+  const composer = useDiscussionComposer(session.user?.uid, targetKey, replyTarget?.parentCommentId ?? null, onCreate);
   const profiles = useDiscussionProfiles(comments);
   const composerDockRef = React.useRef<HTMLDivElement>(null);
   const view = !enabled ? "disabled" : loading && !comments.length ? "loading" : "content";
@@ -86,22 +85,6 @@ export function Discussion({
       root.style.removeProperty("--discussion-composer-height");
     };
   }, [enabled]);
-
-  async function submit(reply = false) {
-    const value = (reply ? replyDraft : commentDraft).trim();
-    if (!value || feedback.busy) return;
-    try {
-      await feedback.run(() => onCreate(value, reply ? replyTarget?.parentCommentId ?? null : null));
-      if (reply) {
-        setReplyDraft("");
-        setReplyTarget(null);
-      } else {
-        setCommentDraft("");
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : translate("ui.discussion.submitFailed"));
-    }
-  }
 
   return (
     <section aria-labelledby="discussion-title">
@@ -140,7 +123,6 @@ export function Discussion({
                       currentUid={session.user?.uid}
                       onDelete={onDelete}
                       onReply={(target, parentCommentId) => {
-                        setReplyDraft("");
                         setReplyTarget({
                           authorUid: target.author_uid,
                           content: target.content,
@@ -194,7 +176,6 @@ export function Discussion({
                   aria-label={translate("ui.common.cancel")}
                   className="shrink-0"
                   onClick={() => {
-                    setReplyDraft("");
                     setReplyTarget(null);
                   }}
                   size="icon-xs"
@@ -206,11 +187,12 @@ export function Discussion({
             ) : null}
             </AnimatePresence>
             <CommentComposer
-              busy={feedback.busy}
-              content={replyTarget ? replyDraft : commentDraft}
-              feedbackState={feedback.state}
-              onChange={replyTarget ? setReplyDraft : setCommentDraft}
-              onSubmit={() => submit(Boolean(replyTarget))}
+              busy={composer.busy}
+              content={composer.content}
+              draftStatus={composer.status}
+              feedbackState={composer.feedbackState}
+              onChange={composer.update}
+              onSubmit={composer.submit}
               reply={Boolean(replyTarget)}
             />
           </div>
