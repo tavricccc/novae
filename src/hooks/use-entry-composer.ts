@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
 import { useI18n } from "@/i18n";
 import {
   findFacilityCategory,

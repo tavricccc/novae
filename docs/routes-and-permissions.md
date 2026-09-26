@@ -23,10 +23,15 @@
 | `/announcements/[announcementId]` | 公告、按讚與留言 | 寫入仍受互動限制 |
 | `/notifications` | 合併 broadcast、admin、user 通知 | admin source 只回給具管理身分的使用者 |
 | `/settings` | 帳號、語言、外觀、安裝、Push 與管理入口 | 管理連結依 permission 顯示 |
-| `/dashboard` | 平台統計與營運診斷 | `dashboard.view` |
-| `/admin/management` | Overview、使用者、分類、成員 scope、audit | 至少具 `dashboard.view`、`category.manage` 或 `role.manage` 之一；tab 再依個別權限顯示 |
-| `/admin/categories` | 舊入口名稱的固定 redirect | 轉到 `/admin/management?tab=categories` |
-| `/admin/access` | 成員管理入口 | 轉到 `/admin/management?tab=members` |
+| `/admin` | 管理入口與平台概覽 | 具 `dashboard.view` 或至少一個管理子頁的存取資格 |
+| `/admin/content` | 分類與功能開關 | `category.manage` |
+| `/admin/platform` | 圖片上傳與資料保留設定 | `category.manage` |
+| `/admin/people` | 使用者限制、成員 scope | `role.manage` |
+| `/admin/audit` | 角色與存取稽核 | `role.manage` |
+| `/admin/system` | 營運狀態、失敗與重試 | 管理身分；後端依操作檢查 permission |
+| `/admin/policies` | 執行期操作政策 | 管理身分；後端依操作檢查 permission |
+
+管理頁已拆成各自儲存的獨立路由。舊 `/dashboard`、`/admin/management`、`/admin/categories` 與 `/admin/access` 不再提供，也沒有相容 redirect；新增導覽應使用 `src/lib/admin-routes.ts` 的路由表。
 
 `issues` 或 `facilities` feature 關閉時，對應 route family 由 `FeatureRouteGuard` 轉到 `/announcements`。公告、通知與設定不受這兩個 feature flag 影響。
 
