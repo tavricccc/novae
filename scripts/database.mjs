@@ -116,7 +116,9 @@ async function startLocalDatabase() {
       "postgres:17-alpine",
     ]);
   }
-  await waitForDatabase();
+  // A failed reset can leave the application database absent. Check server
+  // readiness through postgres so reset-local can recreate novae on retry.
+  await waitForDatabase(localAdminConnectionString);
   console.log("Local PostgreSQL is ready on 127.0.0.1:55432.");
 }
 
