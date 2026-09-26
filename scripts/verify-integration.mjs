@@ -46,12 +46,11 @@ const configuredActionRunners = Number.parseInt(process.env.NOVAE_ACTION_TEST_RU
 const actionTestRunners = Number.isSafeInteger(configuredActionRunners)
   ? Math.min(4, Math.max(1, configuredActionRunners))
   : 3;
-// `bun run` kills this process outright the moment the terminal sends Ctrl+C, so a
-// shutdown handler here never finishes and the services, the PostgreSQL container, and
-// the WSL runtime are all left behind. The interactive environment therefore runs one
-// level deeper in its own process group, where the launcher's death is the stop signal
-// instead of a signal that arrives too late. Terminal output stays inherited, so the
-// shutdown sequence is still visible.
+// Package-manager launchers may terminate this process before its Ctrl+C cleanup
+// finishes, leaving services, PostgreSQL, or WSL behind. The interactive environment
+// therefore runs one level deeper in its own process group, where the launcher's death
+// is the stop signal instead of a signal that arrives too late. Terminal output stays
+// inherited, so the shutdown sequence is still visible.
 if (serve && !process.env.NOVAE_SERVE_SESSION) {
   const session = spawn(
     process.execPath,
@@ -83,13 +82,18 @@ const workerUrl = "http://127.0.0.1:8787";
 const appPort = Number(process.env.NOVAE_TEST_APP_PORT || 3000);
 if (!Number.isInteger(appPort) || appPort < 1024 || appPort > 65535) throw new Error('Invalid NOVAE_TEST_APP_PORT');
 const appUrl = `http://127.0.0.1:${appPort}`;
-const bun = process.platform === "win32" ? "bun.exe" : "bun";
+const integrationLockPort = Number(process.env.NOVAE_INTEGRATION_LOCK_PORT || 46987);
+if (!Number.isInteger(integrationLockPort) || integrationLockPort < 1024 || integrationLockPort > 65535) {
+  throw new Error("Invalid NOVAE_INTEGRATION_LOCK_PORT");
+}
 const npx = process.platform === "win32"
   ? {
       args: [join(dirname(process.execPath), "node_modules", "npm", "bin", "npx-cli.js")],
       command: process.execPath,
     }
   : { args: [], command: "npx" };
+const nextCli = join(root, "node_modules", "next", "dist", "bin", "next");
+const playwrightCli = join(root, "node_modules", "@playwright", "test", "cli.js");
 const vitestCli = join(root, "node_modules", "vitest", "vitest.mjs");
 const wranglerCli = join(root, "node_modules", "wrangler", "bin", "wrangler.js");
 const tempDirectory = await mkdtemp(join(tmpdir(), "novae-integration-"));
@@ -186,7 +190,7 @@ async function probeWorkerDatabase() {
 
 async function runBrowserJourneys(label, args, environment) {
   process.stderr.write(`[integration] ${label}\n`);
-  const child = spawn(bun, ["run", "test:e2e:runner", "--", ...args], {
+  const child = spawn(process.execPath, [playwrightCli, "test", ...args], {
     cwd: root,
     env: { ...process.env, ...environment },
     stdio: "inherit",
@@ -246,6 +250,28 @@ function start(label, command, args, environment = {}, ports = []) {
   children.push({ child, label, log, logPath });
   for (const port of ports) ownedPorts.add(port);
   return child;
+}
+
+async function acquireIntegrationLock() {
+  const server = createServer();
+  await new Promise((resolve, reject) => {
+    server.once("error", (error) => {
+      if (error && typeof error === "object" && "code" in error && error.code === "EADDRINUSE") {
+        reject(new Error(
+          `Another Novae integration environment is already starting or running on lock port ${integrationLockPort}.`,
+        ));
+        return;
+      }
+      reject(error);
+    });
+    server.listen(integrationLockPort, "127.0.0.1", resolve);
+  });
+  return server;
+}
+
+async function releaseIntegrationLock(server) {
+  if (!server.listening) return;
+  await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
 }
 
 async function findAvailablePort() {
@@ -392,15 +418,16 @@ process.once("SIGTERM", async () => {
   process.exit(143);
 });
 
-const requiredServicePorts = new Set(serve || e2e ? [appPort, 4000, 4400, 4500, 8787, 9099] : [8787]);
-const occupiedServicePids = windowsListenerPids(requiredServicePorts);
-if (occupiedServicePids.length > 0) {
-  throw new Error(
-    `Integration service ports are already occupied by process IDs: ${occupiedServicePids.join(", ")}.`,
-  );
-}
-
+const integrationLock = await acquireIntegrationLock();
 try {
+  const requiredServicePorts = new Set(serve || e2e ? [appPort, 4000, 4400, 4500, 8787, 9099] : [8787]);
+  const occupiedServicePids = windowsListenerPids(requiredServicePorts);
+  if (occupiedServicePids.length > 0) {
+    throw new Error(
+      `Integration service ports are already occupied by process IDs: ${occupiedServicePids.join(", ")}.`,
+    );
+  }
+
   await keepWindowsWslRunning();
   run("reset PostgreSQL and apply migrations", process.execPath, [
     "scripts/database.mjs",
@@ -612,14 +639,17 @@ try {
       NOVAE_LOCAL_GATEWAY_URL: workerUrl,
     };
     if (e2e && !skipBuild) {
-      run("build production frontend", bun, ["run", "build:deploy"], frontendEnvironment);
+      run("build production frontend", process.execPath, [nextCli, "build", "--webpack"], frontendEnvironment);
     } else if (e2e && !existsSync(join(root, ".next", "BUILD_ID"))) {
       throw new Error("--skip-build requires an existing production .next build.");
     }
+    const frontendArgs = e2e
+      ? [nextCli, "start", "-H", "0.0.0.0", "-p", String(appPort)]
+      : [nextCli, "dev", "--webpack", "-H", "0.0.0.0", "-p", String(appPort)];
     const frontend = start(
       "next",
-      bun,
-      e2e ? ["run", "start", "--", "-H", "0.0.0.0", "-p", String(appPort)] : ["run", "dev", "--", "-H", "0.0.0.0", "-p", String(appPort)],
+      process.execPath,
+      frontendArgs,
       frontendEnvironment,
       [appPort],
     );
@@ -660,5 +690,9 @@ try {
     }
   }
 } finally {
-  await cleanup();
+  try {
+    await cleanup();
+  } finally {
+    await releaseIntegrationLock(integrationLock);
+  }
 }
