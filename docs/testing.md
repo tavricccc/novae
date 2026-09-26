@@ -58,6 +58,10 @@ Migration 變更還會建立 populated pre-0016 database，從切換前 schema �
 
 E2E mode 先以 deployment build environment 執行 `build:deploy`，再用 `next start` 跑 production artifact。它會啟動 Firebase Auth Emulator，Playwright 走真的登入、API、database、Worker、Queue 和 responsive UI，不把 browser journey 改成 mock service call。
 
+`test:env` 是手動操作環境，會啟用本機管理員自動登入，不適合直接執行需要切換帳號的 Playwright 測試。使用 `test:e2e` 可停用這項便利功能，避免登入狀態干擾案例。整合 runner 使用本機連接埠鎖阻止同時重建測試環境，並直接透過 Node 啟動 Next.js 與 Playwright。
+
+需要檢查 WebKit 的草稿、列表、詳情與多分頁行為時，可安裝 `bunx playwright install webkit`，設定 `NOVAE_E2E_SURFACE_BROWSER=webkit` 後執行 `bun run test:e2e`。這是 WebKit 引擎與響應式畫面的驗證，不等同於實體 iPhone 測試。不同 Playwright 程序若共用已啟動的環境，必須各自指定 `--output`，避免覆寫對方的 trace 與截圖。
+
 `verify:stress` 把 `NOVAE_STRESS_SCALE` 設成 8。Runner 接受 2 到 20 的整數 scale；package script固定使用 8，涵蓋多人 profile sync、分類組合與 permission scope 競爭。
 
 ## CI path selection

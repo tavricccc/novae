@@ -34,6 +34,8 @@ This document is the maintained map of the repository. Read it before broad sear
 
 ## Presentation components
 
+- `src/lib/markdown-editor-value.ts` normalizes Vditor's synthetic final line break before draft persistence and controlled value comparison; editor value tests preserve multiline structure. `AppUpdateGate` releases failed version-check leases so reconnecting can retry promptly.
+
 - `src/hooks/use-foreground-poll.ts` shares visibility/online-aware, sequential exponential polling between setup and administration. `src/lib/refresh-scheduler.ts` bounds and coalesces invalidation bursts; its hook defers background reads.
 - `src/hooks/use-feed-url-state.ts` and `src/lib/feed-url-state.ts` validate URL-backed feed filters and use native history without a server navigation per keystroke. `use-discussion-composer.ts` scopes comment/reply drafts and preserves edits across submission completion. `use-update-deferral.ts` guards PWA reloads while editing or offline.
 - `src/services/realtime-tab-coordinator.ts` elects a per-account/role Web Lock owner and relays credential-free events with BroadcastChannel; `realtime-transport.ts` owns the socket, generation fencing, fallback and foreground resynchronization.
