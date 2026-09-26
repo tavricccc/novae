@@ -35,6 +35,9 @@ integrationTest('operations settings enforce administrator access, revision conf
   const snapshot = asRecord(await callAction('getOperationsConsole', {}, admin.auth));
   assert.ok(Number(snapshot.databaseBytes) > 0);
   assert.ok(Array.isArray(snapshot.capacity));
+  const progress = asRecord(await callAction('getOperationsConsole', { progressOnly: true }, admin.auth));
+  assert.deepEqual(Object.keys(progress), ['jobs']);
+  assert.deepEqual(progress.jobs, snapshot.jobs);
   const metrics = snapshot.metrics as Array<{ bucket: unknown; databaseBytes: unknown }>;
   assert.match(String(metrics[0].bucket), /^\d{4}-\d{2}-\d{2}$/u);
   assert.ok(Number(metrics[0].databaseBytes) > 0);
@@ -42,6 +45,7 @@ integrationTest('operations settings enforce administrator access, revision conf
   assert.equal(diagnostics.status, 'not-configured');
   await assert.rejects(() => callAction('getProviderDiagnostics', { provider: 'cloudflare' }, user.auth), /permission-denied/);
   await assert.rejects(() => callAction('getOperationsConsole', {}, user.auth), /permission-denied/);
+  await assert.rejects(() => callAction('getOperationsConsole', { progressOnly: true }, user.auth), /permission-denied/);
   const runtime = asRecord(await callAction('getRuntimePolicies', {}, user.auth));
   assert.equal(runtime.revision, 1);
   assert.equal('backupIntervalHours' in asRecord(runtime.values), false);

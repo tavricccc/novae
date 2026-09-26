@@ -31,6 +31,13 @@ export function fetchOperationsConsole(
     },
   })(payload);
 }
+
+export function fetchOperationsProgress(page: number) {
+  return invokeBackendAction<
+    { page: number; progressOnly: true },
+    Pick<OperationsConsole, 'jobs'>
+  >('getOperationsConsole')({ page, progressOnly: true });
+}
 export const clearOperationalErrors = invokeBackendAction<Record<string, never>, {
   cleared: number;
   success: boolean;

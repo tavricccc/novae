@@ -5,10 +5,12 @@ import { toast } from "sonner";
 
 import { useI18n } from "@/i18n";
 import { useRememberedState } from "@/hooks/use-remembered-state";
+import { useForegroundPoll } from "@/hooks/use-foreground-poll";
 import {
   clearOperationalErrors,
   clearScheduledWork,
   fetchOperationsConsole,
+  fetchOperationsProgress,
   queueNotionArchiveRebuild,
   retryOperationalWork,
   type OperationsConsole,
@@ -17,16 +19,6 @@ import {
 export type { OperationsConsole } from "@/services/operations-console";
 
 export type RetryKind = "cleanup" | "delivery" | "job";
-
-/**
- * How often a screen with work in flight asks again.
- *
- * The administration surfaces do not refresh themselves, with one exception:
- * progress on work this administrator just queued is feedback on their own
- * action, and a rebuild that takes many passes was otherwise frozen at whatever
- * the screen happened to read when they pressed the button.
- */
-const PROGRESS_POLL_MS = 4000;
 
 const isRunning = (job: { status: string }) =>
   job.status === "pending" || job.status === "processing";
@@ -58,9 +50,11 @@ export function useSystemConsole() {
   const [retrying, setRetrying] = React.useState("");
   const [clearing, setClearing] = React.useState<"errors" | "schedules" | "">("");
   const [rebuildingNotion, setRebuildingNotion] = React.useState(false);
+  const readingVersion = React.useRef(0);
 
   const read = React.useCallback(
     async (nextPage: number) => {
+      readingVersion.current += 1;
       const console_ = await fetchOperationsConsole({ page: nextPage }, {
         onPanel: (panel) => remember((current) => ({
           ...current,
@@ -93,15 +87,16 @@ export function useSystemConsole() {
   }, [cold, load]);
 
   const working = (value.snapshot?.jobs ?? []).some(isRunning);
-  React.useEffect(() => {
-    if (!working) return undefined;
-    // Silently, and without the spinner: this is the screen keeping itself
-    // honest, not the reader asking it a question.
-    const timer = window.setInterval(() => {
-      void read(value.page).catch(() => undefined);
-    }, PROGRESS_POLL_MS);
-    return () => window.clearInterval(timer);
-  }, [read, value.page, working]);
+  useForegroundPoll(async () => {
+    const version = readingVersion.current;
+    const { jobs } = await fetchOperationsProgress(value.page);
+    // An explicit refresh owns its result even if an earlier poll finishes later.
+    if (version !== readingVersion.current) return;
+    remember((current) => current.page !== value.page ? current : {
+      ...current,
+      snapshot: current.snapshot && { ...current.snapshot, jobs },
+    });
+  }, working && !loading, { initialDelayMs: 4000 });
 
   const retry = React.useCallback(
     async (kind: RetryKind, id: string) => {

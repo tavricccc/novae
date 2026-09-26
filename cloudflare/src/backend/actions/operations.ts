@@ -75,6 +75,10 @@ export async function handleOperationsAction(action: string, payload: JsonRecord
   if (action === 'getOperationsConsole') {
     const page = payload.page ?? 0;
     if (!Number.isInteger(page) || Number(page) < 0 || Number(page) > 1_000_000) throw new Error('validation-invalid');
+    if (payload.progressOnly === true) {
+      const jobs = await operationsJobs(Number(page) * 100, database);
+      return { jobs: jobs.rows.slice(0, 100) };
+    }
     return operationsConsole(Number(page) * 100, database);
   }
   throw new Error('invalid-action');
@@ -121,6 +125,12 @@ async function clearSupersededNotionWork(database: BackendDatabase) {
  * slowest before it could show any of them, and now each panel fills in as its
  * own reading lands.
  */
+function operationsJobs(offset: number, database: BackendDatabase) {
+  return database.sql`select id, job_type, status, attempt_count, processed_rows, affected_rows,
+    estimated_rows, next_attempt_at, started_at, completed_at, updated_at, last_attempt_id, error_detail
+    from app_private.background_jobs order by created_at desc, id desc limit 101 offset ${offset}`;
+}
+
 function operationsConsole(offset: number, database: BackendDatabase) {
   const paged = {
     cleanupBacklog: database.sql`select job_id, created_at, payload from app_private.external_cleanup_backlog
@@ -133,9 +143,7 @@ function operationsConsole(offset: number, database: BackendDatabase) {
       order by d.updated_at desc, d.id desc limit 101 offset ${offset}`,
     history: database.sql`select id, actor_uid, revision, reason, before_value, after_value, created_at
       from app_private.operation_policy_history order by id desc limit 101 offset ${offset}`,
-    jobs: database.sql`select id, job_type, status, attempt_count, processed_rows, affected_rows,
-      estimated_rows, next_attempt_at, started_at, completed_at, updated_at, last_attempt_id, error_detail
-      from app_private.background_jobs order by created_at desc, id desc limit 101 offset ${offset}`,
+    jobs: operationsJobs(offset, database),
   };
   const capacity = database.sql`select relname as name, n_live_tup as rows, n_dead_tup as dead_rows,
     pg_table_size(relid) as table_bytes, pg_indexes_size(relid) as index_bytes,
