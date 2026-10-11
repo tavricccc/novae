@@ -85,7 +85,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.29.9",
-    "@babel/parser": "^7.29.9",
+    "@babel/parser": "^8.0.6",
     "@babel/preset-react": "^7.29.7",
     "@babel/preset-typescript": "^7.29.7",
     "@cloudflare/workers-types": "^5.20261008.1",
