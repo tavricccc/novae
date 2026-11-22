@@ -12,8 +12,11 @@
     "@grpc/grpc-js": "1.14.5",
     "browserslist": "4.28.7",
     "js-yaml": "4.3.2",
+    "postcss-selector-parser": "6.1.5",
+    "re2js": "2.8.7",
     "sharp": "0.35.5",
-    "source-map-js": "1.2.2"
+    "source-map-js": "1.2.2",
+    "zod": "4.6.7"
   },
   "scripts": {
     "dev": "vite",
@@ -68,7 +71,7 @@
     "@tanstack/react-query": "5.104.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "dompurify": "3.4.15",
+    "dompurify": "3.4.18",
     "firebase": "12.18.0",
     "harmonyos-sans-webfont-splitted": "^1.2.1",
     "jose": "6.2.12",
@@ -91,7 +94,7 @@
     "@babel/preset-typescript": "^7.28.5",
     "@cloudflare/workers-types": "^5.20260908.1",
     "@eslint/js": "9.39.5",
-    "@serwist/vite": "9.5.12",
+    "@serwist/vite": "9.5.15",
     "@tailwindcss/postcss": "4.3.3",
     "@tailwindcss/typography": "0.5.20",
     "@types/node": "24.13.3",
@@ -102,16 +105,16 @@
     "esbuild": "0.28.1",
     "eslint": "9.39.5",
     "eslint-plugin-react-hooks": "^7.0.1",
-    "jsdom": "30.0.1",
+    "jsdom": "^31.0.1",
     "knip": "6.41.0",
-    "miniflare": "5.20260926.1-alpha",
+    "miniflare": "5.20261119.0-beta",
     "postcss": "8.5.28",
-    "serwist": "9.5.12",
+    "serwist": "9.5.15",
     "sharp": "0.35.5",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "vite": "8.3.4",
-    "vitest": "4.1.11",
-    "wrangler": "^4.144.0"
+    "vitest": "4.1.12",
+    "wrangler": "^4.166.0"
   }
 }
